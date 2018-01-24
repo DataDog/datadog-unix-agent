@@ -1,0 +1,28 @@
+# The host of the Datadog intake server to send Agent data to
+dd_url: https://app.datadoghq.com
+
+# The Datadog api key to associate your Agent's data with your organization.
+# Can be found here:
+# https://app.datadoghq.com/account/settings
+api_key:
+
+# Force the hostname to whatever you want. (default: auto-detected)
+# hostname:
+
+# Set the host's tags (optional)
+# tags:
+#   - mytag
+#   - env:prod
+#   - role:database
+
+# Forwarder timeout in seconds
+# forwarder_timeout: 20
+
+# The forwarder retries failed requests. Use this setting to change the
+# maximum length of the forwarder's retry queue (each request in the queue
+# takes no more than 2MB in memory)
+# forwarder_retry_queue_max_size: 30
+
+# Logging
+#
+# log_level: info

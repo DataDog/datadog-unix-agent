@@ -4,3 +4,4 @@ pyyaml
 requests
 requests-mock
 mock
+psutil

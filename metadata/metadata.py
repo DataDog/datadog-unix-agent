@@ -5,7 +5,7 @@ import socket
 import sys
 import time
 
-from util.platform import Platform, get_os
+from utils.platform import Platform, get_os
 from config import config
 
 

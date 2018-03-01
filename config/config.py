@@ -1,6 +1,7 @@
 import os
 import yaml
 import logging
+import decimal
 
 
 log = logging.getLogger(__name__)
@@ -108,7 +109,11 @@ class Config(object):
                     raise ValueError
 
                 # round to two decimal places
-                result.append(float("{0:.2f}".format(floatval)))
+                floatval = float(
+                    decimal.Decimal(floatval).quantize(decimal.Decimal('.01'),
+                                                              rounding=decimal.ROUND_DOWN)
+                )
+                result.append(floatval)
             except ValueError:
                 log.warning("Bad histogram percentile value {0}, must be float in ]0;1[, skipping"
                             .format(val))

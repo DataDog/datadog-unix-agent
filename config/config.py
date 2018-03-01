@@ -37,6 +37,8 @@ class Config(object):
             if key in os.environ:
                 self.data[env_var] = os.environ[key]
 
+        self.validate()
+
     def set_default(self, key, value):
         self.defaults[key] = value
 
@@ -55,3 +57,63 @@ class Config(object):
 
     def get(self, key, default=None):
         return self.data.get(key, self.defaults.get(key, default))
+
+    def validate(self):
+        self.validate_histogram_aggregates()
+        self.validate_histogram_percentiles()
+
+    def validate_histogram_aggregates(self):
+        aggregates_config = self.data.get('histogram_aggregates')
+
+        if not aggregates_config:
+            return
+        if aggregates_config and not isinstance(aggregates_config, list):
+            log.exception("histogram_aggregates should be a list - ignoring")
+            self.data.pop('histogram_aggregates')
+            return
+
+        result = []
+        valid_values = ['min', 'max', 'median', 'avg', 'sum', 'count']
+
+        for val in aggregates_config:
+            try:
+                val = val.strip()
+                if val not in valid_values:
+                    log.warning("Ignored histogram aggregate {0}, invalid".format(val))
+                    continue
+                else:
+                    result.append(val)
+            except Exception:
+                log.exception("Error when parsing histogram aggregate {0}, invalid".format(val))
+
+        self.data['histogram_aggregates'] = result
+
+    def validate_histogram_percentiles(self):
+        percentiles_config = self.data.get('histogram_percentiles')
+
+        if not percentiles_config:
+            return
+        elif percentiles_config and not isinstance(percentiles_config, list):
+            log.exception("histogram_percentiles should be a list - ignoring")
+            self.data.pop('histogram_percentiles')
+            return
+
+        result = []
+        for val in percentiles_config:
+            try:
+                if isinstance(val, basestring):
+                    val = val.strip()
+                floatval = float(val)
+                if floatval <= 0 or floatval >= 1:
+                    raise ValueError
+
+                # round to two decimal places
+                result.append(float("{0:.2f}".format(floatval)))
+            except ValueError:
+                log.warning("Bad histogram percentile value {0}, must be float in ]0;1[, skipping"
+                            .format(val))
+            except Exception:
+                log.exception("Error when parsing histogram percentiles, skipping")
+                return None
+
+        self.data['histogram_percentiles'] = result

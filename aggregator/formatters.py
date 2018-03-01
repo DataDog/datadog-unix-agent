@@ -3,7 +3,7 @@
 # Licensed under Simplified BSD License (see LICENSE)
 
 # project
-from checks.metric_types import MetricTypes
+from .types import MetricTypes
 
 
 def get_formatter(config):
@@ -27,7 +27,7 @@ def get_formatter(config):
 
 
 def api_formatter(metric, value, timestamp, tags, hostname=None, device_name=None,
-        metric_type=None, interval=None):
+                  metric_type=None, interval=None):
     return {
         'metric': metric,
         'points': [(timestamp, value)],
@@ -35,6 +35,5 @@ def api_formatter(metric, value, timestamp, tags, hostname=None, device_name=Non
         'host': hostname,
         'device_name': device_name,
         'type': metric_type or MetricTypes.GAUGE,
-        'interval':interval,
+        'interval': interval,
     }
-

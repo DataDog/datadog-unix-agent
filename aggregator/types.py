@@ -6,8 +6,6 @@
 import logging
 from time import time
 
-# project
-from checks.metric_types import MetricTypes
 
 log = logging.getLogger(__name__)
 
@@ -19,6 +17,13 @@ class Infinity(Exception):
 class UnknownValue(Exception):
     pass
 
+
+class MetricTypes(object):
+
+    GAUGE = 'gauge'
+    COUNTER = 'counter'
+    RATE = 'rate'
+    COUNT = 'count'
 
 class Metric(object):
     """

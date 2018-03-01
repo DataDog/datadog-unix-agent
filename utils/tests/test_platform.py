@@ -1,6 +1,6 @@
 import mock
 
-from util.platform import Platform, get_os
+from utils.platform import Platform, get_os
 
 
 @mock.patch("sys.platform", return_value="freebsd")

@@ -7,7 +7,7 @@ import logging
 
 from config import config
 from forwarder import Forwarder
-from util.hostname import get_hostname
+from utils.hostname import get_hostname
 from metadata import get_metadata
 
 

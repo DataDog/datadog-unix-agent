@@ -1,7 +1,7 @@
 import mock
 import pytest
 
-from util.hostname import get_hostname, is_valid_hostname
+from utils.hostname import get_hostname, is_valid_hostname
 from config import config
 
 def test_is_valid_hostname():

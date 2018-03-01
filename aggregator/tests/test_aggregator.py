@@ -3,10 +3,14 @@
 import random
 import time
 
+# testing
+import pytest
+
 # project
 from aggregator import MetricsAggregator
-from formatters import get_formatter
-from types import DEFAULT_HISTOGRAM_AGGREGATES
+from aggregator.formatters import get_formatter
+from aggregator.types import DEFAULT_HISTOGRAM_AGGREGATES
+
 
 class TestMetricsAggregator():
 
@@ -35,25 +39,25 @@ class TestMetricsAggregator():
 
     def test_formatter(self):
         stats = MetricsAggregator('myhost', interval=10,
-            formatter = get_formatter({"statsd_metric_namespace": "datadog"}))
+                                  formatter=get_formatter({"statsd_metric_namespace": "datadog"}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
-        self.assertTrue(len(metrics) == 1)
-        self.assertTrue(metrics[0]['metric'] == "datadog.gauge")
+        assert (len(metrics) == 1)
+        assert (metrics[0]['metric'] == "datadog.gauge")
 
         stats = MetricsAggregator('myhost', interval=10,
-            formatter = get_formatter({"statsd_metric_namespace": "datadoge."}))
+                                  formatter=get_formatter({"statsd_metric_namespace": "datadoge."}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
-        self.assertTrue(len(metrics) == 1)
-        self.assertTrue(metrics[0]['metric'] == "datadoge.gauge")
+        assert (len(metrics) == 1)
+        assert (metrics[0]['metric'] == "datadoge.gauge")
 
         stats = MetricsAggregator('myhost', interval=10,
-        formatter = get_formatter({"statsd_metric_namespace": None}))
+                                  formatter=get_formatter({"statsd_metric_namespace": None}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
-        self.assertTrue(len(metrics) == 1)
-        self.assertTrue(metrics[0]['metric'] == "gauge")
+        assert (len(metrics) == 1)
+        assert (metrics[0]['metric'] == "gauge")
 
     def test_counter_normalization(self):
         stats = MetricsAggregator('myhost', interval=10)
@@ -64,7 +68,6 @@ class TestMetricsAggregator():
         stats.submit_packets('int:15|c')
 
         stats.submit_packets('float:5|c')
-
 
         metrics = self.sort_metrics(stats.flush())
         assert len(metrics) == 2
@@ -102,7 +105,7 @@ class TestMetricsAggregator():
         stats.submit_packets('gauge:1|c')
         stats.submit_packets('gauge:2|c|@1')
         stats.submit_packets('gauge:4|c|#tag1,tag2')
-        stats.submit_packets('gauge:8|c|#tag2,tag1') # Should be the same as above
+        stats.submit_packets('gauge:8|c|#tag2,tag1')  # Should be the same as above
         stats.submit_packets('gauge:16|c|#tag3,tag4')
 
         metrics = self.sort_metrics(stats.flush())
@@ -158,12 +161,14 @@ class TestMetricsAggregator():
         assert fourth['points'][0][1] == 16
         assert fourth['device_name'] == 'floppy'
 
-    def test_tags_gh442(self):
-        import dogstatsd
-        from aggregator import api_formatter
+    # TODO: enable after dogstatsd implemented
+    #
+    # def test_tags_gh442(self):
+    #     import dogstatsd
+    #     from aggregator import api_formatter
 
-        serialized = dogstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')], "test-host")
-        assert '"tags": ["tag"]' in serialized[0]
+    #     serialized = dogstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')], "test-host")
+    #     assert '"tags": ["tag"]' in serialized[0]
 
     def test_counter(self):
         stats = MetricsAggregator('myhost')
@@ -434,7 +439,7 @@ class TestMetricsAggregator():
         metrics = stats.flush()
         metrics_ref = stats_ref.flush()
 
-        self.assertTrue(len(metrics) == len(metrics_ref) == 6, (metrics, metrics_ref))
+        assert len(metrics) == len(metrics_ref) == 6
 
         for i in range(len(metrics)):
             assert metrics[i]['points'][0][1] == metrics_ref[i]['points'][0][1]
@@ -454,7 +459,8 @@ class TestMetricsAggregator():
         metrics = self.sort_metrics(stats.flush())
         metrics_ref = self.sort_metrics(stats_ref.flush())
 
-        self.assertTrue(len(metrics) == len(metrics_ref) == 3, (metrics, metrics_ref))
+        assert len(metrics) == 3
+        assert len(metrics) == len(metrics_ref)
 
         for i in range(len(metrics)):
             assert metrics[i]['points'][0][1] == metrics_ref[i]['points'][0][1]
@@ -483,7 +489,7 @@ class TestMetricsAggregator():
         metrics = self.sort_metrics(stats.flush())
         metrics_ref = self.sort_metrics(stats_ref.flush())
 
-        self.assertTrue(len(metrics) == len(metrics_ref) == 9, (metrics, metrics_ref))
+        assert len(metrics) == len(metrics_ref) == 9
         for i in range(len(metrics)):
             assert metrics[i]['points'][0][1] == metrics_ref[i]['points'][0][1]
             assert metrics[i]['tags'] == metrics_ref[i]['tags']
@@ -572,7 +578,7 @@ class TestMetricsAggregator():
             stats.submit_packets('metric:10|c')
         stats.send_packet_count('datadog.dogstatsd.packet.count')
         metrics = self.sort_metrics(stats.flush())
-        assert len(metrics) ==  2
+        assert len(metrics) == 2
         first, second = metrics
 
         assert first['metric'] == 'datadog.dogstatsd.packet.count'
@@ -678,7 +684,8 @@ class TestMetricsAggregator():
         stats = MetricsAggregator('myhost', utf8_decoding=True)
         # Should raise because content is not encoded
 
-        self.assertRaises(Exception, stats.submit_packets, u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪')
+        with pytest.raises(Exception):
+            stats.submit_packets(u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪')
         stats.submit_packets(u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪'.encode('utf-8'))  # utf-8 compliant
         # Normal packet
         stats.submit_packets('_e{2,23}:t3|First line\\nSecond line')  # \n is a newline
@@ -769,7 +776,7 @@ class TestMetricsAggregator():
 
         assert first['check'] == 'check.1'
         assert first['tags'] == ['keym:value']
-        assert 'message' not in first is True
+        assert 'message' not in first
         assert second['check'] == 'check.2'
         assert second['tags'] == ['key2m:value']
         assert second['message'] == 'fakeout'

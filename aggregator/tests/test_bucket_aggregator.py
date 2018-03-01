@@ -5,17 +5,18 @@ import time
 
 # project
 from aggregator import (
-    DEFAULT_HISTOGRAM_AGGREGATES,
     MetricsBucketAggregator,
 )
 
+from aggregator.types import DEFAULT_HISTOGRAM_AGGREGATES
 
 
 class TestUnitMetricsBucketAggregator():
     BUCKET_BOUNDARY_TOLERANCE = 0.1
 
-    def setUp(self):
-        self.interval = 1
+    @classmethod
+    def setup_class(cls):
+        cls.interval = 1
 
     @staticmethod
     def sort_metrics(metrics):
@@ -118,12 +119,14 @@ class TestUnitMetricsBucketAggregator():
         assert third['points'][0][1] == 16
         assert third['host'] == 'myhost'
 
-    def test_tags_gh442(self):
-        import dogstatsd
-        from aggregator import api_formatter
+    # TODO: enable after dogstatsd implemented
+    #
+    # def test_tags_gh442(self):
+    #     import dogstatsd
+    #     from aggregator import api_formatter
 
-        serialized = dogstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')], "test-host")
-        self.assertTrue('"tags": ["tag"]' in serialized[0], serialized)
+    #     serialized = dogstatsd.serialize_metrics([api_formatter("foo", 12, 1, ('tag',), 'host')], "test-host")
+    #     self.assertTrue('"tags": ["tag"]' in serialized[0], serialized)
 
     def test_counter(self):
         ag_interval = 1.0

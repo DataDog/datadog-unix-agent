@@ -1,23 +1,28 @@
+# (C) Datadog, Inc. 2010-2018
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
 from importlib import import_module
 import traceback
 import logging
 
 from .loader import Loader
 
+
 log = logging.getLogger(__name__)
 
 DD_WHEEL_NAMESPACE = "datadog_checks"
 
 
-class WheelsLoader(Loader):
+class WheelLoader(Loader):
 
     def __init__(self, *args, **kwargs):
         self.namespace = kwargs.get('namespace')
-        super(WheelsLoader, self).__init__(*args, **kwargs)
+        super(WheelLoader, self).__init__(*args, **kwargs)
 
     def load(self, name):
         '''Load Check class.'''
-        check_module, error = self._get_check_module(name, None)
+        check_module, error = self._get_check_module(name)
         if check_module:
             check_class = self._get_check_class(check_module)
             return check_class, None

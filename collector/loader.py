@@ -10,13 +10,16 @@ log = logging.getLogger(__name__)
 
 class Loader(object):
 
+    def __init__(self, *args, **kwargs):
+        super(Loader, self).__init__()
+
     def load(self, name):
         '''Load Check class. Abstract.'''
-        pass
+        raise NotImplementedError
 
     def _get_check_class(self, check_module):
         '''Return the corresponding check class for a check name if available.'''
-        from datadog_checks.checks import AgentCheck
+        from checks import AgentCheck
 
         # We make sure that there is an AgentCheck class defined
         check_class = None

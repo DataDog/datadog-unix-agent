@@ -1,3 +1,8 @@
+# (C) Datadog, Inc. 2010-2018
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
+import os
 import imp
 import traceback
 import logging
@@ -6,6 +11,7 @@ from .loader import Loader
 
 
 log = logging.getLogger(__name__)
+
 
 class CheckLoader(Loader):
 
@@ -19,7 +25,7 @@ class CheckLoader(Loader):
     def load(self, name):
         '''Load Check class.'''
         errors = {}
-        for place in self.places:
+        for place in self._places:
             check_module, error = self._get_check_module(name, place)
 
             check_class = self._get_check_class(check_module)
@@ -34,7 +40,8 @@ class CheckLoader(Loader):
         '''Attempt to load the check module from places.'''
 
         try:
-            check_module = imp.load_source('checksd_%s' % check_name, place)
+            source = os.path.join(place, "{}.py".format(check_name))
+            check_module = imp.load_source('checksd_%s' % check_name, source)
         except Exception as e:
             traceback_message = traceback.format_exc()
             # There is a configuration file for that check but the module can't be imported

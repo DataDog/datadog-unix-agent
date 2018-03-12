@@ -9,35 +9,36 @@ log = logging.getLogger(__name__)
 
 class CheckLoader(Loader):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._places = []
+        super(CheckLoader, self).__init__(*args, **kwargs)
 
     def add_place(self, place):
         self._places.append(place)
 
-    def _get_check_module(self, check_name):
-        '''Attempt to load the check module from places.'''
+    def load(self, name):
+        '''Load Check class.'''
         errors = {}
-        location = None
+        for place in self.places:
+            check_module, error = self._get_check_module(name, place)
 
-        for place in self._places:
-            error = None
-            traceback_message = None
-            location = place
-            try:
-                check_module = imp.load_source('checksd_%s' % check_name, place)
-            except Exception as e:
-                error = e
-                traceback_message = traceback.format_exc()
-                # There is a configuration file for that check but the module can't be imported
-                log.exception('Unable to import check module %s.py from location %s' % check_name)
+            check_class = self._get_check_class(check_module)
+            if check_class:
+                return check_class, None
+            else:
+                errors[place] = error
 
-            if not error:
-                break
+        return None, errors
 
-            errors[place] = {'error': error, 'traceback': traceback_message}
+    def _get_check_module(self, check_name, place):
+        '''Attempt to load the check module from places.'''
 
-        if check_module:
-            return check_module, location, None
+        try:
+            check_module = imp.load_source('checksd_%s' % check_name, place)
+        except Exception as e:
+            traceback_message = traceback.format_exc()
+            # There is a configuration file for that check but the module can't be imported
+            log.exception('Unable to import check module %s.py from location %s' % (check_name, place))
+            return None, {'error': e, 'traceback': traceback_message}
 
-        return None, None, errors
+        return check_module, None

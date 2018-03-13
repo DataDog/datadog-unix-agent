@@ -262,14 +262,13 @@ class Aggregator(object):
                 parsed_packets = self.parse_metric_packet(packet)
                 self.count += 1
                 for name, value, mtype, tags, sample_rate in parsed_packets:
-                    hostname, device_name, tags = self._extract_magic_tags(tags)
-                    self.submit_metric(name, value, mtype, tags=tags, hostname=hostname,
-                                       device_name=device_name, sample_rate=sample_rate)
+                    hostname, tags = self._extract_magic_tags(tags)
+                    self.submit_metric(name, value, mtype, tags=tags,
+                                       hostname=hostname, sample_rate=sample_rate)
 
     def _extract_magic_tags(self, tags):
-        """Magic tags (host, device) override metric hostname and device_name attributes"""
+        """Magic tags (host) override metric hostname attributes"""
         hostname = None
-        device_name = None
         # This implementation avoid list operations for the common case
         if tags:
             tags_to_remove = []
@@ -277,19 +276,16 @@ class Aggregator(object):
                 if tag.startswith('host:'):
                     hostname = tag[5:]
                     tags_to_remove.append(tag)
-                elif tag.startswith('device:'):
-                    device_name = tag[7:]
-                    tags_to_remove.append(tag)
             if tags_to_remove:
                 # tags is a tuple already sorted, we convert it into a list to pop elements
                 tags = list(tags)
                 for tag in tags_to_remove:
                     tags.remove(tag)
                 tags = tuple(tags) or None
-        return hostname, device_name, tags
+        return hostname, tags
 
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
-                      device_name=None, timestamp=None, sample_rate=1):
+                      timestamp=None, sample_rate=1):
         """ Add a metric to be aggregated """
         raise NotImplementedError()
 
@@ -404,7 +400,7 @@ class MetricsBucketAggregator(Aggregator):
         return timestamp - (timestamp % self.interval)
 
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
-                      device_name=None, timestamp=None, sample_rate=1):
+                      timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe tags if there are none
         # Note: if you change the way that context is created, please also change create_empty_metrics,
         #  which counts on this order
@@ -413,10 +409,10 @@ class MetricsBucketAggregator(Aggregator):
         hostname = hostname if hostname is not None else self.hostname
 
         if tags is None:
-            context = (name, tuple(), hostname, device_name)
+            context = (name, tuple(), hostname)
         else:
             tags = tuple(self.deduplicate_tags(tags))
-            context = (name, tags, hostname, device_name)
+            context = (name, tags, hostname)
 
         cur_time = time()
         # Check to make sure that the timestamp that is passed in (if any) is not older than
@@ -441,7 +437,7 @@ class MetricsBucketAggregator(Aggregator):
                 metric_class = self.metric_type_to_class[mtype]
                 metric_by_context[context] = \
                     metric_class(self.formatter, name, tags,
-                                 hostname, device_name, self.metric_config.get(metric_class))
+                                 hostname, self.metric_config.get(metric_class))
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
 
@@ -455,7 +451,7 @@ class MetricsBucketAggregator(Aggregator):
             else:
                 # The expiration currently only applies to Counters
                 # This counts on the ordering of the context created in submit_metric not changing
-                metric = Counter(self.formatter, context[0], context[1], context[2], context[3])
+                metric = Counter(self.formatter, context[0], context[1], context[2])
                 metrics += metric.flush(flush_timestamp, self.interval)
 
     def flush(self):
@@ -542,22 +538,22 @@ class MetricsAggregator(Aggregator):
         }
 
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
-                      device_name=None, timestamp=None, sample_rate=1):
+                      timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe tags if there are none
 
         # Keep hostname with empty string to unset it
         hostname = hostname if hostname is not None else self.hostname
 
         if tags is None:
-            context = (name, tuple(), hostname, device_name)
+            context = (name, tuple(), hostname)
         else:
             tags = tuple(self.deduplicate_tags(tags))
-            context = (name, tags, hostname, device_name)
+            context = (name, tags, hostname)
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
             self.metrics[context] = \
                 metric_class(self.formatter, name, tags,
-                             hostname, device_name, self.metric_config.get(metric_class))
+                             hostname, self.metric_config.get(metric_class))
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
             log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))
@@ -565,31 +561,30 @@ class MetricsAggregator(Aggregator):
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
 
-    def gauge(self, name, value, tags=None, hostname=None, device_name=None, timestamp=None):
-        self.submit_metric(name, value, 'g', tags, hostname, device_name, timestamp)
+    def gauge(self, name, value, tags=None, hostname=None, timestamp=None):
+        self.submit_metric(name, value, 'g', tags, hostname, timestamp)
 
-    def increment(self, name, value=1, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'c', tags, hostname, device_name)
+    def increment(self, name, value=1, tags=None, hostname=None,):
+        self.submit_metric(name, value, 'c', tags, hostname)
 
-    def decrement(self, name, value=-1, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'c', tags, hostname, device_name)
+    def decrement(self, name, value=-1, tags=None, hostname=None):
+        self.submit_metric(name, value, 'c', tags, hostname)
 
-    def rate(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, '_dd-r', tags, hostname, device_name)
+    def rate(self, name, value, tags=None, hostname=None):
+        self.submit_metric(name, value, '_dd-r', tags, hostname)
 
-    def submit_count(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'ct', tags, hostname, device_name)
+    def submit_count(self, name, value, tags=None, hostname=None,):
+        self.submit_metric(name, value, 'ct', tags, hostname)
 
     def count_from_counter(self, name, value, tags=None,
-                           hostname=None, device_name=None):
-        self.submit_metric(name, value, 'ct-c', tags,
-                           hostname, device_name)
+                           hostname=None):
+        self.submit_metric(name, value, 'ct-c', tags, hostname)
 
-    def histogram(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 'h', tags, hostname, device_name)
+    def histogram(self, name, value, tags=None, hostname=None):
+        self.submit_metric(name, value, 'h', tags, hostname)
 
-    def set(self, name, value, tags=None, hostname=None, device_name=None):
-        self.submit_metric(name, value, 's', tags, hostname, device_name)
+    def set(self, name, value, tags=None, hostname=None):
+        self.submit_metric(name, value, 's', tags, hostname)
 
     def flush(self):
         timestamp = time()

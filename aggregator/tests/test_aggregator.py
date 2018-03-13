@@ -17,7 +17,7 @@ class TestMetricsAggregator():
     @staticmethod
     def sort_metrics(metrics):
         def sort_by(m):
-            return (m['metric'], m['host'], m['device_name'], ','.join(m['tags'] or []))
+            return (m['metric'], m['host'], ','.join(m['tags'] or []))
         return sorted(metrics, key=sort_by)
 
     @staticmethod
@@ -152,14 +152,12 @@ class TestMetricsAggregator():
         assert second['host'] == 'test-b'
 
         assert third['metric'] == 'my.gauge.c'
-        assert third['tags'] == ('tag3', )
-        assert third['points'][0][1] == 10
-        assert third['device_name'] is None
+        assert third['tags'] == ('device:floppy', 'tag3')
+        assert third['points'][0][1] == 16
 
         assert fourth['metric'] == 'my.gauge.c'
-        assert fourth['tags'] == ('tag3', )
-        assert fourth['points'][0][1] == 16
-        assert fourth['device_name'] == 'floppy'
+        assert fourth['tags'] == ('tag3',)
+        assert fourth['points'][0][1] == 10
 
     # TODO: enable after dogstatsd implemented
     #

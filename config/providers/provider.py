@@ -1,0 +1,14 @@
+# (C) Datadog, Inc. 2010-2018
+# All rights reserved
+# Licensed under Simplified BSD License (see LICENSE)
+
+
+class ConfigProvider(object):
+
+    def collect(self):
+        '''Collect available configurations. Abstract.'''
+        raise NotImplementedError
+
+    def validate_config(self, config):
+        '''Validates right config format'''
+        return 'instances' in config and 'init_conf' in config

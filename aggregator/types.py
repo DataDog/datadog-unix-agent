@@ -57,7 +57,6 @@ class Gauge(Metric):
         self.last_sample_time = time()
         self.timestamp = timestamp
 
-
     def flush(self, timestamp, interval):
         if self.value is not None:
             res = [self.formatter(
@@ -204,6 +203,7 @@ class Counter(Metric):
             )]
         finally:
             self.value = 0
+
 
 DEFAULT_HISTOGRAM_AGGREGATES = ['max', 'median', 'avg', 'count']
 DEFAULT_HISTOGRAM_PERCENTILES = [0.95]

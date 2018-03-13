@@ -402,8 +402,8 @@ class MetricsBucketAggregator(Aggregator):
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
                       timestamp=None, sample_rate=1):
         # Avoid calling extra functions to dedupe tags if there are none
-        # Note: if you change the way that context is created, please also change create_empty_metrics,
-        #  which counts on this order
+        # Note: if you change the way that context is created, please also
+        # change create_empty_metrics, which counts on this order
 
         # Keep hostname with empty string to unset it
         hostname = hostname if hostname is not None else self.hostname
@@ -415,8 +415,8 @@ class MetricsBucketAggregator(Aggregator):
             context = (name, tags, hostname)
 
         cur_time = time()
-        # Check to make sure that the timestamp that is passed in (if any) is not older than
-        #  recent_point_threshold.  If so, discard the point.
+        # Check to make sure that the timestamp that is passed in (if any) is
+        # not older than recent_point_threshold.  If so, discard the point.
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
             log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))
             self.num_discarded_old_points += 1

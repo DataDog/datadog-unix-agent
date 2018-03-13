@@ -60,7 +60,6 @@ class TestAggregatorPerf(object):
         )
         return p
 
-
     def test_dogstatsd_utf8_events(self):
         ma = MetricsBucketAggregator('my.host')
 
@@ -106,8 +105,9 @@ class TestAggregatorPerf(object):
 
             ma.flush()
 
+
 if __name__ == '__main__':
     t = TestAggregatorPerf()
-    #t.test_dogstatsd_aggregation_perf()
-    #t.test_checksd_aggregation_perf()
+    # t.test_dogstatsd_aggregation_perf()
+    # t.test_checksd_aggregation_perf()
     t.test_dogstatsd_utf8_events()

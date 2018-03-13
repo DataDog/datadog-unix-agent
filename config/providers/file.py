@@ -23,14 +23,14 @@ class FileConfigProvider(ConfigProvider):
     ]
 
     def __init__(self):
-        self._places = set([])
+        self._places = set()
         super(FileConfigProvider, self).__init__()
 
     def add_place(self, place):
         if not os.path.isdir(place):
             return False
 
-        self._places.update(place)
+        self._places.update([os.path.realpath(place)])
         return True
 
     def collect(self):
@@ -38,8 +38,8 @@ class FileConfigProvider(ConfigProvider):
         defaults = {}
 
         config_yamls = self._get_config_yamls()
-        for place, config_file, is_default in config_yamls:
-            yaml_path = os.path.join(place, config_file)
+        for config_path, config_file, is_default in config_yamls:
+            yaml_path = os.path.join(config_path, config_file)
             with open(yaml_path, 'r') as stream:
                 try:
                     yaml_config = yaml.load(stream)
@@ -51,7 +51,13 @@ class FileConfigProvider(ConfigProvider):
                     log.warn('bad configuration YAML in %s', yaml_path)
                     continue
 
-            check = self._get_check_from_path(yaml_path, place)
+            place = None
+            for _place in self._places:
+                if os.path.realpath(config_path).startswith(_place):
+                    place = _place
+                    break
+
+            check = self._get_check_from_path(place, yaml_path)
             if is_default:
                 if check in defaults:
                     defaults[check] = self._merge_configs(defaults[check],
@@ -75,24 +81,26 @@ class FileConfigProvider(ConfigProvider):
     def _get_config_yamls(self):
         configs = []
         for place in self._places:
-            dirpath, dirs, files = os.walk(place)
-            for cfile in files:
-                valid_config = False
-                default_config = False
-                for ext in self.VALID_EXTENSIONS:
-                    if cfile.endswith(ext):
-                        valid_config = True
-                        break
-                for ext in self.VALID_DEFAULT_EXTENSIONS:
-                    if cfile.endswith(ext):
-                        valid_config = True
-                        default_config = True
-                        break
+            for dirpath, dirs, files in os.walk(place):
+                for cfile in files:
+                    valid_config = False
+                    default_config = False
+                    for ext in self.VALID_EXTENSIONS:
+                        if cfile.endswith(ext):
+                            valid_config = True
+                            break
+                    for ext in self.VALID_DEFAULT_EXTENSIONS:
+                        if cfile.endswith(ext):
+                            valid_config = True
+                            default_config = True
+                            break
 
-                if not valid_config:
-                    continue
+                    if not valid_config:
+                        continue
 
-                configs.append((place, cfile, default_config))
+                    configs.append((dirpath, cfile, default_config))
+
+        return configs
 
     def _get_check_from_path(self, base, path):
         relative = os.path.relpath(path, base)
@@ -103,7 +111,7 @@ class FileConfigProvider(ConfigProvider):
         if not subdir:
             return os.path.splitext(os.path.basename(path))[0]
 
-        return os.path.split(subdir)[0]
+        return subdir
 
-    def _merge_configs(orig, new):
-        return always_merger(orig, new)
+    def _merge_configs(self, orig, new):
+        return always_merger.merge(orig, new)

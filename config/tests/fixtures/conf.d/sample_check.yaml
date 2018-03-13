@@ -1,0 +1,5 @@
+init_config:
+
+instances:
+    - name: bar
+      url: https://bar:8080

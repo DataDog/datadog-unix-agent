@@ -3,8 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from config import Config
-from . import CheckLoader, WheelLoader
+# from config import Config
+# from . import CheckLoader, WheelLoader
 
 class Collector(object):
     pass

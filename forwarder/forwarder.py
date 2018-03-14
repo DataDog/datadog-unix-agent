@@ -48,7 +48,7 @@ class Forwarder(object):
 
         self.retry_worker.join(self.WORKER_JOIN_TIME)
         if self.retry_worker.is_alive():
-            log.errorf("Could not stop thread '%s'", retry_worker.name)
+            log.errorf("Could not stop thread '%s'", self.retry_worker.name)
         self.retry_worker = None
 
         for w in self.workers:

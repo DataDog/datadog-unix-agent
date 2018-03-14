@@ -5,8 +5,7 @@
 import os
 import yaml
 import logging
-
-from deepmerge import always_merger
+from collections import defaultdict
 
 from .provider import ConfigProvider
 
@@ -34,8 +33,8 @@ class FileConfigProvider(ConfigProvider):
         return True
 
     def collect(self):
-        configs = {}
-        defaults = {}
+        configs = defaultdict(list)
+        defaults = defaultdict(list)
 
         config_yamls = self._get_config_yamls()
         for config_path, config_file, is_default in config_yamls:
@@ -57,19 +56,12 @@ class FileConfigProvider(ConfigProvider):
                     place = _place
                     break
 
-            check = self._get_check_from_path(place, yaml_path)
+            check = self._get_check_name_from_path(place, yaml_path)
+            flat_configs = self._flatten_config(yaml_config)
             if is_default:
-                if check in defaults:
-                    defaults[check] = self._merge_configs(defaults[check],
-                                                          yaml_config)
-                else:
-                    defaults[check] = yaml_config
+                defaults[check].extend(flat_configs)
             else:
-                if check in configs:
-                    configs[check] = self._merge_configs(configs[check],
-                                                         yaml_config)
-                else:
-                    configs[check] = yaml_config
+                configs[check].extend(flat_configs)
 
         # update configs with missing defaults
         for check in defaults:
@@ -102,7 +94,7 @@ class FileConfigProvider(ConfigProvider):
 
         return configs
 
-    def _get_check_from_path(self, base, path):
+    def _get_check_name_from_path(self, base, path):
         relative = os.path.relpath(path, base)
         if not relative:
             return None
@@ -113,5 +105,14 @@ class FileConfigProvider(ConfigProvider):
 
         return subdir
 
-    def _merge_configs(self, orig, new):
-        return always_merger.merge(orig, new)
+    def _flatten_config(self, config):
+        if not isinstance(config, dict):
+            raise ValueError("expected a dictionary")
+
+        configs = []
+        init_config = config.get('init_config', {})
+        for instance in config.get('instances', {}):
+            configs.append({'init_config': init_config,
+                            'instances': [instance]})
+
+        return configs

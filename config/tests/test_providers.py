@@ -3,23 +3,15 @@
 # Licensed under Simplified BSD License (see LICENSE)
 
 import os
+import pytest
 
 from config.providers import FileConfigProvider
 
 
 class TestFileProvider():
 
-    def test_config_merge(self):
-        config_a = {
-            'init_config': None,
-            'instances': [
-                {
-                    'name': 'foo',
-                    'uri': 'localhost:5555'
-                }
-            ]
-        }
-        config_b = {
+    def test_config_flatten(self):
+        config = {
             'init_config': {
                 'param': 1203192
             },
@@ -36,23 +28,18 @@ class TestFileProvider():
         }
         provider = FileConfigProvider()
 
-        merged = provider._merge_configs(config_a, config_b)
-        assert merged is not None
-        assert len(merged['instances']) == 3
-        assert merged['init_config'] is not None
-        assert merged['init_config']['param'] == 1203192
+        with pytest.raises(ValueError):
+            provider._flatten_config(None)
 
-        config_c = {
-            'init_config': {
-                'args': 'someargument'
-            },
-            'instances': []
-        }
+        with pytest.raises(ValueError):
+            provider._flatten_config([])
 
-        merged = provider._merge_configs(merged, config_c)
-        assert 'param' in merged['init_config']
-        assert 'args' in merged['init_config']
-        assert merged['init_config']['args'] == 'someargument'
+        flat = provider._flatten_config(config)
+        assert len(flat) == 2
+        for cfg in flat:
+            assert 'init_config' in cfg
+            assert 'instances' in cfg
+            assert len(cfg['instances']) == 1
 
     def test_checkname_extract(self):
         provider = FileConfigProvider()
@@ -60,11 +47,11 @@ class TestFileProvider():
         place = "/etc/datadog-agent/conf.d"
         file_one = '/etc/datadog-agent/conf.d/foo.yaml'
 
-        check = provider._get_check_from_path(place, file_one)
+        check = provider._get_check_name_from_path(place, file_one)
         assert check == "foo"
 
         file_two = '/etc/datadog-agent/conf.d/foo/conf.yaml'
-        check = provider._get_check_from_path(place, file_two)
+        check = provider._get_check_name_from_path(place, file_two)
         assert check == "foo"
 
     def test_provider(self):
@@ -82,4 +69,4 @@ class TestFileProvider():
         configs = provider.collect()
         assert len(configs) > 0
         assert 'sample_check' in configs
-        assert len(configs['sample_check']['instances']) == 2
+        assert len(configs['sample_check']) == 2

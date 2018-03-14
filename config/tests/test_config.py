@@ -11,7 +11,7 @@ from config import Config
 
 @pytest.fixture
 def conf():
-  return Config()
+    return Config()
 
 def test_init(conf):
     assert conf.search_paths == set()

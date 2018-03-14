@@ -1,0 +1,4 @@
+# invalid config with no instances
+
+init_config:
+    boo: who

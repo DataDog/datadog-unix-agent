@@ -111,7 +111,8 @@ class FileConfigProvider(ConfigProvider):
 
         configs = []
         init_config = config.get('init_config', {})
-        for instance in config.get('instances', {}):
+        instances = config.get('instances', {}) or []
+        for instance in instances:
             configs.append({'init_config': init_config,
                             'instances': [instance]})
 

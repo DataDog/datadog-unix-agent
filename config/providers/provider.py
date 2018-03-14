@@ -11,7 +11,7 @@ class ConfigProvider(object):
 
     def validate_config(self, config):
         '''Validates right config format'''
-        if not config:
+        if not config or not isinstance(config, dict):
             return False
 
-        return 'instances' in config and 'init_config' in config
+        return 'instances' in config

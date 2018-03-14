@@ -367,6 +367,12 @@ class Aggregator(object):
 class MetricsBucketAggregator(Aggregator):
     """
     A metric aggregator class.
+    This class aggregates metrics by context into time buckets (1s).
+    This is required by dogstatsd where there may be a continuous flow of
+    incoming metrics and thus no implicit check-run assumptions can be made.
+
+    Metric types supported by this aggregator: Gauge(BucketGauge), Counter,
+                                               Histogram, Set
     """
 
     def __init__(self, hostname, interval=1.0, expiry_seconds=300,
@@ -509,6 +515,11 @@ class MetricsBucketAggregator(Aggregator):
 class MetricsAggregator(Aggregator):
     """
     A metric aggregator class.
+    This class aggregates metrics by context.
+    This is the default aggregator used by the agent collector.
+
+    Metric types supported by this aggregator: Gauge, Count, MonotonicCount,
+                                               Counter, Histogram, Set, Rate
     """
 
     def __init__(self, hostname, interval=1.0, expiry_seconds=300,

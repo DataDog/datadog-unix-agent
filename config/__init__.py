@@ -9,4 +9,4 @@ import default
 config = Config()
 default.init(config)
 
-__all__ = ["Config", "config"]
+__all__ = ['Config', 'config', 'default']

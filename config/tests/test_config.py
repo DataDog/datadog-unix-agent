@@ -123,6 +123,22 @@ def test_validate_percentiles(conf):
     os.close(fd)
     os.remove(tmpfile)
 
+def test_validate_percentiles_hich_precision(conf):
+    fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
+    os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.999, 0.23, 0.1321]")
+
+    conf.add_search_path(os.path.dirname(tmpfile))
+    conf.conf_name = os.path.basename(tmpfile)
+
+    conf.load()
+
+    assert len(conf.get("histogram_percentiles")) == 3
+    for v in [0.99, 0.23, 0.13]:
+        assert v in conf.get("histogram_percentiles")
+
+    os.close(fd)
+    os.remove(tmpfile)
+
 def test_validate_percentiles_badval(conf):
     fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
     os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.98, foo]")

@@ -108,11 +108,12 @@ class Config(object):
                 if floatval <= 0 or floatval >= 1:
                     raise ValueError
 
-                # round to two decimal places
-                floatval = float(
-                    decimal.Decimal(floatval).quantize(decimal.Decimal('.01'),
-                                                              rounding=decimal.ROUND_DOWN)
-                )
+                if str(floatval)[::-1].find('.') > 2:
+                    # round to two decimal places
+                    floatval = float(
+                        decimal.Decimal(floatval).quantize(
+                            decimal.Decimal('.01'), rounding=decimal.ROUND_DOWN)
+                    )
                 result.append(floatval)
             except ValueError:
                 log.warning("Bad histogram percentile value {0}, must be float in ]0;1[, skipping"

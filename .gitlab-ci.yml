@@ -1,7 +1,7 @@
-image: python:2.7-slim
+image: python:2.7
 
 test:
   script:
-  - pip install -r requirement.txt
+  - pip install -r requirements.txt
   - flake8
   - pytest -v

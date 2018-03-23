@@ -371,3 +371,54 @@ class Rate(Metric):
             )]
         finally:
             self.samples = self.samples[-1:]
+
+
+class TextualMetricTypes(object):
+    COUNT = 'ct'
+    COUNTER = 'c'
+    GAUGE = 'g'
+    HISTOGRAM = 'h'
+    HISTOGRAM_TIMING = 'ms'
+    MONOTONIC_COUNT = 'ct-c',
+    RATE = '_dd-r',
+    SET = 's'
+
+
+class MetricResolver(object):
+    """ Resolves types from textual form to Metric class """
+    TYPES = {
+        'ct': Count,
+        'c': Counter,
+        'g': Gauge,
+        'h': Histogram,
+        'ms': Histogram,
+        'ct-c': MonotonicCount,
+        '_dd-r': Rate,
+        's': Set,
+    }
+
+    def __init__(self):
+        self._acceptable_types = None
+
+    def __getitem__(self, key):
+        return self.get_class_from_type(key)
+
+    def set_resolvable_types(self, types):
+        """ Allows limiting the set of available types with an iterable """
+        self._acceptable_types = types
+
+    def get_class_from_type(self, mtype):
+        """ Returns the resolved class or None """
+        if self._acceptable_types and mtype not in self._acceptable_types:
+            return None
+        return self.TYPES.get(mtype)
+
+
+class BucketMetricResolver(MetricResolver):
+    TYPES = {
+        'g': BucketGauge,
+        'c': Counter,
+        'h': Histogram,
+        'ms': Histogram,
+        's': Set,
+    }

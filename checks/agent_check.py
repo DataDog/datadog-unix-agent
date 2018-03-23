@@ -10,9 +10,9 @@ import re
 import logging
 import unicodedata
 
-# from aggregator import aggregator
-class aggregator(object):
-    pass
+from aggregator import TextualMetricTypes
+from utils.hostname import get_hostname
+
 
 class CheckException(Exception):
     pass
@@ -28,42 +28,47 @@ class AgentCheck(object):
         self.init_config = init_config
         self.warnings = []
         self.log = logging.getLogger('%s.%s' % (__name__, self.name))
+        self.hostname = get_hostname()
+        self.aggregator = None
 
     def check(self, instance):
         raise NotImplementedError
 
+    def set_aggregator(self, aggregator):
+        self.aggregator = aggregator
+
     def _submit_metric(self, mtype, name, value, tags=None):
-        if value is None:
+        if not self.aggregator or value is None:
             # ignore metric sample
             return
 
         tags = self._normalize_tags(tags)
-        aggregator.submit_metric(self, self.check_id, mtype, name, float(value), tags)
+        self.aggregator.submit_metric(self, self.check_id, mtype, name, float(value), tags)
 
     def gauge(self, name, value, tags=None):
-        self._submit_metric(aggregator.GAUGE, name, value, tags=tags)
+        self._submit_metric(TextualMetricTypes.GAUGE, name, value, tags=tags)
 
     def count(self, name, value, tags=None):
-        self._submit_metric(aggregator.COUNT, name, value, tags=tags)
+        self._submit_metric(TextualMetricTypes.COUNT, name, value, tags=tags)
 
     def monotonic_count(self, name, value, tags=None):
-        self._submit_metric(aggregator.MONOTONIC_COUNT, name, value, tags=tags)
+        self._submit_metric(TextualMetricTypes.MONOTONIC_COUNT, name, value, tags=tags)
 
     def rate(self, name, value, tags=None):
-        self._submit_metric(aggregator.RATE, name, value, tags=tags)
+        self._submit_metric(TextualMetricTypes.RATE, name, value, tags=tags)
 
     def histogram(self, name, value, tags=None):
-        self._submit_metric(aggregator.HISTOGRAM, name, value, tags=tags)
+        self._submit_metric(TextualMetricTypes.HISTOGRAM, name, value, tags=tags)
 
     def historate(self, name, value, tags=None):
-        self._submit_metric(aggregator.HISTORATE, name, value, tags=tags)
+        self._submit_metric(TextualMetricTypes.HISTORATE, name, value, tags=tags)
 
     def service_check(self, name, status, tags=None, message=None):
         tags = self._normalize_tags_type(tags)
         if message is None:
             message = ""
 
-        aggregator.submit_service_check(self, self.check_id, name, status, tags, message)
+        self.aggregator.submit_service_check(self, self.check_id, name, status, tags, message)
 
     def event(self, event):
         # Enforce types of some fields, considerably facilitates handling in go bindings downstream
@@ -81,7 +86,7 @@ class AgentCheck(object):
             event['timestamp'] = int(event['timestamp'])
         if event.get('aggregation_key'):
             event['aggregation_key'] = str(event['aggregation_key'])
-        aggregator.submit_event(self, self.check_id, event)
+        self.aggregator.submit_event(self, self.check_id, event)
 
     def normalize(self, metric, prefix=None, fix_case=False):
         """

@@ -8,10 +8,14 @@ from aggregator import (
     MetricsBucketAggregator,
     MetricsAggregator
 )
+from types import (
+    TextualMetricTypes,
+)
 
 
 __all__ = [
-    "Aggregator",
-    "MetricsBucketAggregator",
-    "MetricsAggregator",
+    'Aggregator',
+    'MetricsBucketAggregator',
+    'MetricsAggregator',
+    'TextualMetricTypes',
 ]

@@ -3,8 +3,12 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from .file import FileConfigProvider
+from .file import (
+    ConfigProvider,
+    FileConfigProvider,
+)
 
 __all__ = [
-    'FileConfigProvider'
+    'ConfigProvider',
+    'FileConfigProvider',
 ]

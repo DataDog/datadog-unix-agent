@@ -9,14 +9,10 @@ from time import time
 
 # project
 from .types import (
-    BucketGauge,
-    Count,
     Counter,
-    Gauge,
     Histogram,
-    MonotonicCount,
-    Rate,
-    Set,
+    MetricResolver,
+    BucketMetricResolver,
 )
 
 from .formatters import api_formatter
@@ -395,13 +391,7 @@ class MetricsBucketAggregator(Aggregator):
         self.current_bucket = None
         self.current_mbc = {}
         self.last_flush_cutoff_time = 0
-        self.metric_type_to_class = {
-            'g': BucketGauge,
-            'c': Counter,
-            'h': Histogram,
-            'ms': Histogram,
-            's': Set,
-        }
+        self.metric_type_to_class = BucketMetricResolver()
 
     def calculate_bucket_start(self, timestamp):
         return timestamp - (timestamp % self.interval)
@@ -538,16 +528,7 @@ class MetricsAggregator(Aggregator):
             utf8_decoding
         )
         self.metrics = {}
-        self.metric_type_to_class = {
-            'g': Gauge,
-            'ct': Count,
-            'ct-c': MonotonicCount,
-            'c': Counter,
-            'h': Histogram,
-            'ms': Histogram,
-            's': Set,
-            '_dd-r': Rate,
-        }
+        self.metric_type_to_class = MetricResolver()
 
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
                       timestamp=None, sample_rate=1):

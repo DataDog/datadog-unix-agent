@@ -5,8 +5,9 @@
 
 # Defaults
 
-DEFAULT_ADDITIONAL_CHECKSD = "/etc/datadog-agent/checks.d"
-DEFAULT_DD_URL = "https://app.datadoghq.com"
+DEFAULT_ADDITIONAL_CHECKSD = '/etc/datadog-agent/checks.d'
+DEFAULT_DD_URL = 'https://app.datadoghq.com'
+DEFAULT_MIN_COLLECTION_INTERVAL = 15
 DEFAULT_FORWARDER_TO = 20
 DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE = 30
 DEFAULT_HOST_METADATA_INTERVAL = 4 * 60 * 60
@@ -16,16 +17,17 @@ DEFAULT_LOG_LEVEL = 'info'
 
 def init(config):
     config_defaults = {
-        "dd_url": DEFAULT_DD_URL,
-        "app_key": "",
-        "hostname": "",
-        "tags": [],
-        "log_level": DEFAULT_LOG_LEVEL,
-        "forwarder_timeout": DEFAULT_FORWARDER_TO,
-        "forwarder_retry_queue_max_size": DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE,
-        "additional_checksd": DEFAULT_ADDITIONAL_CHECKSD,
-        "host_metadata": DEFAULT_HOST_METADATA_INTERVAL,
-        "external_host_tags": DEFAULT_EXT_HOST_TAGS_INTERVAL,
+        'dd_url': DEFAULT_DD_URL,
+        'app_key': '',
+        'hostname': '',
+        'tags': [],
+        'log_level': DEFAULT_LOG_LEVEL,
+        'forwarder_timeout': DEFAULT_FORWARDER_TO,
+        'forwarder_retry_queue_max_size': DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE,
+        'additional_checksd': DEFAULT_ADDITIONAL_CHECKSD,
+        'host_metadata_interval': DEFAULT_HOST_METADATA_INTERVAL,
+        'external_host_tags_interval': DEFAULT_EXT_HOST_TAGS_INTERVAL,
+        'min_collection_interval': DEFAULT_MIN_COLLECTION_INTERVAL,
     }
 
     for k, v in config_defaults.iteritems():

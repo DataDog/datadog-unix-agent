@@ -236,7 +236,6 @@ class TestConfig():
 
         conf.add_provider('dummy_source', provider)
         conf.add_provider('file', file_provider)
-        configs = provider.collect()
 
         conf.collect_check_configs()
         assert len(conf._check_configs) > 0

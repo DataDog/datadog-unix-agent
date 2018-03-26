@@ -11,6 +11,7 @@ from . import CheckLoader, WheelLoader
 from .wheel_loader import DD_WHEEL_NAMESPACE
 
 from metadata import get_metadata
+from aggregator import Aggregator
 from utils.hostname import get_hostname
 
 log = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 
 class Collector(object):
 
-    def __init__(self, config):
+    def __init__(self, config, aggregator=None):
         self._config = config
         self._loaders = []
         self._check_classes = {}
@@ -29,10 +30,11 @@ class Collector(object):
         self._metadata = {
             'host_metadata': {
                 'last': time.time(),
-                'interval': int(config.get('metadata_interval')),
+                'interval': int(config.get('host_metadata_interval')),
                 'meta': None,
             },
         }
+        self._aggregator = aggregator
 
         self.set_loaders()
 
@@ -41,6 +43,12 @@ class Collector(object):
         check_loader = CheckLoader()
         check_loader.add_place(self._config['additional_checksd'])
         self._loaders.append(check_loader)
+
+    def set_aggregator(aggregator):
+        if not isinstance(aggregator, Aggregator):
+            raise ValueError('argument should be of type Aggregator')
+
+        self._aggregator = aggregator
 
     def load_check_classes(self):
         for _, check_configs in self._config.get_check_configs().iteritems():
@@ -73,6 +81,7 @@ class Collector(object):
 
                             try:
                                 check_instance = check_class(check_name, init_config, instance)
+                                check_instance.set_aggregator(self._aggregator)
                                 self._check_instances[check_name].append(check_instance)
                                 self._check_instance_signatures.add(signature)
                             except Exception:

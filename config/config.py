@@ -7,9 +7,13 @@ import os
 import yaml
 import logging
 import decimal
+from collections import defaultdict
+
+from .providers import ConfigProvider
 
 
 log = logging.getLogger(__name__)
+
 
 class Config(object):
 
@@ -23,6 +27,35 @@ class Config(object):
         self.env_bindings = set()
         self.data = {}
         self.defaults = {}
+
+        self._providers = {}
+        self._check_configs = defaultdict(dict)
+
+    def __getitem__(self, key):
+        try:
+            ret = self.data[key]
+        except KeyError:
+            ret = self.defaults[key]
+
+        return ret
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __delitem__(self, key):
+        self.reset(key)
+
+    def set_default(self, key, value):
+        self.defaults[key] = value
+
+    def set(self, key, value):
+        self.data[key] = value
+
+    def reset(self, key):
+        del self.data[key]
+
+    def get(self, key, default=None):
+        return self.data.get(key, self.defaults.get(key, default))
 
     def add_search_path(self, search_path):
         self.search_paths.add(search_path)
@@ -45,24 +78,12 @@ class Config(object):
 
         self.validate()
 
-    def set_default(self, key, value):
-        self.defaults[key] = value
-
-    def set(self, key, value):
-        self.data[key] = value
-
-    def reset(self, key):
-        del self.data[key]
-
     def bind_env(self, key):
         self.env_bindings.add(key)
 
     def bind_env_and_set_default(self, key, value):
         self.bind_env(key)
         self.set_default(key, value)
-
-    def get(self, key, default=None):
-        return self.data.get(key, self.defaults.get(key, default))
 
     def validate(self):
         self.validate_histogram_aggregates()
@@ -128,3 +149,28 @@ class Config(object):
                 return None
 
         self.data['histogram_percentiles'] = result
+
+    def add_provider(self, source, provider):
+        """ Adds ConfigProvider for check configurations """
+        if not isinstance(provider, ConfigProvider):
+            raise ValueError("expected a configuration provider")
+
+        self._providers[source] = provider
+
+    def collect_check_configs(self):
+        """ Iterates providers collecting configurations """
+        for source, provider in self._providers.iteritems():
+            checksconfigs = provider.collect()
+            for check, configs in checksconfigs.iteritems():
+                current_configs = self._check_configs[source].get(check, [])
+                for config in configs:
+                    if config in current_configs:
+                        # skip existing ones in case we re-call this
+                        continue
+
+                    current_configs.append(config)
+
+                self._check_configs[source][check] = current_configs
+
+    def get_check_configs(self):
+        return self._check_configs

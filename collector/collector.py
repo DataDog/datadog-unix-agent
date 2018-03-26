@@ -7,7 +7,6 @@ from collections import defaultdict
 import time
 import logging
 
-from config.providers import ConfigProvider
 from . import CheckLoader, WheelLoader
 from .wheel_loader import DD_WHEEL_NAMESPACE
 
@@ -21,9 +20,7 @@ class Collector(object):
 
     def __init__(self, config):
         self._config = config
-        self._providers = {}
         self._loaders = []
-        self._check_configs = defaultdict(dict)
         self._check_classes = {}
         self._check_classes_errors = {}
         self._check_instances = defaultdict(list)
@@ -40,35 +37,13 @@ class Collector(object):
         self.set_loaders()
 
     def set_loaders(self):
-        self._loaders.append(WheelLoader(namespace=DD_WHEEL_NAMESPACE))
+        self._loaders = [WheelLoader(namespace=DD_WHEEL_NAMESPACE)]
         check_loader = CheckLoader()
         check_loader.add_place(self._config['additional_checksd'])
         self._loaders.append(check_loader)
 
-    def add_provider(self, id, provider):
-        if not isinstance(provider, ConfigProvider):
-           raise ValueError("expected a configuration provider")
-
-        if id in self._providers:
-            return
-
-        self._providers[id] = provider
-
-    def collect_check_configs(self):
-        for source, provider in self._providers.iteritems():
-            checksconfigs = provider.collect()
-            for check, configs in checksconfigs:
-                current_configs = self._check_configs.get(source).get(check, [])
-                for config in configs:
-                    if config in current_configs:
-                        # skip existing ones in case we re-call this
-                        continue
-                    current_configs.append(config)
-
-                self._check_configs[source][check] = current_configs
-
     def load_check_classes(self):
-        for _, check_configs in self._check_configs:
+        for _, check_configs in self._config.get_check_configs().iteritems():
             for check_name in check_configs:
                 if check_name in self._check_classes:
                     continue
@@ -84,8 +59,8 @@ class Collector(object):
                         log.exception("unexpected error loading check %s", check_name)
 
     def instantiate_checks(self):
-        for source, check_configs in self._check_configs:
-            for check_name, configs in check_configs.iteritems():
+        for source, check_configs in self._config.get_check_configs().iteritems():
+            for check_name, configs in check_configs.iteritems().iteritems():
                 check_class = self._check_classes.get(check_name)
                 if check_class:
                     for config in configs:

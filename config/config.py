@@ -31,6 +31,32 @@ class Config(object):
         self._providers = {}
         self._check_configs = defaultdict(dict)
 
+    def __getitem__(self, key):
+        try:
+            ret = self.data[key]
+        except KeyError:
+            ret = self.defaults[key]
+
+        return ret
+
+    def __setitem__(self, key, value):
+        self.set(key, value)
+
+    def __delitem__(self, key):
+        self.reset(key)
+
+    def set_default(self, key, value):
+        self.defaults[key] = value
+
+    def set(self, key, value):
+        self.data[key] = value
+
+    def reset(self, key):
+        del self.data[key]
+
+    def get(self, key, default=None):
+        return self.data.get(key, self.defaults.get(key, default))
+
     def add_search_path(self, search_path):
         self.search_paths.add(search_path)
 
@@ -52,24 +78,12 @@ class Config(object):
 
         self.validate()
 
-    def set_default(self, key, value):
-        self.defaults[key] = value
-
-    def set(self, key, value):
-        self.data[key] = value
-
-    def reset(self, key):
-        del self.data[key]
-
     def bind_env(self, key):
         self.env_bindings.add(key)
 
     def bind_env_and_set_default(self, key, value):
         self.bind_env(key)
         self.set_default(key, value)
-
-    def get(self, key, default=None):
-        return self.data.get(key, self.defaults.get(key, default))
 
     def validate(self):
         self.validate_histogram_aggregates()
@@ -139,7 +153,7 @@ class Config(object):
     def add_provider(self, source, provider):
         """ Adds ConfigProvider for check configurations """
         if not isinstance(provider, ConfigProvider):
-           raise ValueError("expected a configuration provider")
+            raise ValueError("expected a configuration provider")
 
         self._providers[source] = provider
 

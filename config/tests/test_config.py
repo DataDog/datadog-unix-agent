@@ -81,6 +81,11 @@ class TestConfig():
         assert conf.get("test") == 21
         conf.reset("test")
         assert conf.get("test") is None
+        conf['test'] = 42
+        assert conf['test'] == 42
+        del conf['test']
+        with pytest.raises(KeyError):
+            conf['test']
 
     def test_load(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
@@ -116,6 +121,11 @@ class TestConfig():
         assert conf.get("test2") == "env_val"
         assert conf.get("test3") == "env_val2"
         assert conf.get("list") == [1, 2, 3]
+
+        assert conf["test1"] == "default"
+        assert conf["test2"] == "env_val"
+        assert conf["test3"] == "env_val2"
+        assert conf["list"] == [1, 2, 3]
 
         os.close(fd)
         os.remove(tmpfile)

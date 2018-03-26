@@ -8,12 +8,17 @@
 import json
 import signal
 import sys
+import time
 import logging
 
 from config import config
+from config.providers import FileConfigProvider
 from forwarder import Forwarder
 from utils.hostname import get_hostname
 from metadata import get_metadata
+from collector import Collector
+
+from aggregator import MetricsAggregator
 
 
 def init_agent():
@@ -22,9 +27,19 @@ def init_agent():
     config.add_search_path(".")
     config.load()
 
+    # add file provider
+    file_provider = FileConfigProvider()
+    file_provider.add_place(config.get('additional_checksd'))
+    config.add_provider('file', file_provider)
+
+    # FIXME: do this elsewhere
+    # collect config
+    config.collect_check_configs()
+
     # init log
     level = logging.getLevelName(config.get("log_level").upper())
     logging.basicConfig(level=level)
+
 
 def start():
     """
@@ -32,14 +47,32 @@ def start():
     """
     init_agent()
 
-    logging.info("Starting the agent, hostname: %s", get_hostname())
+    hostname = get_hostname()
+
+    logging.info("Starting the agent, hostname: %s", hostname)
 
     # init Forwarder
     logging.info("Starting the Forwarder")
-    f = Forwarder(config.get("api_key"), config.get("dd_url"))
+    f = Forwarder(
+        config.get('api_key', 'fake_api'),
+        config.get('dd_url', 'https://localhost:9999')
+    )
     f.start()
 
-    metadata = get_metadata(get_hostname())
+    # aggregator
+    aggregator = MetricsAggregator(
+        hostname,
+        interval=config.get('histogram_aggregates', 1.0),
+        histogram_aggregates=config.get('histogram_aggregates'),
+        histogram_percentiles=config.get('histogram_percentiles'),
+    )
+
+    # instantiate collector
+    collector = Collector(config, aggregator)
+    collector.instantiate_checks()
+
+    # FIXME: collector can do this and set wherever
+    metadata = get_metadata(hostname)
     f.submit_v1_intake(json.dumps(metadata), {'Content-Type': 'application/json'})
     logging.info("metadata:\n%s", json.dumps(metadata))
 
@@ -51,7 +84,10 @@ def start():
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
-    signal.pause()
+
+    while True:
+        collector.run_checks()
+        time.sleep(config.get('min_collection_interval'))
 
 
 if __name__ == "__main__":

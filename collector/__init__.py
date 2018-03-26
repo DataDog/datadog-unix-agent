@@ -5,9 +5,11 @@
 
 from .check_loader import CheckLoader
 from .wheel_loader import WheelLoader
+from .collector import Collector
 
 
 __all__ = [
+    'Collector',
     'CheckLoader',
     'WheelLoader',
 ]

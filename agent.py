@@ -5,7 +5,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import json
 import signal
 import sys
 import time
@@ -13,12 +12,13 @@ import logging
 
 from config import config
 from config.providers import FileConfigProvider
-from forwarder import Forwarder
 from utils.hostname import get_hostname
 from metadata import get_metadata
-from collector import Collector
 
+from collector import Collector
 from aggregator import MetricsAggregator
+from serialize import Serializer
+from forwarder import Forwarder
 
 
 def init_agent():
@@ -52,12 +52,13 @@ def start():
     logging.info("Starting the agent, hostname: %s", hostname)
 
     # init Forwarder
+    domains = [config.get('dd_url', 'https://localhost:9999')]
     logging.info("Starting the Forwarder")
-    f = Forwarder(
+    forwarder = Forwarder(
         config.get('api_key', 'fake_api'),
-        config.get('dd_url', 'https://localhost:9999')
+        domains
     )
-    f.start()
+    forwarder.start()
 
     # aggregator
     aggregator = MetricsAggregator(
@@ -67,26 +68,33 @@ def start():
         histogram_percentiles=config.get('histogram_percentiles'),
     )
 
+    # serializer
+    serializer = Serializer(
+        aggregator,
+        forwarder,
+    )
+
+    # update the metadata periodically?
+    metadata = get_metadata(hostname)
+    serializer.set_metadata(metadata)
+
     # instantiate collector
     collector = Collector(config, aggregator)
     collector.instantiate_checks()
 
-    # FIXME: collector can do this and set wherever
-    metadata = get_metadata(hostname)
-    f.submit_v1_intake(json.dumps(metadata), {'Content-Type': 'application/json'})
-    logging.info("metadata:\n%s", json.dumps(metadata))
-
     def signal_handler(signal, frame):
         logging.info("SIGINT received: stopping the agent")
         logging.info("Stopping the forwarder")
-        f.stop()
+        forwarder.stop()
         logging.info("See you !")
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
 
+    serializer.submit_metadata()
     while True:
         collector.run_checks()
+        serializer.serialize_and_push()
         time.sleep(config.get('min_collection_interval'))
 
 

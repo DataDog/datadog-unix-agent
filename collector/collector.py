@@ -4,13 +4,11 @@
 # Copyright 2018 Datadog, Inc.
 
 from collections import defaultdict
-import time
 import logging
 
 from . import CheckLoader, WheelLoader
 from .wheel_loader import DD_WHEEL_NAMESPACE
 
-from metadata import get_metadata
 from aggregator import Aggregator
 from utils.hostname import get_hostname
 
@@ -27,13 +25,6 @@ class Collector(object):
         self._check_instances = defaultdict(list)
         self._check_instance_signatures = set()
         self._hostname = get_hostname()
-        self._metadata = {
-            'host_metadata': {
-                'last': time.time(),
-                'interval': int(config.get('host_metadata_interval')),
-                'meta': None,
-            },
-        }
         self._aggregator = aggregator
 
         self.set_loaders()
@@ -44,7 +35,7 @@ class Collector(object):
         check_loader.add_place(self._config['additional_checksd'])
         self._loaders.append(check_loader)
 
-    def set_aggregator(aggregator):
+    def set_aggregator(self, aggregator):
         if not isinstance(aggregator, Aggregator):
             raise ValueError('argument should be of type Aggregator')
 
@@ -96,11 +87,3 @@ class Collector(object):
                     check.run(check.instance)
                 except Exception:
                     log.exception("error for instance: %s", str(check.instance))
-
-    def refresh_metadata(self):
-        now = time.time()
-        if (self._metadata['host_metadata']['last'] +
-            self._metadata['host_metadata']['interval']) >= now:
-            self._metadata['host_metadata']['meta']= get_metadata()
-            self._metadata['host_metadata']['last']= now
-            # set the updated metadata somewhere... Serializer?

@@ -55,16 +55,21 @@ class Serializer(object):
         self._metadata = metadata
 
     def serialize(self, add_meta=False):
-        payload, metrics_payload, service_checks_payload = self.split_payload(self._aggregator.flush())
+
+        metrics = self._aggregator.flush()
+        payload, metrics_payload, service_checks_payload = self.split_payload({'metrics': metrics})
 
         # TODO: do this right
         if add_meta:
             payload['meta'] = self._metadata
 
         extra_headers = {'Content-Type': 'application/json'}
-        self._forwarder.submit_v1_series(
-            json.dumps(metrics_payload), extra_headers)
-        self._forwarder.submit_v1_service_checks(
-            json.dumps(service_checks_payload), extra_headers)
-        self._forwarder.submit_v1_intake(
-            json.dumps(payload), extra_headers)
+        if metrics_payload:
+            self._forwarder.submit_v1_series(
+                json.dumps(metrics_payload), extra_headers)
+        if service_checks_payload:
+            self._forwarder.submit_v1_service_checks(
+                json.dumps(service_checks_payload), extra_headers)
+        if payload:
+            self._forwarder.submit_v1_intake(
+                json.dumps(payload), extra_headers)

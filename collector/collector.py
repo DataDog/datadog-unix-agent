@@ -11,11 +11,13 @@ from .wheel_loader import DD_WHEEL_NAMESPACE
 
 from aggregator import Aggregator
 from utils.hostname import get_hostname
+from utils.freeze import hash_mutable
 
 log = logging.getLogger(__name__)
 
 
 class Collector(object):
+    CORE_CHECKS = ['cpu', 'uptime']
 
     def __init__(self, config, aggregator=None):
         self._config = config
@@ -41,7 +43,13 @@ class Collector(object):
 
         self._aggregator = aggregator
 
+    def load_core_checks(self):
+        from checks.corechecks.system import Cpu, UptimeCheck
+        self._check_classes['cpu'] = Cpu
+        self._check_classes['uptime'] = UptimeCheck
+
     def load_check_classes(self):
+        self.load_core_checks()
         for _, check_configs in self._config.get_check_configs().iteritems():
             for check_name in check_configs:
                 if check_name in self._check_classes:
@@ -66,24 +74,36 @@ class Collector(object):
                         init_config = config.get('init_config', {})
                         instances = config.get('instances')  # should be single instance
                         for instance in instances:
-                            signature = (init_config, instance)
-                            if signature in self._check_instance_signatures:
+                            signature = hash_mutable((check_name, init_config, instance))
+                            signature_hash = hash_mutable(signature)
+                            if signature_hash in self._check_instance_signatures:
                                 continue
 
                             try:
                                 check_instance = check_class(check_name, init_config, instance)
                                 check_instance.set_aggregator(self._aggregator)
                                 self._check_instances[check_name].append(check_instance)
-                                self._check_instance_signatures.add(signature)
+                                self._check_instance_signatures.add(signature_hash)
                             except Exception:
                                 log.error("unable to instantiate instance %s for %s",
                                         instance, check_name)
 
+        for check_name in self.CORE_CHECKS:
+            if check_name in self._check_instances:
+                # already instantiated - skip
+                continue
+
+            check_class = self._check_classes[check_name]
+            signature = (check_name, {}, {})
+            check_instance = check_class(*signature)
+            self._check_instances[check_name] = [check_instance]
+            self._check_instance_signatures.add(hash_mutable(signature))
+
     def run_checks(self):
         for name, checks in self._check_instances.iteritems():
-            self.log.debug('running check %s...', name)
+            log.debug('running check %s...', name)
             for check in checks:
                 try:
-                    check.run(check.instance)
+                    check.run()
                 except Exception:
                     log.exception("error for instance: %s", str(check.instance))

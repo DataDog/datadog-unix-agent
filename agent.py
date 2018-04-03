@@ -80,6 +80,7 @@ def start():
 
     # instantiate collector
     collector = Collector(config, aggregator)
+    collector.load_check_classes()
     collector.instantiate_checks()
 
     def signal_handler(signal, frame):

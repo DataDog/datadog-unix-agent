@@ -91,7 +91,7 @@ def start():
 
     while True:
         collector.run_checks()
-        serializer.serialize()
+        serializer.serialize_and_push()
         time.sleep(config.get('min_collection_interval'))
 
 

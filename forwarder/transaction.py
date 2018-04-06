@@ -13,6 +13,7 @@ from config import config
 
 log = logging.getLogger(__name__)
 
+
 class Transaction(object):
     API_KEY_REPLACEMENT = re.compile("api_key=*\\w+(\\w{5})")
     RETRY_INTERVAL = 5 # 5 second interval
@@ -45,6 +46,7 @@ class Transaction(object):
         if resp.status_code in (400, 404, 413):
             log.error("Error code %d received while sending transaction to %s: %s, dropping it",
                     resp.status_code, log_url, str(resp.text))
+            log.debug("Failed payload: %s", self.payload)
         elif resp.status_code == 403:
             log.error("API Key invalid, dropping transaction for %s", log_url)
         elif resp.status_code >= 400:

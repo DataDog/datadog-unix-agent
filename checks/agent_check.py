@@ -21,7 +21,7 @@ class CheckException(Exception):
 class AgentCheck(object):
     OK, WARNING, CRITICAL, UNKNOWN = (0, 1, 2, 3)
 
-    def __init__(self, name, init_config, instance):
+    def __init__(self, name, init_config, instance, aggregator=None):
 
         self.instance = instance
         self.name = name
@@ -29,7 +29,7 @@ class AgentCheck(object):
         self.warnings = []
         self.log = logging.getLogger('%s.%s' % (__name__, self.name))
         self.hostname = get_hostname()
-        self.aggregator = None
+        self.aggregator = aggregator
 
     def check(self, instance):
         raise NotImplementedError
@@ -43,7 +43,7 @@ class AgentCheck(object):
             return
 
         tags = self._normalize_tags(tags)
-        self.aggregator.submit_metric(self, self.check_id, mtype, name, float(value), tags)
+        self.aggregator.submit_metric(name, float(value), mtype, tags=tags)
 
     def gauge(self, name, value, tags=None):
         self._submit_metric(TextualMetricTypes.GAUGE, name, value, tags=tags)
@@ -68,7 +68,7 @@ class AgentCheck(object):
         if message is None:
             message = ""
 
-        self.aggregator.submit_service_check(self, self.check_id, name, status, tags, message)
+        self.aggregator.submit_service_check(self, self.name, name, status, tags, message)
 
     def event(self, event):
         # Enforce types of some fields, considerably facilitates handling in go bindings downstream
@@ -86,7 +86,7 @@ class AgentCheck(object):
             event['timestamp'] = int(event['timestamp'])
         if event.get('aggregation_key'):
             event['aggregation_key'] = str(event['aggregation_key'])
-        self.aggregator.submit_event(self, self.check_id, event)
+        self.aggregator.submit_event(self, self.name, event)
 
     def normalize(self, metric, prefix=None, fix_case=False):
         """

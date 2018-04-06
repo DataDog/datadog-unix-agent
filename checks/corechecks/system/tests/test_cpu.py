@@ -5,13 +5,16 @@
 
 import mock
 from collections import namedtuple
-from agentcheck_mock import AgentCheckTest
+
+from aggregator import MetricsAggregator
 
 
-@mock.patch("checks.AgentCheck", new_callable=lambda: AgentCheckTest)
+GAUGE = 'gauge'
+
+
 @mock.patch("psutil.cpu_times")
 @mock.patch("psutil.cpu_count", return_value=2)
-def test_cpu_first_run(cpu_count, cpu_times, agent_check):
+def test_cpu_first_run(cpu_count, cpu_times):
     from checks.corechecks.system import cpu
 
     # fake cputimes from psutil
@@ -30,9 +33,17 @@ def test_cpu_first_run(cpu_count, cpu_times, agent_check):
             guest=0.0,
             guest_nice=0.0)
 
-    c = cpu.Cpu("cpu", {}, {})
+    hostname = 'foo'
+    aggregator = MetricsAggregator(
+        hostname,
+        interval=1.0,
+        histogram_aggregates=None,
+        histogram_percentiles=None,
+    )
+
+    c = cpu.Cpu("cpu", {}, {}, aggregator)
     c.check({})
-    assert c.get_metrics() == {}
+    assert c.aggregator.flush() == []
 
     cpu_times.return_value = cputimes(user=16683.74,
             nice=6.25,
@@ -46,11 +57,19 @@ def test_cpu_first_run(cpu_count, cpu_times, agent_check):
             guest_nice=0.0)
 
     c.check({})
-    assert c.get_metrics() == {
-        'system.cpu.system': [{'tags': None, 'type': 'gauge', 'value': 0.2}],
-        'system.cpu.user': [{'tags': None, 'type': 'gauge', 'value': 0.12}],
-        'system.cpu.wait': [{'tags': None, 'type': 'gauge', 'value': 0.0}],
-        'system.cpu.idle': [{'tags': None, 'type': 'gauge', 'value': 4.2300}],
-        'system.cpu.stolen': [{'tags': None, 'type': 'gauge', 'value': 0.0}],
-        'system.cpu.guest': [{'tags': None, 'type': 'gauge', 'value': 0.0}],
+    metrics =  c.aggregator.flush()
+    expected_metrics = {
+        'system.cpu.system': (GAUGE, 0.2),
+        'system.cpu.user': (GAUGE, 0.12),
+        'system.cpu.wait': (GAUGE, 0.0),
+        'system.cpu.idle': (GAUGE, 4.2300),
+        'system.cpu.stolen': (GAUGE, 0.0),
+        'system.cpu.guest': (GAUGE, 0.0),
     }
+    assert len(metrics) != 0
+    for metric in metrics:
+        assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
+        assert metric['points'][0][1] == expected_metrics[metric['metric']][1]

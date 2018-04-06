@@ -80,8 +80,7 @@ class Collector(object):
                                 continue
 
                             try:
-                                check_instance = check_class(check_name, init_config, instance)
-                                check_instance.set_aggregator(self._aggregator)
+                                check_instance = check_class(check_name, init_config, instance, self._aggregator)
                                 self._check_instances[check_name].append(check_instance)
                                 self._check_instance_signatures.add(signature_hash)
                             except Exception:
@@ -96,6 +95,7 @@ class Collector(object):
             check_class = self._check_classes[check_name]
             signature = (check_name, {}, {})
             check_instance = check_class(*signature)
+            check_instance.set_aggregator(self._aggregator)
             self._check_instances[check_name] = [check_instance]
             self._check_instance_signatures.add(hash_mutable(signature))
 

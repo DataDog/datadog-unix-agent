@@ -75,6 +75,8 @@ class Config(object):
             key = self.env_prefix + env_var
             if key in os.environ:
                 self.data[env_var] = os.environ[key]
+            elif key.upper() in os.environ:
+                self.data[env_var] = os.environ[key.upper()]
 
         self.validate()
 

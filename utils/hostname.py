@@ -16,6 +16,7 @@ MAX_HOSTNAME_LEN = 255
 
 log = logging.getLogger(__name__)
 
+
 def is_valid_hostname(hostname):
     if hostname.lower() in [
         'localhost',
@@ -32,6 +33,7 @@ def is_valid_hostname(hostname):
         log.warning("Hostname: %s is not complying with RFC 1123" % hostname)
         return False
     return True
+
 
 def get_hostname():
     """
@@ -51,7 +53,7 @@ def get_hostname():
 
     try:
         # try fqdn
-        fqdn = subprocess.check_output(['/bin/hostname', '-f']).strip()
+        fqdn = subprocess.check_output(['/bin/hostname', '-s']).strip()
         if fqdn and is_valid_hostname(fqdn):
             return fqdn
     except Exception:

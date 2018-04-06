@@ -18,7 +18,7 @@ DEFAULT_LOG_LEVEL = 'info'
 def init(config):
     config_defaults = {
         'dd_url': DEFAULT_DD_URL,
-        'app_key': '',
+        'api_key': '',
         'hostname': '',
         'tags': [],
         'log_level': DEFAULT_LOG_LEVEL,

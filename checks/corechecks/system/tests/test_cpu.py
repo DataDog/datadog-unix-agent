@@ -19,14 +19,13 @@ def test_cpu_first_run(cpu_count, cpu_times):
 
     # fake cputimes from psutil
     cputimes = namedtuple("cputimes",
-            ["user", "nice", "system", "idle", "iowait",
-             "irq", "softirq", "steal", "guest", "guest_nice"])
+            ["user", "nice", "system", "idle", "irq",
+             "softirq", "steal", "guest", "guest_nice"])
 
     cpu_times.return_value = cputimes(user=16683.71,
             nice=6.04,
             system=11054.24,
             idle=729913.18,
-            iowait=274.21,
             irq=0.0,
             softirq=104.31,
             steal=0.0,
@@ -49,7 +48,6 @@ def test_cpu_first_run(cpu_count, cpu_times):
             nice=6.25,
             system=11054.34,
             idle=729921.64,
-            iowait=274.21,
             irq=0.1,
             softirq=104.51,
             steal=0.0,
@@ -61,7 +59,6 @@ def test_cpu_first_run(cpu_count, cpu_times):
     expected_metrics = {
         'system.cpu.system': (GAUGE, 0.2),
         'system.cpu.user': (GAUGE, 0.12),
-        'system.cpu.wait': (GAUGE, 0.0),
         'system.cpu.idle': (GAUGE, 4.2300),
         'system.cpu.stolen': (GAUGE, 0.0),
         'system.cpu.guest': (GAUGE, 0.0),

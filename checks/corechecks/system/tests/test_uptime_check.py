@@ -4,16 +4,34 @@
 # Copyright 2018 Datadog, Inc.
 
 import mock
-from agentcheck_mock import AgentCheckTest
+
+from aggregator import MetricsAggregator
 
 
-@mock.patch("checks.AgentCheck", new_callable=lambda: AgentCheckTest)
 @mock.patch("uptime.uptime", return_value=21)
-def test_uptime_check(uptime, agent_check_test):
+def test_uptime_check(uptime):
     from checks.corechecks.system import uptime_check
 
-    u = uptime_check.UptimeCheck("uptime", {}, {})
+    hostname = 'foo'
+    aggregator = MetricsAggregator(
+        hostname,
+        interval=1.0,
+        histogram_aggregates=None,
+        histogram_percentiles=None,
+    )
+
+    u = uptime_check.UptimeCheck("uptime", {}, {}, aggregator)
     u.check({})
-    assert u.get_metrics() == {
-        "system.uptime": [{"type": "gauge", "value": 21, "tags": None}]
+
+    expected_metrics = {
+        'system.uptime': ('gauge', 21),
     }
+    metrics = u.aggregator.flush()
+
+    assert len(metrics) != 0
+    for metric in metrics:
+        assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
+        assert metric['points'][0][1] == expected_metrics[metric['metric']][1]

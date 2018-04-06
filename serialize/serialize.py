@@ -57,7 +57,7 @@ class Serializer(object):
         self._metadata = metadata
 
     def serialize(self, add_meta):
-        metrics = self._aggregator.flush()
+        metrics = {'series': self._aggregator.flush()}
         service_checks = self._aggregator.flush_service_checks()
         events = self._aggregator.flush_events()
 

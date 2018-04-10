@@ -16,20 +16,10 @@ from .types import (
 )
 
 from .formatters import api_formatter
+from config.default import DEFAULT_RECENT_POINT_THRESHOLD
+
 
 log = logging.getLogger(__name__)
-
-
-# This is used to ensure that metrics with a timestamp older than
-# RECENT_POINT_THRESHOLD_DEFAULT seconds (or the value passed in to
-# the MetricsAggregator constructor) get discarded rather than being
-# input into the incorrect bucket. Currently, the MetricsAggregator
-# does not support submitting values for the past, and all values get
-# submitted for the timestamp passed into the flush() function.
-# The MetricsBucketAggregator uses times that are aligned to "buckets"
-# that are the length of the interval that is passed into the
-# MetricsBucketAggregator constructor.
-RECENT_POINT_THRESHOLD_DEFAULT = 3600
 
 
 class Aggregator(object):
@@ -56,7 +46,7 @@ class Aggregator(object):
         self.formatter = formatter or api_formatter
         self.interval = float(interval)
 
-        recent_point_threshold = recent_point_threshold or RECENT_POINT_THRESHOLD_DEFAULT
+        recent_point_threshold = recent_point_threshold or DEFAULT_RECENT_POINT_THRESHOLD
         self.recent_point_threshold = int(recent_point_threshold)
         self.num_discarded_old_points = 0
 

@@ -77,6 +77,7 @@ class Collector(object):
                             signature = hash_mutable((check_name, init_config, instance))
                             signature_hash = hash_mutable(signature)
                             if signature_hash in self._check_instance_signatures:
+                                log.info('instance with identical signature already configured - skipping')
                                 continue
 
                             try:

@@ -57,7 +57,7 @@ def test_cpu_first_run(cpu_count, cpu_times):
             guest_nice=0.0)
 
     c.check({})
-    metrics =  c.aggregator.flush()
+    metrics = c.aggregator.flush()
     expected_metrics = {
         'system.cpu.system': (GAUGE, 0.2),
         'system.cpu.user': (GAUGE, 0.12),

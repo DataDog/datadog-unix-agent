@@ -52,10 +52,19 @@ def start():
     logging.info("Starting the agent, hostname: %s", hostname)
 
     # init Forwarder
-    domains = [config.get('dd_url', 'https://localhost:9999')]
     logging.info("Starting the Forwarder")
+    api_key = config.get('api_key')
+    dd_url = config.get('dd_url')
+    if not dd_url:
+        logging.error('No Datadog URL configured - cannot continue')
+        sys.exit(1)
+    if not api_key:
+        logging.error('No API key configured - cannot continue')
+        sys.exit(1)
+
+    domains = [dd_url]
     forwarder = Forwarder(
-        config.get('api_key', 'fake_api'),
+        api_key,
         domains
     )
     forwarder.start()
@@ -63,7 +72,10 @@ def start():
     # aggregator
     aggregator = MetricsAggregator(
         hostname,
-        interval=config.get('histogram_aggregates', 1.0),
+        interval=config.get('aggregator_interval'),
+        expiry_seconds=(config.get('min_collection_interval') +
+                        config.get('aggregator_expiry_seconds')),
+        recent_point_threshold=config.get('recent_point_threshold'),
         histogram_aggregates=config.get('histogram_aggregates'),
         histogram_percentiles=config.get('histogram_percentiles'),
     )

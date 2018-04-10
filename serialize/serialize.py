@@ -12,7 +12,6 @@ class Serializer(object):
     def __init__(self, aggregator, forwarder):
         self._aggregator = aggregator
         self._forwarder = forwarder
-        self._metadata = None
 
     @classmethod
     def split_payload(cls, payload):
@@ -53,17 +52,10 @@ class Serializer(object):
 
         return payload, metrics_payload, service_checks_payload
 
-    def set_metadata(self, metadata):
-        self._metadata = metadata
-
     def serialize(self, add_meta):
         metrics = {'series': self._aggregator.flush()}
         service_checks = self._aggregator.flush_service_checks()
         events = self._aggregator.flush_events()
-
-        # TODO: do this right
-        if add_meta:
-            metrics['meta'] = self._metadata
 
         return (json.dumps(metrics),
                 json.dumps(service_checks),
@@ -83,8 +75,6 @@ class Serializer(object):
             self._forwarder.submit_v1_intake(
                 events, extra_headers)
 
-    def submit_metadata(self):
+    def submit_metadata(self, metadata):
         extra_headers = self.JSON_HEADERS
-        self._forwarder.submit_v1_intake(
-            self._metadata, extra_headers)
-        pass
+        self._forwarder.submit_v1_intake(metadata, extra_headers)

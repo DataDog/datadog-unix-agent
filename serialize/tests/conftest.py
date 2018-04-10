@@ -36,7 +36,7 @@ def mock_aggregator():
         'series': series,
         'events': events,
         'service_checks': service_checks,
-        'flush.return_value': series,
+        'flush.return_value': MOCK_FLUSH_DATA,
         'flush_events.return_value': events,
         'flush_service_checks.return_value': service_checks,
     }

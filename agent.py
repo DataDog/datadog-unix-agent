@@ -27,6 +27,10 @@ def init_agent():
     config.add_search_path(".")
     config.load()
 
+    # init log
+    level = logging.getLevelName(config.get("log_level").upper())
+    logging.basicConfig(level=level)
+
     # add file provider
     file_provider = FileConfigProvider()
     file_provider.add_place(config.get('additional_checksd'))
@@ -35,10 +39,6 @@ def init_agent():
     # FIXME: do this elsewhere
     # collect config
     config.collect_check_configs()
-
-    # init log
-    level = logging.getLevelName(config.get("log_level").upper())
-    logging.basicConfig(level=level)
 
 
 def start():
@@ -62,10 +62,9 @@ def start():
         logging.error('No API key configured - cannot continue')
         sys.exit(1)
 
-    domains = [dd_url]
     forwarder = Forwarder(
         api_key,
-        domains
+        dd_url
     )
     forwarder.start()
 
@@ -86,10 +85,6 @@ def start():
         forwarder,
     )
 
-    # update the metadata periodically?
-    metadata = get_metadata(hostname)
-    serializer.set_metadata(metadata)
-
     # instantiate collector
     collector = Collector(config, aggregator)
     collector.load_check_classes()
@@ -104,7 +99,9 @@ def start():
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    serializer.submit_metadata()
+    # update the metadata periodically?
+    metadata = get_metadata(hostname)
+    serializer.submit_metadata(metadata)
     while True:
         collector.run_checks()
         serializer.serialize_and_push()

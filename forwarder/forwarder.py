@@ -23,9 +23,9 @@ class Forwarder(object):
     QUEUES_SIZE = 100
     WORKER_JOIN_TIME = 2
 
-    def __init__(self, api_key, domains, nb_worker=4):
+    def __init__(self, api_key, domain, nb_worker=4):
         self.api_key = api_key
-        self.domains = domains
+        self.domain = domain
         self.input_queue = Queue.Queue(self.QUEUES_SIZE)
         self.retry_queue = Queue.Queue(self.QUEUES_SIZE)
         self.workers = []
@@ -67,12 +67,11 @@ class Forwarder(object):
         else:
             extra_header = {self.DD_API_HEADER: self.api_key}
 
-        for domain in self.domains:
-            t = Transaction(payload, domain, endpoint, extra_header)
-            try:
-                self.input_queue.put_nowait(t)
-            except Queue.Full as e:
-                log.errorf("Could not submit transaction to '%s', queue is full (dropping it): %s", endpoint, e)
+        t = Transaction(payload, self.domain, endpoint, extra_header)
+        try:
+            self.input_queue.put_nowait(t)
+        except Queue.Full as e:
+            log.errorf("Could not submit transaction to '%s', queue is full (dropping it): %s", endpoint, e)
 
     def submit_v1_series(self, payload, extra_header):
         self._submit_payload(self.V1_SERIES_ENDPOINT, payload, extra_header)

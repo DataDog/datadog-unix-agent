@@ -63,7 +63,8 @@ def test_cpu_first_run(cpu_count, cpu_times):
         'system.cpu.stolen': (GAUGE, 0.0),
         'system.cpu.guest': (GAUGE, 0.0),
     }
-    assert len(metrics) != 0
+
+    assert len(metrics) == len(expected_metrics)
     for metric in metrics:
         assert metric['metric'] in expected_metrics
         assert len(metric['points']) == 1

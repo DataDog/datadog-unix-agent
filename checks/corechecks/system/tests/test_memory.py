@@ -6,20 +6,23 @@
 import mock
 from collections import namedtuple
 
-from agentcheck_mock import AgentCheckTest
+from aggregator import MetricsAggregator
 
 
-@mock.patch("checks.AgentCheck", new_callable=lambda: AgentCheckTest)
+GAUGE = 'gauge'
+
+
 @mock.patch("psutil.virtual_memory")
 @mock.patch("psutil.swap_memory")
-def test_memory_linux(swap_memory, virtual_memory, agent_check):
+def test_memory_linux(swap_memory, virtual_memory):
     from checks.corechecks.system import memory
 
-    svmem = namedtuple("svmem", ["total", "available", "percent", "used",
-        "free", "active", "inactive", "buffers", "cached", "shared"])
+    svmem = namedtuple("svmem", ["total", "available", "percent", "used", "free",
+                                 "active", "inactive", "buffers", "cached", "shared"])
     sswap = namedtuple("sswap", ["total", "used", "free", "percent", "sin", "sout"])
 
-    virtual_memory.return_value = svmem(total=9177399296,
+    virtual_memory.return_value = svmem(
+        total=9177399296,
         available=5566582784,
         percent=39.3,
         used=2958319616,
@@ -37,16 +40,35 @@ def test_memory_linux(swap_memory, virtual_memory, agent_check):
         sin=0,
         sout=0)
 
-    c = memory.Memory("memory", {}, {})
+    hostname = 'foo'
+    aggregator = MetricsAggregator(
+        hostname,
+        interval=1.0,
+        histogram_aggregates=None,
+        histogram_percentiles=None,
+    )
+
+    c = memory.Memory("memory", {}, {}, aggregator)
     c.check({})
-    assert c.get_metrics() == {
-        'system.mem.total': [{'tags': None, 'type': 'gauge', 'value': 8752}],
-        'system.mem.free': [{'tags': None, 'type': 'gauge', 'value': 4617}],
-        'system.mem.used': [{'tags': None, 'type': 'gauge', 'value': 4135}],
-        'system.mem.usable': [{'tags': None, 'type': 'gauge', 'value': 5308}],
-        'system.mem.pct_usable': [{'tags': None, 'type': 'gauge', 'value': 0}],
-        'system.swap.total': [{'tags': None, 'type': 'gauge', 'value': 9999}],
-        'system.swap.free': [{'tags': None, 'type': 'gauge', 'value': 9999}],
-        'system.swap.used': [{'tags': None, 'type': 'gauge', 'value': 0}],
-        'system.swap.pct_free': [{'tags': None, 'type': 'gauge', 'value': 1}],
+
+    metrics = c.aggregator.flush()
+
+    expected_metrics = {
+        'system.mem.total': (GAUGE, 8752),
+        'system.mem.free': (GAUGE, 4617),
+        'system.mem.used': (GAUGE, 4135),
+        'system.mem.usable': (GAUGE, 5308),
+        'system.mem.pct_usable': (GAUGE, 0),
+        'system.swap.total': (GAUGE, 9999),
+        'system.swap.free': (GAUGE, 9999),
+        'system.swap.used': (GAUGE, 0),
+        'system.swap.pct_free': (GAUGE, 1),
     }
+
+    assert len(metrics) == len(expected_metrics)
+    for metric in metrics:
+        assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
+        assert metric['points'][0][1] == expected_metrics[metric['metric']][1]

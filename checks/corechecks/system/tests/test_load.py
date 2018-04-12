@@ -4,41 +4,79 @@
 # Copyright 2018 Datadog, Inc.
 
 import mock
-from agentcheck_mock import AgentCheckTest
+
+from aggregator import MetricsAggregator
+
+GAUGE = 'gauge'
 
 
-@mock.patch("checks.AgentCheck", new_callable=lambda: AgentCheckTest)
 @mock.patch("psutil.cpu_count", return_value=2)
 @mock.patch("os.getloadavg", return_value=(0.42, 0.43, 0.49))
-def test_load(getloadavg, cpu_count, agent_check):
+def test_load(getloadavg, cpu_count):
     from checks.corechecks.system import load
 
-    c = load.Load("load", {}, {})
+    hostname = 'foo'
+    aggregator = MetricsAggregator(
+        hostname,
+        interval=1.0,
+        histogram_aggregates=None,
+        histogram_percentiles=None,
+    )
+
+    c = load.Load("load", {}, {}, aggregator)
     c.check({})
-    assert c.get_metrics() == {
-        'system.load.1': [{'tags': None, 'type': 'gauge', 'value': 0.42}],
-        'system.load.5': [{'tags': None, 'type': 'gauge', 'value': 0.43}],
-        'system.load.15': [{'tags': None, 'type': 'gauge', 'value': 0.49}],
-        'system.load.norm.1': [{'tags': None, 'type': 'gauge', 'value': 0.21}],
-        'system.load.norm.5': [{'tags': None, 'type': 'gauge', 'value': 0.215}],
-        'system.load.norm.15': [{'tags': None, 'type': 'gauge', 'value': 0.245}],
+    metrics = c.aggregator.flush()
+
+    expected_metrics = {
+        'system.load.1': (GAUGE, 0.42),
+        'system.load.5': (GAUGE, 0.43),
+        'system.load.15': (GAUGE, 0.49),
+        'system.load.norm.1': (GAUGE, 0.21),
+        'system.load.norm.5': (GAUGE, 0.215),
+        'system.load.norm.15': (GAUGE, 0.245),
     }
 
-@mock.patch("checks.AgentCheck", new_callable=lambda: AgentCheckTest)
+    assert len(metrics) == len(expected_metrics)
+    for metric in metrics:
+        assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
+        assert metric['points'][0][1] == expected_metrics[metric['metric']][1]
+
+
 @mock.patch("psutil.cpu_count", return_value=0)
 @mock.patch("os.getloadavg", return_value=(0.42, 0.43, 0.49))
-def test_load_no_cpu_count(getloadavg, cpu_count, agent_check):
+def test_load_no_cpu_count(getloadavg, cpu_count):
     from checks.corechecks.system import load
 
-    c = load.Load("load", {}, {})
+    hostname = 'foo'
+    aggregator = MetricsAggregator(
+        hostname,
+        interval=1.0,
+        histogram_aggregates=None,
+        histogram_percentiles=None,
+    )
+
+    c = load.Load("load", {}, {}, aggregator)
     try:
         c.check({})
         assert 0, "load check should have raise an error"
     except Exception as e:
         assert str(e) == "Cannot determine number of cores"
 
-    assert c.get_metrics() == {
-        'system.load.1': [{'tags': None, 'type': 'gauge', 'value': 0.42}],
-        'system.load.5': [{'tags': None, 'type': 'gauge', 'value': 0.43}],
-        'system.load.15': [{'tags': None, 'type': 'gauge', 'value': 0.49}],
+    metrics = c.aggregator.flush()
+
+    expected_metrics = {
+        'system.load.1': (GAUGE, 0.42),
+        'system.load.5': (GAUGE, 0.43),
+        'system.load.15': (GAUGE, 0.49),
     }
+
+    assert len(metrics) == len(expected_metrics)
+    for metric in metrics:
+        assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
+        assert metric['points'][0][1] == expected_metrics[metric['metric']][1]

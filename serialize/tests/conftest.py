@@ -9,10 +9,8 @@ import json
 import pytest
 from mock import MagicMock
 
-
 HERE = os.path.dirname(os.path.realpath(__file__))
 FIXTURE_PATH = os.path.join(HERE, 'fixtures')
-
 
 MOCK_FLUSH_DATA = [
     {'foo': 'bar'},
@@ -26,12 +24,9 @@ def mock_aggregator():
     series = {
         'series': MOCK_FLUSH_DATA
     }
-    events = {
-        'events': MOCK_FLUSH_DATA
-    }
-    service_checks = {
-        'service_checks': MOCK_FLUSH_DATA
-    }
+    events = MOCK_FLUSH_DATA
+    service_checks = MOCK_FLUSH_DATA
+
     attrs = {
         'series': series,
         'events': events,

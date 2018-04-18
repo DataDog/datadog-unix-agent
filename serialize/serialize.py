@@ -78,7 +78,7 @@ class Serializer(object):
             if not source_type:
                 source_type = 'api'
 
-            event_list = serialized_events.get(source_type)
+            event_list = serialized_events[source_type]
             event_list.append(event)
 
         payload = {

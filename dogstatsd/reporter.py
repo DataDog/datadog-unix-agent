@@ -40,8 +40,6 @@ class Reporter(threading.Thread):
             self.finished.wait(self.interval)
             self.aggregator.send_packet_count('datadog.dogstatsd.packet.count')
             self.flush()
-            if self.watchdog:
-                self.watchdog.reset()
 
         # Clean up the status messages.
         logging.debug("Stopped reporter")

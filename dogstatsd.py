@@ -28,15 +28,16 @@ from dogstatsd.constants import (
 
 
 def init_dogstatsd(config):
-    port = config['dogstatsd_port']
     api_key = config['api_key']
-    non_local_traffic = config['non_local_traffic']
     recent_point_threshold = config.get('recent_point_threshold', None)
-    so_rcvbuf = config.get('statsd_so_rcvbuf', None)
     server_host = config['bind_host']
     dd_url = config['dd_url']
-    forward_to_host = config.get('statsd_forward_host')
-    forward_to_port = config.get('statsd_forward_port')
+    port = config['dogstatsd']['port']
+    forward_to_host = config['dogstatsd'].get('forward_host')
+    forward_to_port = config['dogstatsd'].get('forward_port')
+    non_local_traffic = config['dogstatsd'].get('non_local_traffic')
+    so_rcvbuf = config['dogstatsd'].get('so_rcvbuf')
+    utf8_decoding = config['dogstatsd'].get('utf8_decoding')
 
     interval = DOGSTATSD_FLUSH_INTERVAL
     aggregator_interval = DOGSTATSD_AGGREGATOR_BUCKET_SIZE
@@ -56,7 +57,7 @@ def init_dogstatsd(config):
         formatter=get_formatter(config),
         histogram_aggregates=config.get('histogram_aggregates'),
         histogram_percentiles=config.get('histogram_percentiles'),
-        utf8_decoding=config['utf8_decoding']
+        utf8_decoding=utf8_decoding
     )
     # serializer
     serializer = Serializer(
@@ -125,6 +126,7 @@ def main(config_path=None):
 
     if command == 'start'or command == 'restart':
         try:
+            reporter.run()
             server.start()
         except Exception:
             logging.exception('Error running dogstatsd')

@@ -10,12 +10,12 @@ from .types import MetricTypes
 def get_formatter(config):
     formatter = api_formatter
 
-    if config['statsd_metric_namespace']:
+    if config['dogstatsd']['metric_namespace']:
         def metric_namespace_formatter_wrapper(metric, value, timestamp, tags,
                                                hostname=None, metric_type=None,
                                                interval=None):
 
-            metric_prefix = config['statsd_metric_namespace']
+            metric_prefix = config['dogstatsd']['metric_namespace']
             if metric_prefix[-1] != '.':
                 metric_prefix += '.'
 

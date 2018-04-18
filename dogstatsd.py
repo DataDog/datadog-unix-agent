@@ -126,11 +126,10 @@ def main(config_path=None):
 
     if command == 'start'or command == 'restart':
         try:
-            reporter.run()
+            reporter.start()
             server.start()
         except Exception:
             logging.exception('Error running dogstatsd')
-            signal_handler(None, None)
     else:
         sys.stderr.write("Unknown command: %s\n\n" % command)
         parser.print_help()

@@ -5,7 +5,7 @@
 
 import pytest
 
-from utils.freeze import (
+from utils.hash import (
     freeze,
     hash_mutable,
 )

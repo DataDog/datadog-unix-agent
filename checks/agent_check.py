@@ -12,6 +12,7 @@ import unicodedata
 
 from aggregator import TextualMetricTypes
 from utils.hostname import get_hostname
+from utils.hash import hash_mutable
 
 
 class CheckException(Exception):
@@ -23,9 +24,10 @@ class AgentCheck(object):
 
     def __init__(self, name, init_config, instance, aggregator=None):
 
-        self.instance = instance
         self.name = name
         self.init_config = init_config
+        self.instance = instance
+        self.signature = self.signature_hash(name, init_config, instance)
         self.warnings = []
         self.log = logging.getLogger('%s.%s' % (__name__, self.name))
         self.hostname = get_hostname()
@@ -33,6 +35,10 @@ class AgentCheck(object):
 
     def check(self, instance):
         raise NotImplementedError
+
+    @staticmethod
+    def signature_hash(name, init_config, instance):
+        return hash_mutable((name, init_config, instance))
 
     def set_aggregator(self, aggregator):
         self.aggregator = aggregator
@@ -43,7 +49,8 @@ class AgentCheck(object):
             return
 
         tags = self._normalize_tags(tags)
-        self.aggregator.submit_metric(name, float(value), mtype, tags=tags)
+        source = (self.name, self.signature)
+        self.aggregator.submit_metric(name, float(value), mtype, tags=tags, source=source)
 
     def gauge(self, name, value, tags=None):
         self._submit_metric(TextualMetricTypes.GAUGE, name, value, tags=tags)

@@ -10,8 +10,8 @@ from . import CheckLoader, WheelLoader
 from .wheel_loader import DD_WHEEL_NAMESPACE
 
 from aggregator import Aggregator
+from checks import AgentCheck
 from utils.hostname import get_hostname
-from utils.freeze import hash_mutable
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class Collector(object):
         self._check_classes = {}
         self._check_classes_errors = {}
         self._check_instances = defaultdict(list)
-        self._check_instance_signatures = set()
+        self._check_instance_signatures = {}
         self._hostname = get_hostname()
         self._aggregator = aggregator
 
@@ -42,6 +42,9 @@ class Collector(object):
             raise ValueError('argument should be of type Aggregator')
 
         self._aggregator = aggregator
+
+    def collector_status(self):
+        pass
 
     def load_core_checks(self):
         from checks.corechecks.system import (
@@ -81,8 +84,8 @@ class Collector(object):
                         init_config = config.get('init_config', {})
                         instances = config.get('instances')  # should be single instance
                         for instance in instances:
-                            signature = hash_mutable((check_name, init_config, instance))
-                            signature_hash = hash_mutable(signature)
+                            signature = (check_name, init_config, instance)
+                            signature_hash = AgentCheck.signature_hash(*signature)
                             if signature_hash in self._check_instance_signatures:
                                 log.info('instance with identical signature already configured - skipping')
                                 continue
@@ -90,10 +93,10 @@ class Collector(object):
                             try:
                                 check_instance = check_class(check_name, init_config, instance, self._aggregator)
                                 self._check_instances[check_name].append(check_instance)
-                                self._check_instance_signatures.add(signature_hash)
+                                self._check_instance_signatures[signature_hash] = signature
                             except Exception:
                                 log.error("unable to instantiate instance %s for %s",
-                                        instance, check_name)
+                                          instance, check_name)
 
         for check_name in self.CORE_CHECKS:
             if check_name in self._check_instances:
@@ -102,10 +105,14 @@ class Collector(object):
 
             check_class = self._check_classes[check_name]
             signature = (check_name, {}, {})
-            check_instance = check_class(*signature)
-            check_instance.set_aggregator(self._aggregator)
-            self._check_instances[check_name] = [check_instance]
-            self._check_instance_signatures.add(hash_mutable(signature))
+            signature_hash = AgentCheck.signature_hash(*signature)
+            try:
+                check_instance = check_class(*signature)
+                check_instance.set_aggregator(self._aggregator)
+                self._check_instances[check_name] = [check_instance]
+                self._check_instance_signatures[signature_hash] = signature
+            except Exception:
+                log.error("unable to instantiate core check %s", check_name)
 
     def run_checks(self):
         for name, checks in self._check_instances.iteritems():

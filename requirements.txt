@@ -6,3 +6,4 @@ requests-mock
 mock
 psutil
 uptime
+tornado

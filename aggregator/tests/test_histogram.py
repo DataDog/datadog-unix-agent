@@ -16,7 +16,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
 
         assert len(metrics) == 5
 
@@ -44,7 +44,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
 
         assert len(metrics) == 5
 
@@ -69,7 +69,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
 
         assert len(metrics) == 7
 
@@ -133,7 +133,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
 
         assert len(metrics) == 4
 

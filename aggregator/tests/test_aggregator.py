@@ -13,6 +13,7 @@ import pytest
 
 # project
 from aggregator import MetricsAggregator
+from aggregator.aggregator import UNKNOWN_SOURCE
 from aggregator.formatters import get_formatter
 from aggregator.types import DEFAULT_HISTOGRAM_AGGREGATES
 
@@ -46,21 +47,24 @@ class TestMetricsAggregator():
         stats = MetricsAggregator('myhost', interval=10,
                                   formatter=get_formatter({'dogstatsd': {'metric_namespace': 'datadog'}}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert (len(metrics) == 1)
         assert (metrics[0]['metric'] == 'datadog.gauge')
 
         stats = MetricsAggregator('myhost', interval=10,
                                   formatter=get_formatter({'dogstatsd': {'metric_namespace': 'datadoge'}}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert (len(metrics) == 1)
         assert (metrics[0]['metric'] == 'datadoge.gauge')
 
         stats = MetricsAggregator('myhost', interval=10,
                                   formatter=get_formatter({'dogstatsd': {'metric_namespace': None}}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert (len(metrics) == 1)
         assert (metrics[0]['metric'] == 'gauge')
 
@@ -74,7 +78,8 @@ class TestMetricsAggregator():
 
         stats.submit_packets('float:5|c')
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 2
 
         floatc, intc = metrics
@@ -99,7 +104,8 @@ class TestMetricsAggregator():
         for i in range(20):
             stats.submit_packets('h2:1|h')
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         _, _, h1count, _, _, _, _, _, h2count, _, _, _ = metrics
 
         assert h1count['points'][0][1] == 0.5
@@ -113,7 +119,8 @@ class TestMetricsAggregator():
         stats.submit_packets('gauge:8|c|#tag2,tag1')  # Should be the same as above
         stats.submit_packets('gauge:16|c|#tag3,tag4')
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
 
         assert len(metrics) == 3
         first, second, third = metrics
@@ -141,7 +148,8 @@ class TestMetricsAggregator():
         stats.submit_packets('my.gauge.c:10|c|#tag3')
         stats.submit_packets('my.gauge.c:16|c|#device:floppy,tag3')
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
 
         assert len(metrics) == 4
         first, second, third, fourth = metrics
@@ -183,7 +191,8 @@ class TestMetricsAggregator():
         stats.submit_packets('my.third.counter:3|c')
 
         # Ensure they roll up nicely.
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 3
 
         first, second, third = metrics
@@ -198,7 +207,8 @@ class TestMetricsAggregator():
         assert third['points'][0][1] == 3
 
         # Ensure that counters reset to zero.
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         first, second, third = metrics
         assert first['metric'] == 'my.first.counter'
         assert first['points'][0][1] == 0
@@ -212,7 +222,8 @@ class TestMetricsAggregator():
         # Submit a sampled counter.
         stats = MetricsAggregator('myhost')
         stats.submit_packets('sampled.counter:1|c|@0.5')
-        metrics = stats.flush()
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'sampled.counter'
@@ -227,7 +238,8 @@ class TestMetricsAggregator():
         stats.submit_packets('my.second.gauge:1.5|g')
 
         # Ensure that gauges roll up correctly.
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 2
 
         first, second = metrics
@@ -244,7 +256,8 @@ class TestMetricsAggregator():
         stats.gauge('my.first.gauge', 1, timestamp=1000000000)
         stats.gauge('my.second.gauge', 20, timestamp=1000000000)
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 1
 
         first = metrics[0]
@@ -263,14 +276,15 @@ class TestMetricsAggregator():
         stats.submit_packets('my.set:30|s')
 
         # Assert that it's treated normally.
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'my.set'
         assert m['points'][0][1] == 3
 
         # Assert there are no more sets
-        assert not stats.flush()
+        metrics, _ = stats.flush()
+        assert not metrics
 
     def test_string_sets(self):
         stats = MetricsAggregator('myhost')
@@ -282,14 +296,15 @@ class TestMetricsAggregator():
         stats.submit_packets('my.set:test|s')
 
         # Assert that it's treated normally.
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'my.set'
         assert m['points'][0][1] == 3
 
         # Assert there are no more sets
-        assert not stats.flush()
+        metrics, _ = stats.flush()
+        assert not metrics
 
     def test_ignore_distribution(self):
         stats = MetricsAggregator('myhost')
@@ -298,7 +313,7 @@ class TestMetricsAggregator():
         stats.submit_packets('my.gauge:1|g')
 
         # Assert that it's treated normally, and that the distribution is ignored
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'my.gauge'
@@ -312,14 +327,15 @@ class TestMetricsAggregator():
         stats.submit_packets('my.rate:40|_dd-r')
 
         # Check that the rate is calculated correctly
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'my.rate'
         assert m['points'][0][1] == 30
 
         # Assert that no more rates are given
-        assert not stats.flush()
+        metrics, _ = stats.flush()
+        assert not metrics
 
     def test_rate_errors(self):
         stats = MetricsAggregator('myhost')
@@ -329,14 +345,14 @@ class TestMetricsAggregator():
         stats.submit_packets('my.rate:9|_dd-r')
 
         # Since the difference < 0 we shouldn't get a value
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 0
 
         stats.submit_packets('my.rate:10|_dd-r')
         # Trying to have the times be the same
         stats.submit_packets('my.rate:40|_dd-r')
 
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 0
 
     def test_gauge_sample_rate(self):
@@ -346,7 +362,7 @@ class TestMetricsAggregator():
         stats.submit_packets('sampled.gauge:10|g|@0.1')
 
         # Assert that it's treated normally.
-        metrics = stats.flush()
+        metrics, _ = stats.flush()
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'sampled.gauge'
@@ -369,7 +385,8 @@ class TestMetricsAggregator():
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
 
         assert len(metrics) == 6
         p95, pavg, pcount, pmax, pmed, pmin = self.sort_metrics(metrics)
@@ -383,7 +400,8 @@ class TestMetricsAggregator():
         assert p95['host'] == 'myhost'
 
         # Ensure that histograms are reset.
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert not metrics
 
     def test_sampled_histogram(self):
@@ -396,7 +414,8 @@ class TestMetricsAggregator():
         stats.submit_packets('sampled.hist:5|h|@0.5')
 
         # Assert we scale up properly.
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         p95, pavg, pcount, pmax, pmed, pmin = self.sort_metrics(metrics)
 
         assert pcount['points'][0][1] == 2
@@ -414,7 +433,8 @@ class TestMetricsAggregator():
         packet = '\n'.join(metrics)
         stats.submit_packets(packet)
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 2
         counter, gauge = metrics
         assert counter['points'][0][1] == 2
@@ -439,8 +459,8 @@ class TestMetricsAggregator():
         ]
         stats_ref.submit_packets('\n'.join(packets))
 
-        metrics = stats.flush()
-        metrics_ref = stats_ref.flush()
+        metrics, _ = stats.flush()
+        metrics_ref, _ = stats_ref.flush()
 
         assert len(metrics) == len(metrics_ref) == 6
 
@@ -459,8 +479,10 @@ class TestMetricsAggregator():
         ]
         stats_ref.submit_packets('\n'.join(packets))
 
-        metrics = self.sort_metrics(stats.flush())
-        metrics_ref = self.sort_metrics(stats_ref.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
+        flushed, _ = stats_ref.flush()
+        metrics_ref = self.sort_metrics(flushed)
 
         assert len(metrics) == 3
         assert len(metrics) == len(metrics_ref)
@@ -489,8 +511,10 @@ class TestMetricsAggregator():
         ]
         stats_ref.submit_packets('\n'.join(packets))
 
-        metrics = self.sort_metrics(stats.flush())
-        metrics_ref = self.sort_metrics(stats_ref.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
+        flushed, _ = stats_ref.flush()
+        metrics_ref = self.sort_metrics(flushed)
 
         assert len(metrics) == len(metrics_ref) == 9
         for i in range(len(metrics)):
@@ -540,19 +564,22 @@ class TestMetricsAggregator():
 
         # Ensure points keep submitting
         time.sleep(ag_interval)
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 9
         assert metrics[0]['metric'] == 'test.counter'
         assert metrics[0]['points'][0][1] == 123
         time.sleep(ag_interval)
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 1
         assert metrics[0]['metric'] == 'test.counter'
         assert metrics[0]['points'][0][1] == 0
 
         time.sleep(ag_interval)
         time.sleep(0.5)
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 1
         assert metrics[0]['metric'] == 'test.counter'
         assert metrics[0]['points'][0][1] == 0
@@ -561,7 +588,7 @@ class TestMetricsAggregator():
         # no points are submitted
         time.sleep(ag_interval)
         time.sleep(2)
-        m = stats.flush()
+        m, _ = stats.flush()
         assert not m, str(m)
 
         # If we submit again, we're all good.
@@ -570,7 +597,8 @@ class TestMetricsAggregator():
         stats.submit_packets('test.set:44|s')
         stats.submit_packets('test.histogram:11|h')
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 9
         assert metrics[0]['metric'] == 'test.counter'
         assert metrics[0]['points'][0][1] == 123
@@ -580,7 +608,8 @@ class TestMetricsAggregator():
         for i in xrange(10):
             stats.submit_packets('metric:10|c')
         stats.send_packet_count('datadog.dogstatsd.packet.count')
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 2
         first, second = metrics
 
@@ -600,7 +629,8 @@ class TestMetricsAggregator():
                 else:
                     stats.submit_packets('test.counter:1|c')
                     stats.submit_packets('test.hist:1|ms')
-            metrics = self.sort_metrics(stats.flush())
+            flushed, _ = stats.flush()
+            metrics = self.sort_metrics(flushed)
             assert len(metrics) > 0
 
             assert [m['points'][0][1] for m in metrics if m['metric'] == 'test.counter'] == [cnt * run]
@@ -610,7 +640,8 @@ class TestMetricsAggregator():
         stats = MetricsAggregator('myhost', interval=10)
 
         stats.submit_packets('test.scinot:9.512901e-05|g')
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
 
         assert len(metrics) == 1
         ts, val = metrics[0].get('points')[0]
@@ -803,7 +834,8 @@ class TestMetricsAggregator():
         stats.submit_metric('my.first.gauge', 1, 'g', timestamp=timestamp_beyond_threshold)
         stats.submit_metric('my.second.gauge', 20, 'g', timestamp=timestamp_beyond_threshold)
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 1
 
         first = metrics[0]
@@ -819,7 +851,8 @@ class TestMetricsAggregator():
         stats.submit_metric('my.4.histogram', 20, 'h', timestamp=timestamp_within_threshold)
 
         flush_timestamp = time.time()
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
         assert len(metrics) == 9
 
         first, second, third, h1, h2, h3, h4, h5, h6 = metrics
@@ -851,7 +884,8 @@ class TestMetricsAggregator():
         stats.submit_packets('line_ending.unix:400|c\n')
         stats.submit_packets('line_ending.windows:300|c\r\n')
 
-        metrics = self.sort_metrics(stats.flush())
+        flushed, _ = stats.flush()
+        metrics = self.sort_metrics(flushed)
 
         assert len(metrics) == 3
 
@@ -864,3 +898,35 @@ class TestMetricsAggregator():
 
         assert third['metric'] == 'line_ending.windows'
         assert third['points'][0][1] == 300
+
+    def test_source_classification(self):
+        # The min is not enabled by default
+        stats = MetricsAggregator('myhost')
+
+        # Ensure that old gauges get dropped due to old timestamps
+        stats.submit_metric('my.first.gauge', 5, 'g', source='foo')
+        stats.submit_metric('my.first.gauge', 1, 'g', source='foo')
+        stats.submit_metric('my.second.gauge', 20, 'g', source='foo')
+
+        # Same metric different source
+        stats.submit_metric('my.first.gauge', 10, 'g', source='bar')
+        stats.submit_metric('my.first.gauge', 2, 'g', source='bar')
+        stats.submit_metric('my.second.gauge', 40, 'g', source='bar')
+
+        # Same metric different source
+        stats.submit_metric('my.first.gauge', 15, 'g', source='haz')
+        stats.submit_metric('my.first.gauge', 3, 'g', source='haz')
+
+        # Same metric from unknown sources
+        stats.submit_metric('my.first.gauge', 15, 'g')
+        stats.submit_metric('my.first.gauge', 3, 'g')
+
+        flushed, sources = stats.flush()
+        metrics = self.sort_metrics(flushed)
+        assert len(metrics) == 2
+
+        assert len(sources) == 4
+        assert sources['foo'] == 2
+        assert sources['bar'] == 2
+        assert sources['haz'] == 1
+        assert sources[UNKNOWN_SOURCE] == 1

@@ -5,9 +5,7 @@
 
 # stdlib
 import logging
-from copy import deepcopy
 from time import time
-from threading import Lock
 from collections import defaultdict, Hashable
 
 # project
@@ -19,12 +17,14 @@ from .types import (
 )
 
 from .formatters import api_formatter
+from. stats import AggregatorStats
 from config.default import DEFAULT_RECENT_POINT_THRESHOLD
 
 
 log = logging.getLogger(__name__)
 
 UNKNOWN_SOURCE = 'unknown'
+
 
 class Aggregator(object):
     """
@@ -41,8 +41,9 @@ class Aggregator(object):
                  utf8_decoding=False):
         self.events = []
         self.service_checks = []
-        self._stats_mutex = Lock()
-        self.last_flush_stats = None
+
+        self.stats = AggregatorStats()
+        # TODO(jaime): we can probably kill total counts
         self.total_count = 0
         self.count = 0
         self.event_count = 0
@@ -277,16 +278,6 @@ class Aggregator(object):
                 tags = tuple(tags) or None
         return hostname, tags
 
-    def get_aggregator_stats(self):
-        self._stats_mutex.acquire()
-        try:
-            stats = deepcopy(self.last_flush_stats)
-            count = int(self.total_count)
-        finally:
-            self._stats_mutex.release()
-
-        return stats, count
-
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
                       timestamp=None, sample_rate=1):
         """ Add a metric to be aggregated """
@@ -346,6 +337,7 @@ class Aggregator(object):
         events = self.events
         self.events = []
 
+        self.stats.set_last_flush_counts(ecount=self.event_count)
         self.total_count += self.event_count
         self.event_count = 0
 
@@ -357,6 +349,7 @@ class Aggregator(object):
         service_checks = self.service_checks
         self.service_checks = []
 
+        self.stats.set_last_flush_counts(sccount=self.service_check_count)
         self.total_count += self.service_check_count
         self.service_check_count = 0
 
@@ -502,6 +495,7 @@ class MetricsBucketAggregator(Aggregator):
 
         # Save some stats.
         log.debug("received %s payloads since last flush" % self.count)
+        self.stats.set_last_flush_counts(mcount=self.count)
         self.total_count += self.count
         self.count = 0
         self.current_bucket = None
@@ -621,13 +615,11 @@ class MetricsAggregator(Aggregator):
             stats_by_source[source] = len(contexts)
 
         # Save some stats.
-        self._stats_mutex.acquire()
-        try:
-            log.debug("received %s payloads since last flush" % self.count)
-            self.last_flush_stats = stats_by_source
-            self.total_count += self.count
-            self.count = 0
-        finally:
-            self._stats_mutex.release()
+        self.stats.set_last_flush_metric_stats(stats_by_source)
+        self.stats.set_last_flush_counts(mcount=self.count)
+        log.debug("received %s payloads since last flush" % self.count)
 
-        return metrics, stats_by_source
+        self.count = 0
+        self.total_count += self.count
+
+        return metrics

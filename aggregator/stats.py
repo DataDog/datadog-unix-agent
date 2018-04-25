@@ -15,6 +15,7 @@ class AggregatorStats(object):
     def __init__(self):
         self._stats_mutex = Lock()
         self._last_flush_metric_stats = None
+
         self._last_flush_service_check_count = 0
         self._last_flush_metric_count = 0
         self._last_flush_event_count = 0
@@ -89,7 +90,7 @@ class AggregatorStats(object):
 
         return {
             'stats': stats,
-            'metric_count': mcount,
-            'event_count': ecount,
-            'service_check_count': sccount,
+            'metric_pkt_count': mcount,
+            'event_pkt_count': ecount,
+            'service_check_pkt_count': sccount,
         }

@@ -12,18 +12,19 @@ log = logging.getLogger(__name__)
 
 
 class APIStatusHandler(tornado.web.RequestHandler):
-    def initialize(self, aggregator):
-        self.aggregator = aggregator
+    def initialize(self, aggregator_stats):
+        self._aggregator_stats = aggregator_stats
 
     def get(self):
-        stats, count = self.aggregator.get_aggregator_stats()
+        stats = self._aggregator_stats.get_aggregator_stats()
 
-        output = {'total count': count}
-        for signature, values in stats.iteritems():
+        check_stats = stats.pop('stats')
+        stats['checks'] = {}
+        for signature, values in check_stats.iteritems():
             check = signature[0]
-            if check in output:
-                output[check] += values
+            if check in stats['checks']:
+                stats['checks'][check]['merics'] += values
             else:
-                output[check] = values
+                stats['checks'][check] = {'metrics': values}
 
-        self.write(json.dumps(output))
+        self.write(json.dumps(stats))

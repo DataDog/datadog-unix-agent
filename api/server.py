@@ -19,9 +19,8 @@ class APIServer(object):
     def __init__(self, port, aggregator_stats):
         # start API
         self._port = port
-        self._aggregator_stats = aggregator_stats
         self._app = tornado.web.Application([
-            (r"/status", APIStatusHandler, dict(aggregator=self._aggregator)),
+            (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
         ])
         self._ioloop = tornado.ioloop.IOLoop.current()
 

@@ -39,6 +39,7 @@ class Aggregator(object):
                  formatter=None, recent_point_threshold=None,
                  histogram_aggregates=None, histogram_percentiles=None,
                  utf8_decoding=False):
+        # TODO(jaime): add support for event, service_check sources
         self.events = []
         self.service_checks = []
 

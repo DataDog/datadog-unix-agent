@@ -5,6 +5,7 @@
 
 from aggregator.stats import AggregatorStats
 
+
 def test_stats():
     # The min is not enabled by default
     stats = AggregatorStats()
@@ -18,9 +19,9 @@ def test_stats():
 
     flush_stats = stats.get_aggregator_stats()
     assert flush_stats['stats'] == metric_stats
-    assert flush_stats['metric_count'] == 4
-    assert flush_stats['event_count'] == 2
-    assert flush_stats['service_check_count'] == 1
+    assert flush_stats['metric_pkt_count'] == 4
+    assert flush_stats['event_pkt_count'] == 2
+    assert flush_stats['service_check_pkt_count'] == 1
 
     # test we got a deepcopy
     metric_stats['foo'] += 10

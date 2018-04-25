@@ -16,9 +16,9 @@ from .types import (
     BucketMetricResolver,
 )
 
+from config.default import DEFAULT_RECENT_POINT_THRESHOLD
 from .formatters import api_formatter
 from. stats import AggregatorStats
-from config.default import DEFAULT_RECENT_POINT_THRESHOLD
 
 
 log = logging.getLogger(__name__)

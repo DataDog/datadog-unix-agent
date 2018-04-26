@@ -4,10 +4,14 @@
 # Copyright 2018 Datadog, Inc.
 
 from .cpu import Cpu
+from .load import Load
+from .memory import Memory
 from .uptime_check import UptimeCheck
 
 
 __all__ = [
     'Cpu',
+    'Load',
+    'Memory',
     'UptimeCheck',
 ]

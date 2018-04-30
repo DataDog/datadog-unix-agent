@@ -74,9 +74,9 @@ class Config(object):
         for env_var in self.env_bindings:
             key = self.env_prefix + env_var
             if key in os.environ:
-                self.data[env_var] = os.environ[key]
+                self.env_override(key, env_var)
             elif key.upper() in os.environ:
-                self.data[env_var] = os.environ[key.upper()]
+                self.env_override(key.upper(), env_var)
 
         self.validate()
 
@@ -84,8 +84,55 @@ class Config(object):
         self.env_bindings.add(key)
 
     def bind_env_and_set_default(self, key, value):
-        self.bind_env(key)
-        self.set_default(key, value)
+        if isinstance(value, dict):
+            for k, v in value.iteritems():
+                self.bind_env_and_set_default("{}_{}".format(key, k), v)
+        else:
+            self.bind_env(key)
+            self.set_default(key, value)
+
+    def env_var_namespaces(self, env_var):
+        namespaces = [(env_var, '')]
+        split = env_var.split('_')
+        for i in range(len(split)):
+            namespaces.append(('_'.join(split[:i]), '_'.join(split[i:])))
+
+        return namespaces
+
+    def env_override(self, env_var, key, path=[]):
+        key_path=list(path)
+        data = self.data
+        defaults = self.defaults
+        for p in key_path:
+            data = data.get(p, {})
+            if not data:
+                break
+        for p in key_path:
+            defaults = defaults.get(p, {})
+            if not defaults:
+                break
+
+        if not (data or defaults):
+            log.warn("key not available")
+            return False
+
+        for key_prefix, key_suffix in self.env_var_namespaces(key):
+            if key_prefix in data or key_prefix in defaults:
+                if key_prefix not in data:
+                    data[key_prefix] = defaults[key_prefix]
+
+                if key_suffix:
+                    key_path.append(key_prefix)
+                    return self.env_override(env_var, key_suffix, path=key_path)
+                else:
+                    try:
+                        data[key_prefix] = os.environ[env_var]
+                        return True
+                    except TypeError:
+                        log.warn("unable to override: %s", env_var)
+                        return False
+
+        return False
 
     def validate(self):
         self.validate_histogram_aggregates()

@@ -259,3 +259,46 @@ class TestConfig():
             assert 'init_config' in config
             assert 'instances' in config
             assert isinstance(config['instances'], list)
+
+    def test_env_namespaces(self):
+        config = Config()
+
+        test_env_var = "DD_FOO_BAR_HaZ"
+        namespaces = config.env_var_namespaces(test_env_var)
+        assert len(namespaces) == 5
+
+        for prefix, suffix in namespaces:
+            if prefix and suffix:
+                assert "{}_{}".format(prefix, suffix) == test_env_var
+            elif suffix:
+                assert suffix == test_env_var
+            else:
+                assert prefix == test_env_var
+
+    def test_env_override(self):
+        config = Config()
+
+        config.data = {
+            'logging': {
+                'agent_log_file': 'foo',
+                'dogstatsd_log_file': 'bar',
+            },
+            'comics':
+            {
+                'marvel': {
+                    'hulk': 'unknown'
+                }
+            }
+        }
+
+        os.environ['DD_LOGGING_AGENT_LOG_FILE'] = 'qux'
+        os.environ['DD_LOGGING_DOGSTATSD_LOG_FILE'] = 'lulz'
+        os.environ['DD_COMICS_MARVEL_HULK'] = 'bruce banner'
+
+        override = config.env_override('DD_LOGGING_AGENT_LOG_FILE', 'logging_agent_log_file')
+        override &= config.env_override('DD_LOGGING_DOGSTATSD_LOG_FILE', 'logging_dogstatsd_log_file')
+        override &= config.env_override('DD_COMICS_MARVEL_HULK', 'comics_marvel_hulk')
+        assert override is True
+        assert config.data['logging']['agent_log_file'] == 'qux'
+        assert config.data['logging']['dogstatsd_log_file'] == 'lulz'
+        assert config.data['comics']['marvel']['hulk'] == 'bruce banner'

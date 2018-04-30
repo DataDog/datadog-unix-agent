@@ -3,6 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import os
+
 # Defaults
 
 DEFAULT_ADDITIONAL_CHECKSD = '/etc/datadog-agent/checks.d'
@@ -17,6 +19,11 @@ DEFAULT_EXT_HOST_TAGS_INTERVAL = 5 * 60
 DEFAULT_LOG_LEVEL = 'info'
 DEFAULT_DOGSTATSD_PORT = 8125
 DEFAULT_BIND_HOST = 'localhost'
+DEFAULT_LOGGING_CONFIG = {
+    'disable_file_logging': False,
+    'agent_log_file': os.path.join(os.getcwd(), 'agent.log'),
+    'dogstatsd_log_file': os.path.join(os.getcwd(), 'dogstatsd.log'),
+}
 
 # This is used to ensure that metrics with a timestamp older than
 # RECENT_POINT_THRESHOLD_DEFAULT seconds (or the value passed in to
@@ -37,6 +44,7 @@ def init(config):
         'hostname': '',
         'tags': [],
         'log_level': DEFAULT_LOG_LEVEL,
+        'logging': DEFAULT_LOGGING_CONFIG,
         'forwarder_timeout': DEFAULT_FORWARDER_TO,
         'forwarder_retry_queue_max_size': DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE,
         'additional_checksd': DEFAULT_ADDITIONAL_CHECKSD,

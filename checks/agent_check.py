@@ -4,7 +4,6 @@
 # Copyright 2018 Datadog, Inc.
 
 import copy
-import json
 import traceback
 import re
 import logging
@@ -85,7 +84,8 @@ class AgentCheck(object):
                 try:
                     event[key] = event[key].encode('utf-8')
                 except UnicodeError:
-                    self.log.warning("Error encoding unicode field '%s' of event to utf-8 encoded string, can't submit event", key)
+                    self.log.warning("Error encoding unicode field '%s' of event to utf-8 encoded string, \
+                                     can't submit event", key)
                     return
         if event.get('tags'):
             event['tags'] = self._normalize_tags_type(event['tags'])
@@ -197,14 +197,12 @@ class AgentCheck(object):
     def run(self):
         try:
             self.check(copy.deepcopy(self.instance))
-            result = ''
+            result = None
 
         except Exception, e:
-            result = json.dumps([
-                {
-                    "message": str(e),
-                    "traceback": traceback.format_exc(),
-                }
-            ])
+            result = {
+                "message": str(e),
+                "traceback": traceback.format_exc(),
+            }
 
         return result

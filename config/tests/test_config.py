@@ -290,15 +290,26 @@ class TestConfig():
                 }
             }
         }
+        config.defaults = {
+            'comics':
+            {
+                'dc': {
+                    'flash': 'unknown'
+                }
+            }
+        }
 
         os.environ['DD_LOGGING_AGENT_LOG_FILE'] = 'qux'
         os.environ['DD_LOGGING_DOGSTATSD_LOG_FILE'] = 'lulz'
         os.environ['DD_COMICS_MARVEL_HULK'] = 'bruce banner'
+        os.environ['DD_COMICS_DC_FLASH'] = 'barry allen'
 
         override = config.env_override('DD_LOGGING_AGENT_LOG_FILE', 'logging_agent_log_file')
         override &= config.env_override('DD_LOGGING_DOGSTATSD_LOG_FILE', 'logging_dogstatsd_log_file')
         override &= config.env_override('DD_COMICS_MARVEL_HULK', 'comics_marvel_hulk')
+        override &= config.env_override('DD_COMICS_DC_FLASH', 'comics_dc_flash')
         assert override is True
         assert config.data['logging']['agent_log_file'] == 'qux'
         assert config.data['logging']['dogstatsd_log_file'] == 'lulz'
         assert config.data['comics']['marvel']['hulk'] == 'bruce banner'
+        assert config.data['comics']['dc']['flash'] == 'barry allen'

@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import os
+import copy
 import yaml
 import logging
 import decimal
@@ -113,13 +114,13 @@ class Config(object):
                 break
 
         if not (data or defaults):
-            log.warn("key not available")
+            log.warn("key prefix unexpectedly unavailable in configurations")
             return False
 
         for key_prefix, key_suffix in self.env_var_namespaces(key):
             if key_prefix in data or key_prefix in defaults:
                 if key_prefix not in data:
-                    data[key_prefix] = defaults[key_prefix]
+                    data[key_prefix] = copy.deepcopy(defaults[key_prefix])
 
                 if key_suffix:
                     key_path.append(key_prefix)

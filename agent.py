@@ -13,6 +13,8 @@ import logging
 from config import config
 from config.providers import FileConfigProvider
 from utils.hostname import get_hostname
+from utils.daemon import Daemon
+from utils.pidfile import PidFile
 from metadata import get_metadata
 
 from collector import Collector
@@ -20,8 +22,11 @@ from aggregator import MetricsAggregator
 from serialize import Serializer
 from forwarder import Forwarder
 
+PID_NAME = "dd-unix-agent"
+PID_DIR = None
 
-def init_agent():
+
+def init_config():
     # init default search path
     config.add_search_path("/etc/datadog-unix-agent")
     config.add_search_path(".")
@@ -41,72 +46,86 @@ def init_agent():
     config.collect_check_configs()
 
 
-def start():
-    """
-    Dummy start until we have a collector
-    """
-    init_agent()
+class Agent(Daemon):
+    @classmethod
+    def info(cls):
+        return True
 
-    hostname = get_hostname()
+    def run(self):
+        hostname = get_hostname()
 
-    logging.info("Starting the agent, hostname: %s", hostname)
+        logging.info("Starting the agent, hostname: %s", hostname)
 
-    # init Forwarder
-    logging.info("Starting the Forwarder")
-    api_key = config.get('api_key')
-    dd_url = config.get('dd_url')
-    if not dd_url:
-        logging.error('No Datadog URL configured - cannot continue')
-        sys.exit(1)
-    if not api_key:
-        logging.error('No API key configured - cannot continue')
-        sys.exit(1)
+        # init Forwarder
+        logging.info("Starting the Forwarder")
+        api_key = config.get('api_key')
+        dd_url = config.get('dd_url')
+        if not dd_url:
+            logging.error('No Datadog URL configured - cannot continue')
+            sys.exit(1)
+        if not api_key:
+            logging.error('No API key configured - cannot continue')
+            sys.exit(1)
 
-    forwarder = Forwarder(
-        api_key,
-        dd_url
-    )
-    forwarder.start()
+        forwarder = Forwarder(
+            api_key,
+            dd_url
+        )
+        forwarder.start()
 
-    # aggregator
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=config.get('aggregator_interval'),
-        expiry_seconds=(config.get('min_collection_interval') +
-                        config.get('aggregator_expiry_seconds')),
-        recent_point_threshold=config.get('recent_point_threshold'),
-        histogram_aggregates=config.get('histogram_aggregates'),
-        histogram_percentiles=config.get('histogram_percentiles'),
-    )
+        # aggregator
+        aggregator = MetricsAggregator(
+            hostname,
+            interval=config.get('aggregator_interval'),
+            expiry_seconds=(config.get('min_collection_interval') +
+                            config.get('aggregator_expiry_seconds')),
+            recent_point_threshold=config.get('recent_point_threshold'),
+            histogram_aggregates=config.get('histogram_aggregates'),
+            histogram_percentiles=config.get('histogram_percentiles'),
+        )
 
-    # serializer
-    serializer = Serializer(
-        aggregator,
-        forwarder,
-    )
+        # serializer
+        serializer = Serializer(
+            aggregator,
+            forwarder,
+        )
 
-    # instantiate collector
-    collector = Collector(config, aggregator)
-    collector.load_check_classes()
-    collector.instantiate_checks()
+        # instantiate collector
+        collector = Collector(config, aggregator)
+        collector.load_check_classes()
+        collector.instantiate_checks()
 
-    def signal_handler(signal, frame):
-        logging.info("SIGINT received: stopping the agent")
-        logging.info("Stopping the forwarder")
-        forwarder.stop()
-        logging.info("See you !")
-        sys.exit(0)
+        def signal_handler(signal, frame):
+            logging.info("SIGINT received: stopping the agent")
+            logging.info("Stopping the forwarder")
+            forwarder.stop()
+            logging.info("See you !")
+            sys.exit(0)
 
-    signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
 
-    # update the metadata periodically?
-    metadata = get_metadata(hostname)
-    serializer.submit_metadata(metadata)
-    while True:
-        collector.run_checks()
-        serializer.serialize_and_push()
-        time.sleep(config.get('min_collection_interval'))
+        # update the metadata periodically?
+        metadata = get_metadata(hostname)
+        serializer.submit_metadata(metadata)
+        while True:
+            collector.run_checks()
+            serializer.serialize_and_push()
+            time.sleep(config.get('min_collection_interval'))
+
+
+def main():
+    init_config()
+
+    agent = Agent(PidFile(PID_NAME, PID_DIR).get_path())
+    agent.start(foreground=True)
 
 
 if __name__ == "__main__":
-    start()
+    try:
+        sys.exit(main())
+    except StandardError:
+        try:
+            logging.exception("Uncaught error running the Agent")
+        except Exception:
+            pass
+        raise

@@ -104,7 +104,7 @@ def test_load_aix(getloadavg, get_subprocess_output, cpu_count):
         'system.load.1': (GAUGE, 1.19),
         'system.load.5': (GAUGE, 0.77),
         'system.load.15': (GAUGE, 0.85),
-        'system.load.norm.1': (GAUGE,0.595),
+        'system.load.norm.1': (GAUGE, 0.595),
         'system.load.norm.5': (GAUGE, 0.385),
         'system.load.norm.15': (GAUGE, 0.425),
     }

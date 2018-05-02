@@ -9,6 +9,7 @@ import signal
 import sys
 import time
 import logging
+from optparse import OptionParser
 
 from config import config
 from config.providers import FileConfigProvider
@@ -47,6 +48,17 @@ def init_config():
 
 
 class Agent(Daemon):
+    COMMANDS = [
+        'start',
+        'stop',
+        'restart',
+        'status',
+    ]
+
+    @classmethod
+    def usage(cls):
+        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
+
     @classmethod
     def info(cls):
         return True
@@ -114,10 +126,38 @@ class Agent(Daemon):
 
 
 def main():
-    init_config()
+    parser = OptionParser()
+    parser.add_option('-b', '--background', action='store_true', default=False,
+                      dest='background', help='Run agent on the foreground')
+    options, args = parser.parse_args()
 
+    if len(args) < 1:
+        sys.stderr.write(Agent.usage())
+        return 2
+
+    command = args[0]
+    if command not in Agent.COMMANDS:
+        sys.stderr.write("Unknown command: %s\n" % command)
+        return 3
+
+    init_config()
     agent = Agent(PidFile(PID_NAME, PID_DIR).get_path())
-    agent.start(foreground=True)
+
+    foreground = not options.background
+    if 'start' == command:
+        logging.info('Start daemon')
+        agent.start(foreground=foreground)
+
+    elif 'stop' == command:
+        logging.info('Stop daemon')
+        agent.stop()
+
+    elif 'restart' == command:
+        logging.info('Restart daemon')
+        agent.restart()
+
+    elif 'status' == command:
+        agent.status()
 
 
 if __name__ == "__main__":

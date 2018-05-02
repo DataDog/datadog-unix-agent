@@ -4,10 +4,31 @@
 # Copyright 2018 Datadog, Inc.
 
 import uptime
+
+from utils.process import get_subprocess_output
 from checks import AgentCheck
 
 
 class UptimeCheck(AgentCheck):
 
     def check(self, instance):
-        self.gauge("system.uptime", uptime.uptime())
+        up = uptime.uptime()
+        if up:
+            self.gauge("system.uptime", up)
+            return
+
+        try:
+            # get uptime from init process lifetime (pid 1)
+            # format: 8-00:56:09
+            up, _, _ = get_subprocess_output(['ps', '-o', 'etime=', '-p1'], self.log)
+            up = up.split('-')
+            days, rest = up[0], up[1]
+
+            time = rest.split(':')
+            days_s = int(days) * 24 * 60 * 60
+            hour_s = int(time[0]) * 60 * 60
+            mins_s = int(time[1]) * 60
+            secs = int(time[2])
+            self.gauge("system.uptime", days_s+hour_s+mins_s+secs)
+        except Exception:
+            self.log.exception("Cannot collect uptime statistics")

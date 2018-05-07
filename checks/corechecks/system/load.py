@@ -17,7 +17,7 @@ class Load(AgentCheck):
             load = os.getloadavg()
         except AttributeError:
             # sample output: '10:50AM   up 8 days,   2:48,  2 users,  load average: 1.19, 0.77, 0.85'
-            load, _, _ = get_subprocess_output(["uptime"])
+            load, _, _ = get_subprocess_output(["uptime"], self.log)
             load = load.strip().split(' ')
             load = [float(load[-3].strip(',')),
                     float(load[-2].strip(',')),

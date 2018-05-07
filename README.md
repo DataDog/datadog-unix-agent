@@ -82,9 +82,19 @@ DD_LOG_LEVEL=debug DD_API_KEY=<api_key_here> ./agent.py start
 
 You may also drop a configuration file `datadog.yaml` in the repo root (you may use the example 
 file provided in the repo). Other more UNIX appropriate locations are supported (namely
-`/etc/datadog-agent` but packaging isn't currently available).
+`/etc/datadog-agent` but packaging isn't currently available). When using a config file instead
+of environment variables to specify configuration params, launch like this:
 
-The agent will run by default in the foreground.
+```bash
+./agent.py start
+```
+
+Config file will be searched in this order:
+- `./datadog.yaml`
+- `/etc/datadog-agent/datadog.yaml`
+
+
+By default, the agent will run in the foreground.
 
 There are also facilities to run the agent both daemonized and via a `supervisor`, this would
 probably be the preferred way to manage your daemons (`agent` and `dogstatsd`).

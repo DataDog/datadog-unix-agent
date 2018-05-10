@@ -8,7 +8,7 @@ This agent targets miscellaneous Unix operating systems not supported by our cur
 agents. To do so, it has been stripped of unnecessary bloat and cut around irrelevant use-cases 
 given the target platforms, sometimes at the expense of certain features. To maximize portability
 the agent will attempt to reduce the number of non pure-python dependencies to a minimum, and rely
-on packages with native support for the targeted OSes (AIX, currently).
+on packages with native support for the targeted OSes (AIX currently).
 
 ## AIX
 

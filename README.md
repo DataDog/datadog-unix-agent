@@ -1,6 +1,8 @@
 # Datadog Unix Agent
 
-A full fledged Agent specifically designed for Unix-bases systems.
+A full fledged Agent specifically designed for Unix-bases systems. 
+
+NOTE: Datadog currently officially supports only AIX. We have not yet fully tested Solaris or others.
 
 This agent targets miscellaneous Unix operating systems not supported by our currently available
 agents. To do so, it has been stripped of unnecessary bloat and cut around irrelevant use-cases 

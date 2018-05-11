@@ -1,12 +1,14 @@
 # Datadog Unix Agent
 
-A full fledged Agent specifically designed for Unix-bases systems.
+A full fledged Agent specifically designed for Unix-based systems. 
+
+Note: This agent is currently in beta for AIX. It has not been tested on other systems.
 
 This agent targets miscellaneous Unix operating systems not supported by our currently available
 agents. To do so, it has been stripped of unnecessary bloat and cut around irrelevant use-cases 
 given the target platforms, sometimes at the expense of certain features. To maximize portability
 the agent will attempt to reduce the number of non pure-python dependencies to a minimum, and rely
-on packages with native support for the targeted OSes (AIX, Solaris).
+on packages with native support for the targeted OSes (AIX currently).
 
 ## AIX
 

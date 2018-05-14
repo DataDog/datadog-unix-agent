@@ -6,12 +6,23 @@
 import os
 import psutil
 
+from utils.process import get_subprocess_output
 from checks import AgentCheck
+
 
 class Load(AgentCheck):
 
     def check(self, instance):
-        load = os.getloadavg()
+        try:
+            load = os.getloadavg()  # os.getloadvg() not available on AIX fallback to uptime report
+        except AttributeError:
+            # sample output: '10:50AM   up 8 days,   2:48,  2 users,  load average: 1.19, 0.77, 0.85'
+            load, _, _ = get_subprocess_output(["uptime"], self.log)
+            load = load.strip().split(' ')
+            load = [float(load[-3].strip(',')),
+                    float(load[-2].strip(',')),
+                    float(load[-1].strip(','))]
+
         self.gauge('system.load.1', load[0])
         self.gauge('system.load.5', load[1])
         self.gauge('system.load.15', load[2])

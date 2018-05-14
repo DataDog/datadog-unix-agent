@@ -34,6 +34,8 @@ class Cpu(AgentCheck):
             self.gauge("system.cpu.user", round(user / self._nb_cpu, 4))
             self.gauge("system.cpu.idle", round((res.idle   - self._last.idle)   / self._nb_cpu, 4))
 
+            if hasattr(res, 'iowait'):
+                self.gauge("system.cpu.iowait", round((res.iowait   - self._last.iowait)   / self._nb_cpu, 4))
             if hasattr(res, 'steal'):
                 self.gauge("system.cpu.stolen", round((res.steal  - self._last.steal)  / self._nb_cpu, 4))
             if hasattr(res, 'guest'):

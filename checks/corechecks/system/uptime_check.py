@@ -17,6 +17,9 @@ class UptimeCheck(AgentCheck):
             self.gauge("system.uptime", up)
             return
 
+        # On AIX and some other platforms the uptime module may fail to find the system
+        # uptime and return `None` - in that case, grab the uptime as the init process
+        # (pid 1) uptime
         try:
             # get uptime from init process lifetime (pid 1)
             # format: 8-00:56:09

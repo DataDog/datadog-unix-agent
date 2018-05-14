@@ -14,7 +14,7 @@ class Load(AgentCheck):
 
     def check(self, instance):
         try:
-            load = os.getloadavg()
+            load = os.getloadavg()  # os.getloadvg() not available on AIX fallback to uptime report
         except AttributeError:
             # sample output: '10:50AM   up 8 days,   2:48,  2 users,  load average: 1.19, 0.77, 0.85'
             load, _, _ = get_subprocess_output(["uptime"], self.log)

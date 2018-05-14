@@ -45,9 +45,11 @@ def test_split(legacy_payload, service_check_payload):
 def test_serialize(mock_aggregator, mock_forwarder):
     serializer = Serializer(mock_aggregator, mock_forwarder)
 
-    metrics_szd, service_checks_szd, events_szd = serializer.serialize(False)
+    metrics_szd, metrics_count = serializer.serialize_metrics(False)
     assert metrics_szd
+    service_checks_szd, service_checks_count = serializer.serialize_service_checks(False)
     assert service_checks_szd
+    events_szd, events_count = serializer.serialize_events(False)
     assert events_szd
 
     metrics = json.loads(metrics_szd)
@@ -56,7 +58,7 @@ def test_serialize(mock_aggregator, mock_forwarder):
 
     assert metrics == mock_aggregator.series
     assert service_checks == mock_aggregator.service_checks
-    assert events == mock_aggregator.events
+    assert events['events']['api'] == mock_aggregator.events
 
 
 def test_serialize_and_push(mock_aggregator, mock_forwarder):

@@ -44,25 +44,25 @@ class TestMetricsAggregator():
 
     def test_formatter(self):
         stats = MetricsAggregator('myhost', interval=10,
-                                  formatter=get_formatter({"statsd_metric_namespace": "datadog"}))
+                                  formatter=get_formatter({'dogstatsd': {'metric_namespace': 'datadog'}}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
         assert (len(metrics) == 1)
-        assert (metrics[0]['metric'] == "datadog.gauge")
+        assert (metrics[0]['metric'] == 'datadog.gauge')
 
         stats = MetricsAggregator('myhost', interval=10,
-                                  formatter=get_formatter({"statsd_metric_namespace": "datadoge."}))
+                                  formatter=get_formatter({'dogstatsd': {'metric_namespace': 'datadoge'}}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
         assert (len(metrics) == 1)
-        assert (metrics[0]['metric'] == "datadoge.gauge")
+        assert (metrics[0]['metric'] == 'datadoge.gauge')
 
         stats = MetricsAggregator('myhost', interval=10,
-                                  formatter=get_formatter({"statsd_metric_namespace": None}))
+                                  formatter=get_formatter({'dogstatsd': {'metric_namespace': None}}))
         stats.submit_packets('gauge:16|c|#tag3,tag4')
         metrics = self.sort_metrics(stats.flush())
         assert (len(metrics) == 1)
-        assert (metrics[0]['metric'] == "gauge")
+        assert (metrics[0]['metric'] == 'gauge')
 
     def test_counter_normalization(self):
         stats = MetricsAggregator('myhost', interval=10)
@@ -411,7 +411,7 @@ class TestMetricsAggregator():
             'counter:1|c',
             'gauge:1|g'
         ]
-        packet = "\n".join(metrics)
+        packet = '\n'.join(metrics)
         stats.submit_packets(packet)
 
         metrics = self.sort_metrics(stats.flush())
@@ -437,7 +437,7 @@ class TestMetricsAggregator():
             'test_hist:2.5|ms|@0.5',
             'test_hist:3|ms'
         ]
-        stats_ref.submit_packets("\n".join(packets))
+        stats_ref.submit_packets('\n'.join(packets))
 
         metrics = stats.flush()
         metrics_ref = stats_ref.flush()
@@ -457,7 +457,7 @@ class TestMetricsAggregator():
             'test_gauge:2.3|g|#tag3:three',
             'test_gauge:3|g'
         ]
-        stats_ref.submit_packets("\n".join(packets))
+        stats_ref.submit_packets('\n'.join(packets))
 
         metrics = self.sort_metrics(stats.flush())
         metrics_ref = self.sort_metrics(stats_ref.flush())
@@ -487,7 +487,7 @@ class TestMetricsAggregator():
             'test_metric:3|g',
             'test_metric:42|h|#tag1:12,tag42:42|@0.22'
         ]
-        stats_ref.submit_packets("\n".join(packets))
+        stats_ref.submit_packets('\n'.join(packets))
 
         metrics = self.sort_metrics(stats.flush())
         metrics_ref = self.sort_metrics(stats_ref.flush())

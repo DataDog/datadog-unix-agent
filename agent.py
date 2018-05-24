@@ -23,7 +23,7 @@ from aggregator import MetricsAggregator
 from serialize import Serializer
 from forwarder import Forwarder
 
-PID_NAME = "dd-unix-agent"
+PID_NAME = "datadog-unix-agent"
 PID_DIR = None
 
 

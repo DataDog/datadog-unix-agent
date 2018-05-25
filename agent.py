@@ -9,10 +9,13 @@ import signal
 import sys
 import time
 import logging
+from optparse import OptionParser
 
 from config import config
 from config.providers import FileConfigProvider
 from utils.hostname import get_hostname
+from utils.daemon import Daemon
+from utils.pidfile import PidFile
 from metadata import get_metadata
 
 from collector import Collector
@@ -20,8 +23,11 @@ from aggregator import MetricsAggregator
 from serialize import Serializer
 from forwarder import Forwarder
 
+PID_NAME = "datadog-unix-agent"
+PID_DIR = None
 
-def init_agent():
+
+def init_config():
     # init default search path
     config.add_search_path("/etc/datadog-unix-agent")
     config.add_search_path(".")
@@ -41,72 +47,125 @@ def init_agent():
     config.collect_check_configs()
 
 
-def start():
-    """
-    Dummy start until we have a collector
-    """
-    init_agent()
+class Agent(Daemon):
+    COMMANDS = [
+        'start',
+        'stop',
+        'restart',
+        'status',
+    ]
 
-    hostname = get_hostname()
+    @classmethod
+    def usage(cls):
+        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
 
-    logging.info("Starting the agent, hostname: %s", hostname)
+    @classmethod
+    def info(cls):
+        return True
 
-    # init Forwarder
-    logging.info("Starting the Forwarder")
-    api_key = config.get('api_key')
-    dd_url = config.get('dd_url')
-    if not dd_url:
-        logging.error('No Datadog URL configured - cannot continue')
-        sys.exit(1)
-    if not api_key:
-        logging.error('No API key configured - cannot continue')
-        sys.exit(1)
+    def run(self):
+        hostname = get_hostname()
 
-    forwarder = Forwarder(
-        api_key,
-        dd_url
-    )
-    forwarder.start()
+        logging.info("Starting the agent, hostname: %s", hostname)
 
-    # aggregator
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=config.get('aggregator_interval'),
-        expiry_seconds=(config.get('min_collection_interval') +
-                        config.get('aggregator_expiry_seconds')),
-        recent_point_threshold=config.get('recent_point_threshold'),
-        histogram_aggregates=config.get('histogram_aggregates'),
-        histogram_percentiles=config.get('histogram_percentiles'),
-    )
+        # init Forwarder
+        logging.info("Starting the Forwarder")
+        api_key = config.get('api_key')
+        dd_url = config.get('dd_url')
+        if not dd_url:
+            logging.error('No Datadog URL configured - cannot continue')
+            sys.exit(1)
+        if not api_key:
+            logging.error('No API key configured - cannot continue')
+            sys.exit(1)
 
-    # serializer
-    serializer = Serializer(
-        aggregator,
-        forwarder,
-    )
+        forwarder = Forwarder(
+            api_key,
+            dd_url
+        )
+        forwarder.start()
 
-    # instantiate collector
-    collector = Collector(config, aggregator)
-    collector.load_check_classes()
-    collector.instantiate_checks()
+        # aggregator
+        aggregator = MetricsAggregator(
+            hostname,
+            interval=config.get('aggregator_interval'),
+            expiry_seconds=(config.get('min_collection_interval') +
+                            config.get('aggregator_expiry_seconds')),
+            recent_point_threshold=config.get('recent_point_threshold'),
+            histogram_aggregates=config.get('histogram_aggregates'),
+            histogram_percentiles=config.get('histogram_percentiles'),
+        )
 
-    def signal_handler(signal, frame):
-        logging.info("SIGINT received: stopping the agent")
-        logging.info("Stopping the forwarder")
-        forwarder.stop()
-        logging.info("See you !")
-        sys.exit(0)
+        # serializer
+        serializer = Serializer(
+            aggregator,
+            forwarder,
+        )
 
-    signal.signal(signal.SIGINT, signal_handler)
+        # instantiate collector
+        collector = Collector(config, aggregator)
+        collector.load_check_classes()
+        collector.instantiate_checks()
 
-    # update the metadata periodically?
-    metadata = get_metadata(hostname)
-    serializer.submit_metadata(metadata)
-    while True:
-        collector.run_checks()
-        serializer.serialize_and_push()
-        time.sleep(config.get('min_collection_interval'))
+        def signal_handler(signal, frame):
+            logging.info("SIGINT received: stopping the agent")
+            logging.info("Stopping the forwarder")
+            forwarder.stop()
+            logging.info("See you !")
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+
+        # update the metadata periodically?
+        metadata = get_metadata(hostname)
+        serializer.submit_metadata(metadata)
+        while True:
+            collector.run_checks()
+            serializer.serialize_and_push()
+            time.sleep(config.get('min_collection_interval'))
+
+
+def main():
+    parser = OptionParser()
+    parser.add_option('-b', '--background', action='store_true', default=False,
+                      dest='background', help='Run agent on the foreground')
+    options, args = parser.parse_args()
+
+    if len(args) < 1:
+        sys.stderr.write(Agent.usage())
+        return 2
+
+    command = args[0]
+    if command not in Agent.COMMANDS:
+        sys.stderr.write("Unknown command: %s\n" % command)
+        return 3
+
+    init_config()
+    agent = Agent(PidFile(PID_NAME, PID_DIR).get_path())
+
+    foreground = not options.background
+    if 'start' == command:
+        logging.info('Start daemon')
+        agent.start(foreground=foreground)
+
+    elif 'stop' == command:
+        logging.info('Stop daemon')
+        agent.stop()
+
+    elif 'restart' == command:
+        logging.info('Restart daemon')
+        agent.restart()
+
+    elif 'status' == command:
+        agent.status()
 
 
 if __name__ == "__main__":
-    start()
+    try:
+        sys.exit(main())
+    except StandardError:
+        try:
+            logging.exception("Uncaught error running the Agent")
+        except Exception:
+            pass
+        raise

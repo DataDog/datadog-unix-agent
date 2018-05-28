@@ -1,0 +1,5 @@
+dd_url: https://app.datadoghq.com
+api_key: <api_key_here>
+log_level: debug
+logging:
+    agent_log_file: agent.log

@@ -32,9 +32,12 @@ def initialize_logging(logger_name):
         if log_file is not None and not log_settings.get('disable_file_logging', False):
             # make sure the log directory is writeable
             # NOTE: the entire directory needs to be writable so that rotation works
-            if os.access(os.path.dirname(log_file), os.R_OK | os.W_OK):
+            log_file = os.path.basename(log_file)
+            log_path = os.path.dirname(log_file)
+            log_path = os.getcwd() if not log_path else log_path
+            if os.access(log_path, os.R_OK | os.W_OK):
                 file_handler = logging.handlers.RotatingFileHandler(
-                    log_file, maxBytes=LOG_MAX_BYTES, backupCount=1)
+                    os.path.join(log_path, log_file), maxBytes=LOG_MAX_BYTES, backupCount=1)
                 formatter = logging.Formatter(LOG_FORMAT % logger_name, get_log_date_format())
                 file_handler.setFormatter(formatter)
 

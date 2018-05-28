@@ -113,6 +113,7 @@ class Agent(Daemon):
 
         # get proxy settings
         proxies = get_proxy()
+        logging.debug('Proxy configuration used: %s', proxies)
 
         forwarder = Forwarder(
             api_key,

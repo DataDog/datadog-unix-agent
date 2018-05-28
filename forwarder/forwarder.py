@@ -31,7 +31,7 @@ class Forwarder(object):
         self.workers = []
         self.nb_worker = nb_worker
         self.retry_worker = None
-        self.proxies = {}
+        self.proxies = proxies
 
     def start(self):
         self.retry_worker = RetryWorker(self.input_queue, self.retry_queue)

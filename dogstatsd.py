@@ -17,6 +17,7 @@ from serialize import Serializer
 from forwarder import Forwarder
 from utils.hostname import get_hostname
 from utils.logs import initialize_logging
+from utils.network import get_proxy
 
 from dogstatsd import (
     Server,
@@ -56,9 +57,13 @@ def init_dogstatsd(config):
 
     hostname = get_hostname()
 
+    # get proxy settings
+    proxies = get_proxy()
+
     forwarder = Forwarder(
         api_key,
-        dd_url
+        dd_url,
+        proxies=proxies,
     )
     forwarder.start()
 

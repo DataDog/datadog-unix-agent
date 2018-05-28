@@ -1,12 +1,18 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
+
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import os
 import socket
 import logging
 
+from urllib import getproxies
+from urlparse import urlparse
 from socket import inet_pton
+
+from config import config
 
 IPPROTO_IPV6 = socket.IPPROTO_IPV6
 IPV6_V6ONLY = socket.IPV6_V6ONLY
@@ -22,6 +28,8 @@ def ipv6_support():
         raise e
 
     return True
+
+log = logging.getLogger(__name__)
 
 
 def mapto_v6(addr):
@@ -71,3 +79,65 @@ def get_socket_address(host, port, ipv4_only=False):
         mapped_host = mapto_v6(sockaddr[0])
         sockaddr = (mapped_host, sockaddr[1], 0, 0)
     return sockaddr
+
+
+def set_no_proxy_settings(proxy_settings):
+
+    to_add = ["127.0.0.1", "localhost", "169.254.169.254"]
+    no_proxy = os.environ.get('no_proxy', os.environ.get('NO_PROXY', None))
+
+    if no_proxy is None or not no_proxy.strip():
+        no_proxy = []
+    else:
+        no_proxy = no_proxy.split(',')
+
+    for host in to_add:
+        if host not in no_proxy:
+            no_proxy.append(host)
+
+    for host in proxy_settings.get('no_proxy', '').split(','):
+        if host not in no_proxy:
+            no_proxy.append(host)
+
+    proxy_settings['no_proxy'] = ','.join(no_proxy)
+    os.environ['no_proxy'] = proxy_settings['no_proxy']
+
+
+def get_proxy():
+    proxy_settings = config.get('proxy', {})
+
+    # if nothing was set, use OS-level proxies
+    if not proxy_settings:
+        proxy_settings = getproxies()
+
+    # remove anything local...
+    if proxy_settings:
+        set_no_proxy_settings(proxy_settings)
+
+    return proxy_settings
+
+
+def config_proxy_skip(proxies, uri, skip_proxy=False):
+    """
+    Returns an amended copy of the proxies dictionary - used by `requests`,
+    it will disable the proxy if the uri provided is to be reached directly.
+
+    Keyword Arguments:
+        proxies -- dict with existing proxies: 'https', 'http', 'no' as pontential keys
+        uri -- uri to determine if proxy is necessary or not.
+        skip_proxy -- if True, the proxy dictionary returned will disable all proxies
+    """
+    parsed_uri = urlparse(uri)
+
+    # disable proxy if necessary
+    # keep keys so `requests` doesn't use env var proxies either
+    if skip_proxy:
+        proxies['http'] = None
+        proxies['https'] = None
+    elif proxies.get('no'):
+        for url in proxies['no'].replace(';', ',').split(","):
+            if url in parsed_uri.netloc:
+                proxies['http'] = None
+                proxies['https'] = None
+
+    return proxies

@@ -95,7 +95,7 @@ def set_no_proxy_settings(proxy_settings):
         if host not in no_proxy:
             no_proxy.append(host)
 
-    for host in proxy_settings.get('no_proxy', '').split(','):
+    for host in filter(None, proxy_settings.get('no_proxy', '').split(',')):
         if host not in no_proxy:
             no_proxy.append(host)
 

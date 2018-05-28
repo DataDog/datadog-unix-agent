@@ -13,6 +13,7 @@ import pytest
 
 # project
 from aggregator import MetricsAggregator
+from aggregator.aggregator import UNKNOWN_SOURCE
 from aggregator.formatters import get_formatter
 from aggregator.types import DEFAULT_HISTOGRAM_AGGREGATES
 
@@ -212,7 +213,7 @@ class TestMetricsAggregator():
         # Submit a sampled counter.
         stats = MetricsAggregator('myhost')
         stats.submit_packets('sampled.counter:1|c|@0.5')
-        metrics = stats.flush()
+        metrics = self.sort_metrics(stats.flush())
         assert len(metrics) == 1
         m = metrics[0]
         assert m['metric'] == 'sampled.counter'
@@ -270,7 +271,8 @@ class TestMetricsAggregator():
         assert m['points'][0][1] == 3
 
         # Assert there are no more sets
-        assert not stats.flush()
+        metrics = stats.flush()
+        assert not metrics
 
     def test_string_sets(self):
         stats = MetricsAggregator('myhost')
@@ -289,7 +291,8 @@ class TestMetricsAggregator():
         assert m['points'][0][1] == 3
 
         # Assert there are no more sets
-        assert not stats.flush()
+        metrics = stats.flush()
+        assert not metrics
 
     def test_ignore_distribution(self):
         stats = MetricsAggregator('myhost')
@@ -319,7 +322,8 @@ class TestMetricsAggregator():
         assert m['points'][0][1] == 30
 
         # Assert that no more rates are given
-        assert not stats.flush()
+        metrics = stats.flush()
+        assert not metrics
 
     def test_rate_errors(self):
         stats = MetricsAggregator('myhost')
@@ -864,3 +868,35 @@ class TestMetricsAggregator():
 
         assert third['metric'] == 'line_ending.windows'
         assert third['points'][0][1] == 300
+
+    def test_source_classification(self):
+        # The min is not enabled by default
+        myaggregator = MetricsAggregator('myhost')
+
+        # Ensure that old gauges get dropped due to old timestamps
+        myaggregator.submit_metric('my.first.gauge', 5, 'g', source='foo')
+        myaggregator.submit_metric('my.first.gauge', 1, 'g', source='foo')
+        myaggregator.submit_metric('my.second.gauge', 20, 'g', source='foo')
+
+        # Same metric different source
+        myaggregator.submit_metric('my.first.gauge', 10, 'g', source='bar')
+        myaggregator.submit_metric('my.first.gauge', 2, 'g', source='bar')
+        myaggregator.submit_metric('my.second.gauge', 40, 'g', source='bar')
+
+        # Same metric different source
+        myaggregator.submit_metric('my.first.gauge', 15, 'g', source='haz')
+        myaggregator.submit_metric('my.first.gauge', 3, 'g', source='haz')
+
+        # Same metric from unknown sources
+        myaggregator.submit_metric('my.first.gauge', 15, 'g')
+        myaggregator.submit_metric('my.first.gauge', 3, 'g')
+
+        metrics = self.sort_metrics(myaggregator.flush())
+        assert len(metrics) == 2
+
+        sources = myaggregator.stats.get_aggregator_stats()
+        assert len(sources['stats']) == 4
+        assert sources['stats']['foo'] == 2
+        assert sources['stats']['bar'] == 2
+        assert sources['stats']['haz'] == 1
+        assert sources['stats'][UNKNOWN_SOURCE] == 1

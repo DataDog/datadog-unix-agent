@@ -42,10 +42,12 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
+.pytest_cache
 nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.pylintrc
 
 # Sphinx documentation
 docs/_build/

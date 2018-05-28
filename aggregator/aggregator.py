@@ -6,6 +6,7 @@
 # stdlib
 import logging
 from time import time
+from collections import defaultdict, Hashable
 
 # project
 from .types import (
@@ -15,11 +16,14 @@ from .types import (
     BucketMetricResolver,
 )
 
-from .formatters import api_formatter
 from config.default import DEFAULT_RECENT_POINT_THRESHOLD
+from .formatters import api_formatter
+from. stats import AggregatorStats
 
 
 log = logging.getLogger(__name__)
+
+UNKNOWN_SOURCE = 'unknown'
 
 
 class Aggregator(object):
@@ -35,8 +39,12 @@ class Aggregator(object):
                  formatter=None, recent_point_threshold=None,
                  histogram_aggregates=None, histogram_percentiles=None,
                  utf8_decoding=False):
+        # TODO(jaime): add support for event, service_check sources
         self.events = []
         self.service_checks = []
+
+        self.stats = AggregatorStats()
+        # TODO(jaime): we can probably kill total counts
         self.total_count = 0
         self.count = 0
         self.event_count = 0
@@ -276,7 +284,8 @@ class Aggregator(object):
         """ Add a metric to be aggregated """
         raise NotImplementedError()
 
-    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None, source_type_name=None, priority=None, tags=None, hostname=None):
+    def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None,
+              source_type_name=None, priority=None, tags=None, hostname=None):
         event = {
             'msg_title': title,
             'msg_text': text,
@@ -329,6 +338,7 @@ class Aggregator(object):
         events = self.events
         self.events = []
 
+        self.stats.set_last_flush_counts(ecount=self.event_count)
         self.total_count += self.event_count
         self.event_count = 0
 
@@ -340,6 +350,7 @@ class Aggregator(object):
         service_checks = self.service_checks
         self.service_checks = []
 
+        self.stats.set_last_flush_counts(sccount=self.service_check_count)
         self.total_count += self.service_check_count
         self.service_check_count = 0
 
@@ -485,6 +496,7 @@ class MetricsBucketAggregator(Aggregator):
 
         # Save some stats.
         log.debug("received %s payloads since last flush" % self.count)
+        self.stats.set_last_flush_counts(mcount=self.count)
         self.total_count += self.count
         self.count = 0
         self.current_bucket = None
@@ -517,26 +529,36 @@ class MetricsAggregator(Aggregator):
             histogram_percentiles,
             utf8_decoding
         )
+        self.sources = defaultdict(set)
         self.metrics = {}
         self.metric_type_to_class = MetricResolver()
 
     def submit_metric(self, name, value, mtype, tags=None, hostname=None,
-                      timestamp=None, sample_rate=1):
+                      timestamp=None, sample_rate=1, source=None):
         # Avoid calling extra functions to dedupe tags if there are none
 
         # Keep hostname with empty string to unset it
         hostname = hostname if hostname is not None else self.hostname
+
+        source = UNKNOWN_SOURCE if not source else source
+        if not isinstance(source, Hashable):
+            source = UNKNOWN_SOURCE
 
         if tags is None:
             context = (name, tuple(), hostname)
         else:
             tags = tuple(self.deduplicate_tags(tags))
             context = (name, tags, hostname)
+
         if context not in self.metrics:
             metric_class = self.metric_type_to_class[mtype]
             self.metrics[context] = \
                 metric_class(self.formatter, name, tags,
                              hostname, self.metric_config.get(metric_class))
+
+        if context not in self.sources[source]:
+            self.sources[source].add(context)
+
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
             log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))
@@ -544,30 +566,30 @@ class MetricsAggregator(Aggregator):
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
 
-    def gauge(self, name, value, tags=None, hostname=None, timestamp=None):
-        self.submit_metric(name, value, 'g', tags, hostname, timestamp)
+    def gauge(self, name, value, tags=None, hostname=None, timestamp=None, source=None):
+        self.submit_metric(name, value, 'g', tags, hostname, timestamp, source)
 
-    def increment(self, name, value=1, tags=None, hostname=None,):
-        self.submit_metric(name, value, 'c', tags, hostname)
+    def increment(self, name, value=1, tags=None, hostname=None, source=None):
+        self.submit_metric(name, value, 'c', tags, hostname, source)
 
-    def decrement(self, name, value=-1, tags=None, hostname=None):
-        self.submit_metric(name, value, 'c', tags, hostname)
+    def decrement(self, name, value=-1, tags=None, hostname=None, source=None):
+        self.submit_metric(name, value, 'c', tags, hostname, source)
 
-    def rate(self, name, value, tags=None, hostname=None):
-        self.submit_metric(name, value, '_dd-r', tags, hostname)
+    def rate(self, name, value, tags=None, hostname=None, source=None):
+        self.submit_metric(name, value, '_dd-r', tags, hostname, source)
 
-    def submit_count(self, name, value, tags=None, hostname=None,):
-        self.submit_metric(name, value, 'ct', tags, hostname)
+    def submit_count(self, name, value, tags=None, hostname=None, source=None):
+        self.submit_metric(name, value, 'ct', tags, hostname, source)
 
     def count_from_counter(self, name, value, tags=None,
-                           hostname=None):
-        self.submit_metric(name, value, 'ct-c', tags, hostname)
+                           hostname=None, source=None):
+        self.submit_metric(name, value, 'ct-c', tags, hostname, source)
 
-    def histogram(self, name, value, tags=None, hostname=None):
-        self.submit_metric(name, value, 'h', tags, hostname)
+    def histogram(self, name, value, tags=None, hostname=None, source=None):
+        self.submit_metric(name, value, 'h', tags, hostname, source)
 
-    def set(self, name, value, tags=None, hostname=None):
-        self.submit_metric(name, value, 's', tags, hostname)
+    def set(self, name, value, tags=None, hostname=None, source=None):
+        self.submit_metric(name, value, 's', tags, hostname, source)
 
     def flush(self):
         timestamp = time()
@@ -588,8 +610,17 @@ class MetricsAggregator(Aggregator):
             log.warn('%s points were discarded as a result of having an old timestamp' % self.num_discarded_old_points)
             self.num_discarded_old_points = 0
 
+        # generate some stats
+        stats_by_source = {}
+        for source, contexts in self.sources.iteritems():
+            stats_by_source[source] = len(contexts)
+
         # Save some stats.
+        self.stats.set_last_flush_metric_stats(stats_by_source)
+        self.stats.set_last_flush_counts(mcount=self.count)
         log.debug("received %s payloads since last flush" % self.count)
-        self.total_count += self.count
+
         self.count = 0
+        self.total_count += self.count
+
         return metrics

@@ -10,6 +10,7 @@ import sys
 import time
 import logging
 from optparse import OptionParser
+from threading import Thread, Event
 
 from config import config
 from config.providers import FileConfigProvider
@@ -22,9 +23,39 @@ from collector import Collector
 from aggregator import MetricsAggregator
 from serialize import Serializer
 from forwarder import Forwarder
+from api import APIServer
 
 PID_NAME = "datadog-unix-agent"
 PID_DIR = None
+
+log = logging.getLogger('agent')
+
+
+class AgentRunner(Thread):
+    def __init__(self, collector, serializer, config):
+        super(AgentRunner, self).__init__()
+        self._collector = collector
+        self._serializer = serializer
+        self._config = config
+        self._event = Event()
+
+    def collection(self):
+        # update the metadata periodically?
+        metadata = get_metadata(get_hostname())
+        self._serializer.submit_metadata(metadata)
+
+        while not self._event.is_set():
+            self._collector.run_checks()
+            self._serializer.serialize_and_push()
+            time.sleep(self._config.get('min_collection_interval'))
+
+    def stop(self):
+        log.info("Stopping Agent Runner...")
+        self._event.set()
+
+    def run(self):
+        log.info("Starting Agent Runner...")
+        self.collection()
 
 
 def init_config():
@@ -107,22 +138,25 @@ class Agent(Daemon):
         collector.load_check_classes()
         collector.instantiate_checks()
 
+        # instantiate AgentRunner
+        runner = AgentRunner(collector, serializer, config)
+
+        # instantiate API
+        api = APIServer(8888, aggregator.stats)
+
         def signal_handler(signal, frame):
-            logging.info("SIGINT received: stopping the agent")
-            logging.info("Stopping the forwarder")
+            log.info("SIGINT received: stopping the agent")
+            log.info("Stopping the forwarder")
+            runner.stop()
             forwarder.stop()
-            logging.info("See you !")
+            api.stop()
+            log.info("See you !")
             sys.exit(0)
 
         signal.signal(signal.SIGINT, signal_handler)
 
-        # update the metadata periodically?
-        metadata = get_metadata(hostname)
-        serializer.submit_metadata(metadata)
-        while True:
-            collector.run_checks()
-            serializer.serialize_and_push()
-            time.sleep(config.get('min_collection_interval'))
+        runner.start()
+        api.run()  # blocking tornado in main thread
 
 
 def main():

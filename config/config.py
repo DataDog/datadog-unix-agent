@@ -101,7 +101,7 @@ class Config(object):
         return namespaces
 
     def env_override(self, env_var, key, path=[]):
-        key_path=list(path)
+        key_path = list(path)
         data = self.data
         defaults = self.defaults
         for p in key_path:

@@ -17,6 +17,9 @@ from config import config
 IPPROTO_IPV6 = socket.IPPROTO_IPV6
 IPV6_V6ONLY = socket.IPV6_V6ONLY
 IPV6_DISABLED_ERR = "IPv6 is disabled"
+LOCAL_PROXY_SKIP = ["127.0.0.1", "localhost", "169.254.169.254"]
+
+log = logging.getLogger(__name__)
 
 
 def ipv6_support():
@@ -28,8 +31,6 @@ def ipv6_support():
         raise e
 
     return True
-
-log = logging.getLogger(__name__)
 
 
 def mapto_v6(addr):
@@ -83,7 +84,6 @@ def get_socket_address(host, port, ipv4_only=False):
 
 def set_no_proxy_settings(proxy_settings):
 
-    to_add = ["127.0.0.1", "localhost", "169.254.169.254"]
     no_proxy = os.environ.get('no_proxy', os.environ.get('NO_PROXY', None))
 
     if no_proxy is None or not no_proxy.strip():
@@ -91,7 +91,7 @@ def set_no_proxy_settings(proxy_settings):
     else:
         no_proxy = no_proxy.split(',')
 
-    for host in to_add:
+    for host in LOCAL_PROXY_SKIP:
         if host not in no_proxy:
             no_proxy.append(host)
 
@@ -107,10 +107,11 @@ def get_proxy():
     proxy_settings = config.get('proxy', {})
 
     # if nothing was set, use OS-level proxies
-    if not proxy_settings:
+    if not proxy_settings or \
+            not (proxy_settings.get('http') or proxy_settings.get('https')):
         proxy_settings = getproxies()
 
-    # remove anything local...
+    # allow anything local...
     if proxy_settings:
         set_no_proxy_settings(proxy_settings)
 

@@ -47,7 +47,16 @@ class Config(object):
         self.reset(key)
 
     def set_default(self, key, value):
-        self.defaults[key] = value
+        if not isinstance(key, list):
+            self.defaults[key] = value
+        else:
+            node = self.defaults
+            for k in key[:-1]:
+                if k not in node:
+                    node[k] = {}
+                node = node[k]
+
+            node[key[-1]] = value
 
     def set(self, key, value):
         self.data[key] = value
@@ -84,13 +93,16 @@ class Config(object):
     def bind_env(self, key):
         self.env_bindings.add(key)
 
-    def bind_env_and_set_default(self, key, value):
+    def bind_env_and_set_default(self, key, path, value):
         if isinstance(value, dict):
+            if not isinstance(path, list):
+                path = [path]
+
             for k, v in value.iteritems():
-                self.bind_env_and_set_default("{}_{}".format(key, k), v)
+                self.bind_env_and_set_default("{}_{}".format(key, k), path + [k], v)
         else:
             self.bind_env(key)
-            self.set_default(key, value)
+            self.set_default(path, value)
 
     def env_var_namespaces(self, env_var):
         namespaces = [(env_var, '')]

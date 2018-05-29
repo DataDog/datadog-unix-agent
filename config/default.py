@@ -67,4 +67,4 @@ def init(config):
     }
 
     for k, v in config_defaults.iteritems():
-        config.bind_env_and_set_default(k, v)
+        config.bind_env_and_set_default(k, k, v)

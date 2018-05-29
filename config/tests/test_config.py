@@ -114,7 +114,7 @@ class TestConfig():
         conf.set_default("test1", "default")
         conf.set_default("test2", "default")
         conf.bind_env("test2")
-        conf.bind_env_and_set_default("test3", False)
+        conf.bind_env_and_set_default("test3", "test3", False)
         conf.load()
 
         assert conf.get("test1") == "default"
@@ -313,3 +313,31 @@ class TestConfig():
         assert config.data['logging']['dogstatsd_log_file'] == 'lulz'
         assert config.data['comics']['marvel']['hulk'] == 'bruce banner'
         assert config.data['comics']['dc']['flash'] == 'barry allen'
+
+    def test_build_defaults(self):
+        config = Config()
+        config_defaults = {
+            'test': 'foo',
+            'test2': 'bar',
+            'sub_test1': {
+                'sub_test2': {
+                    'sub_test3': 'haz'
+                },
+                'boolean': False,
+                'string': 'config string',
+            },
+            'sub_test2': {
+                'sub_test2': {
+                    'sub_test2': 'sub_test',
+                },
+                'sub_test3': None
+            }
+        }
+
+        for k, v in config_defaults.iteritems():
+            config.bind_env_and_set_default(k, k, v)
+
+        for k, v in config_defaults.iteritems():
+            assert config.defaults[k] == v
+
+        assert len(config.env_bindings) == 7

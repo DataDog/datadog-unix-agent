@@ -10,6 +10,7 @@ import socket
 from utils.network import (
     IPPROTO_IPV6,
     IPV6_V6ONLY,
+    ipv6_support,
     get_socket_address,
 )
 
@@ -51,32 +52,33 @@ class Server(object):
         """
         Run the server.
         """
-        ipv4_only = False
+        ipv4_only = not ipv6_support()
+        addr_family = socket.AF_INET if ipv4_only else socket.AF_INET6
         try:
-            # Bind to the UDP socket in IPv4 and IPv6 compatibility mode
-            self.socket = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-            # Configure the socket so that it accepts connections from both
-            # IPv4 and IPv6 networks in a portable manner.
-            self.socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
+            self.socket = socket.socket(addr_family, socket.SOCK_DGRAM)
+            if not ipv4_only:
+                # Configure the socket so that it accepts connections from both
+                # IPv4 and IPv6 networks in a portable manner.
+                self.socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
+
             # Set SO_RCVBUF on the socket if a specific value has been
             # configured.
             if self.so_rcvbuf is not None:
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, int(self.so_rcvbuf))
         except Exception:
-            logging.info('unable to create IPv6 socket, falling back to IPv4.')
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            ipv4_only = True
+            raise
 
         self.socket.setblocking(0)
-
-        # let's get the sockaddr
-        self.sockaddr = get_socket_address(self.host, int(self.port), ipv4_only=ipv4_only)
-
         try:
+            # let's get the sockaddr
+            self.sockaddr = get_socket_address(self.host, int(self.port), ipv4_only=ipv4_only)
             self.socket.bind(self.sockaddr)
         except TypeError:
             logging.error('Unable to start Dogstatsd server loop, exiting...')
-            return
+            raise
+        except socket.error as e:
+            logging.warn('unable to bind to socket (%s): %s', str(self.sockaddr), e)
+            raise
 
         logging.info('Listening on socket address: %s', str(self.sockaddr))
 

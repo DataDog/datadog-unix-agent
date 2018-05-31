@@ -7,3 +7,4 @@ mock
 psutil
 uptime
 tornado
+supervisor

@@ -23,7 +23,7 @@ class Forwarder(object):
     QUEUES_SIZE = 100
     WORKER_JOIN_TIME = 2
 
-    def __init__(self, api_key, domain, nb_worker=4):
+    def __init__(self, api_key, domain, nb_worker=4, proxies={}):
         self.api_key = api_key
         self.domain = domain
         self.input_queue = Queue.Queue(self.QUEUES_SIZE)
@@ -31,6 +31,7 @@ class Forwarder(object):
         self.workers = []
         self.nb_worker = nb_worker
         self.retry_worker = None
+        self.proxies = proxies
 
     def start(self):
         self.retry_worker = RetryWorker(self.input_queue, self.retry_queue)
@@ -67,7 +68,7 @@ class Forwarder(object):
         else:
             extra_header = {self.DD_API_HEADER: self.api_key}
 
-        t = Transaction(payload, self.domain, endpoint, extra_header)
+        t = Transaction(payload, self.domain, endpoint, extra_header, proxies=self.proxies)
         try:
             self.input_queue.put_nowait(t)
         except Queue.Full as e:

@@ -17,8 +17,20 @@ from config import config
 IPPROTO_IPV6 = socket.IPPROTO_IPV6
 IPV6_V6ONLY = socket.IPV6_V6ONLY
 LOCAL_PROXY_SKIP = ["127.0.0.1", "localhost", "169.254.169.254"]
+IPV6_DISABLED_ERR = "IPv6 is disabled"
 
 log = logging.getLogger(__name__)
+
+
+def ipv6_support():
+    try:
+        socket.inet_pton(socket.AF_INET6, "::1")
+    except socket.error as e:
+        if IPV6_DISABLED_ERR in str(e):
+            return False
+        raise e
+
+    return True
 
 
 def mapto_v6(addr):

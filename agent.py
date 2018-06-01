@@ -14,6 +14,7 @@ from threading import Thread, Event
 
 from config import config
 from config.providers import FileConfigProvider
+from utils.logs import initialize_logging
 from utils.hostname import get_hostname
 from utils.daemon import Daemon
 from utils.pidfile import PidFile
@@ -25,6 +26,7 @@ from serialize import Serializer
 from forwarder import Forwarder
 from api import APIServer
 
+# Globals
 PID_NAME = "datadog-unix-agent"
 PID_DIR = None
 
@@ -65,8 +67,7 @@ def init_config():
     config.load()
 
     # init log
-    level = logging.getLevelName(config.get("log_level").upper())
-    logging.basicConfig(level=level)
+    initialize_logging('agent')
 
     # add file provider
     file_provider = FileConfigProvider()

@@ -119,6 +119,10 @@ class Collector(object):
             log.debug('running check %s...', name)
             for check in checks:
                 try:
-                    check.run()
+                    result = check.run()
                 except Exception:
                     log.exception("error for instance: %s", str(check.instance))
+
+                if result:
+                    log.error('There was an error running your %s: %s', name, result.get('message'))
+                    log.error('Traceback %s: %s', name, result.get('traceback'))

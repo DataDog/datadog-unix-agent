@@ -114,7 +114,7 @@ class TestConfig():
         conf.set_default("test1", "default")
         conf.set_default("test2", "default")
         conf.bind_env("test2")
-        conf.bind_env_and_set_default("test3", False)
+        conf.bind_env_and_set_default("test3", "test3", False)
         conf.load()
 
         assert conf.get("test1") == "default"
@@ -259,3 +259,85 @@ class TestConfig():
             assert 'init_config' in config
             assert 'instances' in config
             assert isinstance(config['instances'], list)
+
+    def test_env_namespaces(self):
+        config = Config()
+
+        test_env_var = "DD_FOO_BAR_HaZ"
+        namespaces = config.env_var_namespaces(test_env_var)
+        assert len(namespaces) == 5
+
+        for prefix, suffix in namespaces:
+            if prefix and suffix:
+                assert "{}_{}".format(prefix, suffix) == test_env_var
+            elif suffix:
+                assert suffix == test_env_var
+            else:
+                assert prefix == test_env_var
+
+    def test_env_override(self):
+        config = Config()
+
+        config.data = {
+            'logging': {
+                'agent_log_file': 'foo',
+                'dogstatsd_log_file': 'bar',
+            },
+            'comics':
+            {
+                'marvel': {
+                    'hulk': 'unknown'
+                }
+            }
+        }
+        config.defaults = {
+            'comics':
+            {
+                'dc': {
+                    'flash': 'unknown'
+                }
+            }
+        }
+
+        os.environ['DD_LOGGING_AGENT_LOG_FILE'] = 'qux'
+        os.environ['DD_LOGGING_DOGSTATSD_LOG_FILE'] = 'lulz'
+        os.environ['DD_COMICS_MARVEL_HULK'] = 'bruce banner'
+        os.environ['DD_COMICS_DC_FLASH'] = 'barry allen'
+
+        override = config.env_override('DD_LOGGING_AGENT_LOG_FILE', 'logging_agent_log_file')
+        override &= config.env_override('DD_LOGGING_DOGSTATSD_LOG_FILE', 'logging_dogstatsd_log_file')
+        override &= config.env_override('DD_COMICS_MARVEL_HULK', 'comics_marvel_hulk')
+        override &= config.env_override('DD_COMICS_DC_FLASH', 'comics_dc_flash')
+        assert override is True
+        assert config.data['logging']['agent_log_file'] == 'qux'
+        assert config.data['logging']['dogstatsd_log_file'] == 'lulz'
+        assert config.data['comics']['marvel']['hulk'] == 'bruce banner'
+        assert config.data['comics']['dc']['flash'] == 'barry allen'
+
+    def test_build_defaults(self):
+        config = Config()
+        config_defaults = {
+            'test': 'foo',
+            'test2': 'bar',
+            'sub_test1': {
+                'sub_test2': {
+                    'sub_test3': 'haz'
+                },
+                'boolean': False,
+                'string': 'config string',
+            },
+            'sub_test2': {
+                'sub_test2': {
+                    'sub_test2': 'sub_test',
+                },
+                'sub_test3': None
+            }
+        }
+
+        for k, v in config_defaults.iteritems():
+            config.bind_env_and_set_default(k, k, v)
+
+        for k, v in config_defaults.iteritems():
+            assert config.defaults[k] == v
+
+        assert len(config.env_bindings) == 7

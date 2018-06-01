@@ -54,19 +54,17 @@ class Server(object):
         """
         ipv4_only = not ipv6_support()
         addr_family = socket.AF_INET if ipv4_only else socket.AF_INET6
-        try:
-            self.socket = socket.socket(addr_family, socket.SOCK_DGRAM)
-            if not ipv4_only:
-                # Configure the socket so that it accepts connections from both
-                # IPv4 and IPv6 networks in a portable manner.
-                self.socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
 
-            # Set SO_RCVBUF on the socket if a specific value has been
-            # configured.
-            if self.so_rcvbuf is not None:
-                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, int(self.so_rcvbuf))
-        except Exception:
-            raise
+        self.socket = socket.socket(addr_family, socket.SOCK_DGRAM)
+        if not ipv4_only:
+            # Configure the socket so that it accepts connections from both
+            # IPv4 and IPv6 networks in a portable manner.
+            self.socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
+
+        # Set SO_RCVBUF on the socket if a specific value has been
+        # configured.
+        if self.so_rcvbuf is not None:
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, int(self.so_rcvbuf))
 
         self.socket.setblocking(0)
         try:

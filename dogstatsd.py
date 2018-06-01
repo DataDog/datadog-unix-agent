@@ -130,6 +130,9 @@ def main(config_path=None):
             server.start()
         except Exception:
             logging.exception('Error running dogstatsd')
+            forwarder.stop()
+            reporter.stop()
+            reporter.join()
     else:
         sys.stderr.write("Unknown command: %s\n\n" % command)
         parser.print_help()

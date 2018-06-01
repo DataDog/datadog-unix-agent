@@ -10,6 +10,18 @@ from socket import inet_pton
 
 IPPROTO_IPV6 = socket.IPPROTO_IPV6
 IPV6_V6ONLY = socket.IPV6_V6ONLY
+IPV6_DISABLED_ERR = "IPv6 is disabled"
+
+
+def ipv6_support():
+    try:
+        socket.inet_pton(socket.AF_INET6, "::1")
+    except socket.error as e:
+        if IPV6_DISABLED_ERR in str(e):
+            return False
+        raise e
+
+    return True
 
 
 def mapto_v6(addr):

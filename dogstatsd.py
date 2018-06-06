@@ -16,6 +16,7 @@ from config import config
 from serialize import Serializer
 from forwarder import Forwarder
 from utils.hostname import get_hostname
+from utils.logs import initialize_logging
 
 from dogstatsd import (
     Server,
@@ -25,6 +26,17 @@ from dogstatsd.constants import (
     DOGSTATSD_FLUSH_INTERVAL,
     DOGSTATSD_AGGREGATOR_BUCKET_SIZE,
 )
+
+log = logging.getLogger('dogstatsd')
+
+
+def init_config():
+    config.add_search_path("/etc/datadog-unix-agent")
+    config.add_search_path(".")
+    try:
+        config.load()
+    finally:
+        initialize_logging('dogstatsd')
 
 
 def init_dogstatsd(config):
@@ -95,13 +107,11 @@ def main(config_path=None):
                       dest="use_forwarder", default=False)
     opts, args = parser.parse_args()
 
-    config.add_search_path("/etc/datadog-unix-agent")
-    config.add_search_path(".")
-    config.load()
-
-    # init log
-    level = logging.getLevelName(config.get("log_level").upper())
-    logging.basicConfig(level=level)
+    try:
+        init_config()
+    except Exception as e:
+        logging.error("Problem initializing configuration: %s", e)
+        return 1
 
     if not args or args[0] in COMMANDS_START_DOGSTATSD:
         reporter, server, forwarder = init_dogstatsd(config)

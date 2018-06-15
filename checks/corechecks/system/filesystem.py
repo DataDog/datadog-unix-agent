@@ -22,20 +22,26 @@ class Filesystem(AgentCheck):
         /dev/hd3         256.00    158.39     97.61      62% /tmp
         /dev/hd1         256.00    219.11     36.89      86% /home
         '''
-        for line in output.splitlines()[1:]:
+        stats = filter(None, output.splitlines())
+        for line in stats[1:]:
             fields = line.split(' ')
             fields = filter(None, fields)
             filesystem = '_'.join(fields[0:-5])
-            blocks = float(fields[-5])
-            used = float(fields[-4])
-            available = float(fields[-3])
+            try:
+                blocks = float(fields[-5])
+                used = float(fields[-4])
+                available = float(fields[-3])
+            except ValueError:
+                self.log.debug("Unable to get stats for %s - skipping", filesystem)
+                continue
+
             mount = fields[-1]
 
             tags = ['fs:{}'.format(filesystem), 'mount:{}'.format(mount)]
-            self.gauge('sys.fs.total', blocks, tags=tags)
-            self.gauge('sys.fs.used', used, tags=tags)
-            self.gauge('sys.fs.available', available, tags=tags)
+            self.gauge('system.fs.total', blocks, tags=tags)
+            self.gauge('system.fs.used', used, tags=tags)
+            self.gauge('system.fs.available', available, tags=tags)
             try:
-                self.gauge('sys.fs.available.pct', (used/blocks)*100, tags=tags)
+                self.gauge('system.fs.available.pct', (used/blocks)*100, tags=tags)
             except ZeroDivisionError:
-                self.gauge('sys.fs.available.pct', 100, tags=tags)
+                self.gauge('system.fs.available.pct', 100, tags=tags)

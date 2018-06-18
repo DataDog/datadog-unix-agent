@@ -64,7 +64,11 @@ def init_config():
     # init default search path
     config.add_search_path("/etc/datadog-unix-agent")
     config.add_search_path(".")
-    config.load()
+    try:
+        config.load()
+    except Exception:
+        initialize_logging('agent')
+        raise
 
     # init log
     initialize_logging('agent')
@@ -175,7 +179,12 @@ def main():
         sys.stderr.write("Unknown command: %s\n" % command)
         return 3
 
-    init_config()
+    try:
+        init_config()
+    except Exception as e:
+        logging.error("Problem initializing configuration: %s", e)
+        return 1
+
     agent = Agent(PidFile(PID_NAME, PID_DIR).get_path())
 
     foreground = not options.background

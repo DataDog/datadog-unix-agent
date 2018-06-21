@@ -31,9 +31,10 @@ class LPARStats(AgentCheck):
             self.collect_spurr()
 
     def collect_memory(self, page_stats=True):
-        cmd = ['lparstats', '-m', '1', '1']
+        cmd = ['lparstat', '-m']
         if page_stats:
             cmd.append('-pw')
+        cmd.extend(['1', '1'])
 
         output, _, _ = get_subprocess_output(cmd, self.log)
         '''
@@ -66,7 +67,7 @@ class LPARStats(AgentCheck):
                 continue
 
     def collect_hypervisor(self):
-        cmd = ['lparstats', '-H', '1', '1']
+        cmd = ['lparstat', '-H', '1', '1']
         output, _, _ = get_subprocess_output(cmd, self.log)
         '''
 
@@ -101,7 +102,7 @@ class LPARStats(AgentCheck):
                     continue
 
     def collect_memory_entitlements(self):
-        cmd = ['lparstats', '-m', '-eR', '1', '1']
+        cmd = ['lparstat', '-m', '-eR', '1', '1']
         output, _, _ = get_subprocess_output(cmd, self.log)
         '''
 
@@ -144,7 +145,7 @@ class LPARStats(AgentCheck):
                     continue
 
     def collect_spurr(self):
-        cmd = ['lparstats', '-m', '-eR', '1', '1']
+        cmd = ['lparstat', '-m', '-eR', '1', '1']
         output, _, _ = get_subprocess_output(cmd, self.log)
         '''
 

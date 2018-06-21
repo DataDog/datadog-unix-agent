@@ -25,7 +25,10 @@ class UptimeCheck(AgentCheck):
             # format: 8-00:56:09
             up, _, _ = get_subprocess_output(['ps', '-o', 'etime=', '-p1'], self.log)
             up = up.split('-')
-            days, rest = up[0], up[1]
+            if len(up) == 1:
+                days, rest = 0, up[0]
+            else:
+                days, rest = up[0], up[1]
 
             time = rest.split(':')
             days_s = int(days) * 24 * 60 * 60

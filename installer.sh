@@ -3,8 +3,14 @@
 START_PATH=$(pwd)
 PSUTIL_WHEEL=./deps/psutil/psutil-5.4.5-cp27-cp27-aix_6_1.whl
 
+usage() {
+    echo "$0 <branch_name> <destination> [<local_psutil_wheel>]"
+}
+
 if (( $# < 2 )); then
     echo "Illegal number of parameters"
+    usage
+    exit(1)
 elif (( $# == 3 )); then
     PSUTIL_WHEEL=$3
 fi
@@ -48,6 +54,7 @@ set -e
 echo "Unpacking tarball to destination $2..."
 gunzip datadog-unix-agent.tar.gz
 tar xvf datadog-unix-agent.tar
+mkdir -p $2
 find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $2/datadog-unix-agent
 
 echo "Setting up virtual env..."

@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 class Collector(object):
-    CORE_CHECKS = ['cpu', 'filesystem', 'iostat', 'load', 'memory', 'uptime']
+    CORE_CHECKS = ['cpu', 'load', 'iostat', 'memory', 'filesystem', 'lparstats', 'uptime']
 
     def __init__(self, config, aggregator=None):
         self._config = config

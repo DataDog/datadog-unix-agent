@@ -145,7 +145,7 @@ class LPARStats(AgentCheck):
                     continue
 
     def collect_spurr(self):
-        cmd = ['lparstat', '-m', '-eR', '1', '1']
+        cmd = ['lparstat', '-E', '1', '1']
         output, _, _ = get_subprocess_output(cmd, self.log)
         '''
 

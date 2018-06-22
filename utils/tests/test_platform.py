@@ -5,23 +5,44 @@
 
 import mock
 
-from utils.platform import get_os
+from utils.platform import (
+    get_os,
+    running_root
+)
 
 
-@mock.patch("sys.platform", return_value="freebsd")
-def get_os_freebsd(platform):
+@mock.patch("utils.platform.OS_PLATFORM", "freebsd")
+def test_get_os_freebsd():
     assert get_os() == "freebsd"
 
-@mock.patch("sys.platform", return_value="linux")
-def get_os_linux(platform):
+
+@mock.patch("utils.platform.OS_PLATFORM", "linux")
+def test_get_os_linux():
     assert get_os() == "linux"
 
-@mock.patch("sys.platform", return_value="sunos")
-def get_os_sunos(platform):
-    assert get_os() == "sunos"
 
-@mock.patch("sys.platform", return_value="test-value")
-def get_os_custom(platform):
+@mock.patch("utils.platform.OS_PLATFORM", "sunos")
+def test_get_os_sunos():
+    assert get_os() == "solaris"
+
+
+@mock.patch("utils.platform.OS_PLATFORM", "aix6")
+def test_get_os_aix6():
+    assert get_os() == "aix"
+
+
+@mock.patch("utils.platform.OS_PLATFORM", "aix7")
+def test_get_os_aix7():
+    assert get_os() == "aix"
+
+
+@mock.patch("utils.platform.OS_PLATFORM", "test-value")
+def test_get_os_custom():
     assert get_os() == "test-value"
+
+
+@mock.patch("os.getuid", return_value=0)
+def test_running_root(fixture):
+    assert running_root()
 
 # TODO: test Platform

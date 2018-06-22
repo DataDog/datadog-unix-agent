@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 from utils.process import get_subprocess_output
+from utils.platform import running_root
 from checks import AgentCheck
 
 
@@ -21,11 +22,15 @@ class LPARStats(AgentCheck):
     SPURR_PROCESSOR_UTILIZATION_START_IDX = 3
 
     def check(self, instance):
+        root = running_root()
+        if not root:
+            self.log.info('Not running as root - entitlement and hypervisor metrics will be unavailable')
+
         if instance.get('memory_stats', True):
             self.collect_memory(instance.get('page_stats', True))
-        if instance.get('memory_entitlements', True):
+        if instance.get('memory_entitlements', True) and root:
             self.collect_memory_entitlements()
-        if instance.get('hypervisor', True):
+        if instance.get('hypervisor', True) and root:
             self.collect_hypervisor()
         if instance.get('spurr_utilization', True):
             self.collect_spurr()

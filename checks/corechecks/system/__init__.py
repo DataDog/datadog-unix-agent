@@ -7,6 +7,7 @@ from .cpu import Cpu
 from .load import Load
 from .memory import Memory
 from .filesystem import Filesystem
+from .process import Process
 from .uptime_check import UptimeCheck
 
 
@@ -15,5 +16,6 @@ __all__ = [
     'Load',
     'Memory',
     'Filesystem',
+    'Process',
     'UptimeCheck',
 ]

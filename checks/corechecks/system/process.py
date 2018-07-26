@@ -1,7 +1,7 @@
-# (C) Datadog, Inc. 2010-2017
-# (C) Luca Cipriani <luca@c9.io> 2013
-# All rights reserved
-# Licensed under Simplified BSD License (see LICENSE)
+# Unless explicitly stated otherwise all files in this repository are licensed
+# under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 # stdlib
 from collections import defaultdict

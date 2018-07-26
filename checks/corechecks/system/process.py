@@ -6,7 +6,6 @@
 # stdlib
 from collections import defaultdict
 import time
-import os
 
 # 3p
 import psutil

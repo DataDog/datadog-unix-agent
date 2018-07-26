@@ -3,9 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import contextlib
 import os
-from mock import patch, MagicMock
+from mock import patch
 import psutil
 
 from checks.corechecks.system import process

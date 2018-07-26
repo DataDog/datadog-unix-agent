@@ -32,10 +32,10 @@ CHECK_NAME = 'process'
 
 PROCESS_METRICS = [
     'system.processes.ctx_swt.involuntary',
-    'system.processes.ioread_bytes',
-    'system.processes.ioread_count',
-    'system.processes.iowrite_bytes',
-    'system.processes.iowrite_count',
+    'system.processes.io.r_bytes',
+    'system.processes.io.r_count',
+    'system.processes.io.w_bytes',
+    'system.processes.io.w_count',
     'system.processes.mem.pct',
     'system.processes.mem.real',
     'system.processes.mem.rss',

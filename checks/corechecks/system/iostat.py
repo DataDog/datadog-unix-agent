@@ -47,7 +47,7 @@ class IOStat(AgentCheck):
         stats = filter(None, output.splitlines())
         mode = ''
         for line in stats[4:]:
-            if line.startswith(TABLE_SEP):
+            if line.startswith(self.TABLE_SEP):
                 continue
 
             for m in self.MODES:
@@ -55,7 +55,7 @@ class IOStat(AgentCheck):
                     mode = m
                     expected_fields_no = 0
                     for section in self.SCHEMA[mode]['sections']:
-                        expected_fields_no += len(SCHEMA[mode][section]['cols'])
+                        expected_fields_no += len(self.SCHEMA[mode][section]['cols'])
                     expected_fields_no += 1  # the device
                     continue
 
@@ -77,7 +77,7 @@ class IOStat(AgentCheck):
                     else:
                         metrics["{mode}.{name}".format(mode=mode.lower(), name=colname)] = float(fields[section_idx+idx])
 
-                section_idx += len(self.SCHEMA[mode][secion]['cols'])
+                section_idx += len(self.SCHEMA[mode][section]['cols'])
 
             for name, value in metrics.iteritems():
                 self.gauge("system.iostat.{}".format(name), value, tags=tags)

@@ -42,7 +42,10 @@ def test_iostat_aix(get_subprocess_output):
         histogram_percentiles=None,
     )
 
+
+    import pdb ; pdb.set_trace()
     c = iostat.IOStat("iostat", {}, {}, aggregator)
+    c.check({})
     metrics = c.aggregator.flush()
 
     expected_metrics = {
@@ -54,21 +57,18 @@ def test_iostat_aix(get_subprocess_output):
         'system.iostat.vadapter.read.serv.avg': GAUGE,
         'system.iostat.vadapter.read.serv.min': GAUGE,
         'system.iostat.vadapter.read.serv.max': GAUGE,
-        'system.iostat.vadapter.read.serv.timeouts': GAUGE,
-        'system.iostat.vadapter.read.serv.fail': GAUGE,
-        'system.iostat.vadapter.write.rps': GAUGE,
+        'system.iostat.vadapter.write.wps': GAUGE,
         'system.iostat.vadapter.write.serv.avg': GAUGE,
         'system.iostat.vadapter.write.serv.min': GAUGE,
         'system.iostat.vadapter.write.serv.max': GAUGE,
-        'system.iostat.vadapter.write.serv.timeouts': GAUGE,
-        'system.iostat.vadapter.write.serv.fail': GAUGE,
         'system.iostat.vadapter.queue.time.avg': GAUGE,
         'system.iostat.vadapter.queue.time.min': GAUGE,
         'system.iostat.vadapter.queue.time.max': GAUGE,
         'system.iostat.vadapter.queue.wqsz.avg': GAUGE,
         'system.iostat.vadapter.queue.sqsz.avg': GAUGE,
         'system.iostat.vadapter.queue.serv.qfull': GAUGE,
-        'system.iostat.disks.xfers.kbps': GAUGE,
+        'system.iostat.disks.xfers.tm.act.pct': GAUGE,
+        'system.iostat.disks.xfers.bps': GAUGE,
         'system.iostat.disks.xfers.tps': GAUGE,
         'system.iostat.disks.xfers.blks.read': GAUGE,
         'system.iostat.disks.xfers.blks.write': GAUGE,
@@ -76,14 +76,14 @@ def test_iostat_aix(get_subprocess_output):
         'system.iostat.disks.read.serv.avg': GAUGE,
         'system.iostat.disks.read.serv.min': GAUGE,
         'system.iostat.disks.read.serv.max': GAUGE,
-        'system.iostat.disks.read.serv.timeouts': GAUGE,
-        'system.iostat.disks.read.serv.fail': GAUGE,
-        'system.iostat.disks.write.rps': GAUGE,
+        'system.iostat.disks.read.timeouts': GAUGE,
+        'system.iostat.disks.read.fail': GAUGE,
+        'system.iostat.disks.write.wps': GAUGE,
         'system.iostat.disks.write.serv.avg': GAUGE,
         'system.iostat.disks.write.serv.min': GAUGE,
         'system.iostat.disks.write.serv.max': GAUGE,
-        'system.iostat.disks.write.serv.timeouts': GAUGE,
-        'system.iostat.disks.write.serv.fail': GAUGE,
+        'system.iostat.disks.write.timeouts': GAUGE,
+        'system.iostat.disks.write.fail': GAUGE,
         'system.iostat.disks.queue.time.avg': GAUGE,
         'system.iostat.disks.queue.time.min': GAUGE,
         'system.iostat.disks.queue.time.max': GAUGE,

@@ -15,10 +15,10 @@ class IOStat(AgentCheck):
                 'tags': ['partition_id'],
             },
             'read': {
-                'cols': ['rps', 'serv.avg', 'serv.min', 'serv.max', 'timeouts', 'fail'],
+                'cols': ['rps', 'serv.avg', 'serv.min', 'serv.max'],
             },
             'write': {
-                'cols': ['wps', 'serv.avg', 'serv.min', 'serv.max', 'timeouts', 'fail'],
+                'cols': ['wps', 'serv.avg', 'serv.min', 'serv.max'],
             },
             'queue': {
                 'cols': ['time.avg', 'time.min', 'time.max', 'wqsz.avg', 'sqsz.avg', 'serv.qfull'],
@@ -50,7 +50,7 @@ class IOStat(AgentCheck):
             if line.startswith(self.TABLE_SEP):
                 continue
 
-            for m in self.MODES:
+            for m in self.SCHEMA:
                 if line.startswith(m):
                     mode = m
                     expected_fields_no = 0
@@ -69,13 +69,14 @@ class IOStat(AgentCheck):
             metrics = {}
             tags = ["{mode}:{device}".format(mode=mode.lower(), device=device.lower())]
             section_idx = 1  # we start after the device
-            for section in self.SCHEMA[mode]['section']:
+            for section in self.SCHEMA[mode]['sections']:
                 for idx, colname in enumerate(self.SCHEMA[mode][section]['cols']):
                     section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
                     if colname in section_tag_cols:
                         tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
                     else:
-                        metrics["{mode}.{name}".format(mode=mode.lower(), name=colname)] = float(fields[section_idx+idx])
+                        metrics["{mode}.{section}.{name}".format(mode=mode.lower(), section=section, name=colname)] = \
+                            float(fields[section_idx+idx])
 
                 section_idx += len(self.SCHEMA[mode][section]['cols'])
 

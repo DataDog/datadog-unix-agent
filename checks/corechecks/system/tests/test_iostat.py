@@ -42,8 +42,6 @@ def test_iostat_aix(get_subprocess_output):
         histogram_percentiles=None,
     )
 
-
-    import pdb ; pdb.set_trace()
     c = iostat.IOStat("iostat", {}, {}, aggregator)
     c.check({})
     metrics = c.aggregator.flush()

@@ -71,10 +71,12 @@ class IOStat(AgentCheck):
             section_idx = 1  # we start after the device
             for section in self.SCHEMA[mode]['section']:
                 for idx, colname in enumerate(self.SCHEMA[mode][section]['cols']):
-                    if colname not in self.SCHEMA[mode][section]['tags']:
-                        metrics["{mode}.{name}".format(mode=mode.lower(), name=colname)] = float(fields[section_idx+idx])
-                    else:
+                    section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
+                    if colname in section_tag_cols:
                         tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
+                    else:
+                        metrics["{mode}.{name}".format(mode=mode.lower(), name=colname)] = float(fields[section_idx+idx])
+
                 section_idx += len(self.SCHEMA[mode][secion]['cols'])
 
             for name, value in metrics.iteritems():

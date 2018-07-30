@@ -48,6 +48,10 @@ def test_iostat_aix(get_subprocess_output):
     metrics = c.aggregator.flush()
 
     expected_metrics = {
+        'system.iostat.physical.kbps': GAUGE,
+        'system.iostat.physical.tps': GAUGE,
+        'system.iostat.physical.kb.read': GAUGE,
+        'system.iostat.physical.kb.write': GAUGE,
         'system.iostat.vadapter.xfers.kbps': GAUGE,
         'system.iostat.vadapter.xfers.tps': GAUGE,
         'system.iostat.vadapter.xfers.blks.read': GAUGE,

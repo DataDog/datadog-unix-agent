@@ -10,6 +10,18 @@ from checks import AgentCheck
 
 class IOStat(AgentCheck):
     SCHEMA = {
+        'Physical': {
+            'sections': ['physical'],
+            'physical': {
+                'cols': ['kbps', 'tps', 'kb.read', 'kb.write'],
+            },
+        },
+        'Adapter': {
+            'sections': ['xfers'],
+            'xfers': {
+                'cols': ['kbps', 'tps', 'blks.read', 'blks.write'],
+            },
+        },
         'Vadapter': {
             'sections': ['xfers', 'read', 'write', 'queue'],
             'xfers': {
@@ -66,10 +78,12 @@ class IOStat(AgentCheck):
             if len(fields) != expected_fields_no:
                 continue
 
-            device = fields[0]
-
+            tags = []
             metrics = {}
-            tags = ["{mode}:{device}".format(mode=mode.lower(), device=device.lower())]
+            if mode.lower() is not 'physical':  # odd one out
+                device = fields[0]
+                tags = ["{mode}:{device}".format(mode=mode.lower(), device=device.lower())]
+
             section_idx = 1  # we start after the device
             for section in self.SCHEMA[mode]['sections']:
                 for idx, colname in enumerate(self.SCHEMA[mode][section]['cols']):

@@ -3,6 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import math
+
 from utils.process import get_subprocess_output
 from checks import AgentCheck
 
@@ -71,14 +73,42 @@ class IOStat(AgentCheck):
             section_idx = 1  # we start after the device
             for section in self.SCHEMA[mode]['sections']:
                 for idx, colname in enumerate(self.SCHEMA[mode][section]['cols']):
-                    section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
-                    if colname in section_tag_cols:
-                        tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
-                    else:
-                        metrics["{mode}.{section}.{name}".format(mode=mode.lower(), section=section, name=colname)] = \
-                            float(fields[section_idx+idx])
+                    try:
+                        section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
+                        if colname in section_tag_cols:
+                            tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
+                        else:
+                            metrics["{mode}.{section}.{name}".format(mode=mode.lower(), section=section, name=colname)] = \
+                                self.extract_with_unit(fields[section_idx+idx])
+                    except ValueError as e:
+                        self.log.debug("unexpected value parsing metric %s", e)
 
                 section_idx += len(self.SCHEMA[mode][section]['cols'])
 
             for name, value in metrics.iteritems():
                 self.gauge("system.iostat.{}".format(name), value, tags=tags)
+
+
+    @classmethod
+    def extract_with_unit(cls, value):
+
+        unit_map = {
+            'K': 1000,
+            'M': 1000000,
+            'G': 1000000000,
+            'T': 1000000000000,
+        }
+
+        converted = None
+        try:
+            converted = float(value)
+        except ValueError:
+            for unit, factor in unit_map.iteritems():
+                if value.endswith(unit):
+                    return float(value[:-1]) * factor
+            raise
+
+        if math.isnan(converted):
+            raise ValueError("NaN is not an acceptable value")
+
+        return converted

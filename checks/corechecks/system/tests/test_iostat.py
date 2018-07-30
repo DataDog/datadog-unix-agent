@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import mock
+import pytest
 
 from checks.corechecks.system import iostat
 from aggregator import MetricsAggregator
@@ -97,3 +98,35 @@ def test_iostat_aix(get_subprocess_output):
         assert len(metric['points']) == 1
         assert metric['host'] == hostname
         assert metric['type'] == expected_metrics[metric['metric']]
+
+
+def test_iostat_value_extract():
+    valid_unit_set = {
+        '0.23': 0.23,
+        '12.34': 12.34,
+        '100000': 100000,
+        '1010392.132': 1010392.132,
+        '100000K': 100000000,
+        '1010392.132K': 1010392132,
+        '100000M': 100000000000,
+        '1010392.132M': 1010392132000,
+        '100000G': 100000000000000,
+        '1010392.132G': 1010392132000000,
+        '100000T': 100000000000000000,
+        '1010392.132T': 1010392132000000000,
+    }
+
+    for value, expected in valid_unit_set.iteritems():
+        assert iostat.IOStat.extract_with_unit(value) == expected
+
+
+    invalid_unit_set = [
+        '100000P',
+        '100000H',
+        'NaN',
+        '912931.1231923.13213'
+    ]
+
+    for bad_unit in invalid_unit_set:
+        with pytest.raises(ValueError):
+            assert iostat.IOStat.extract_with_unit(bad_unit)

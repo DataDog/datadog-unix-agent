@@ -7,7 +7,8 @@ import os
 
 # Defaults
 
-DEFAULT_ADDITIONAL_CHECKSD = '/etc/datadog-agent/checks.d'
+DEFAULT_CONFD_PATH = os.path.join(os.getcwd(), 'etc', 'datadog-agent', 'conf.d')
+DEFAULT_ADDITIONAL_CHECKSD = os.path.join(os.getcwd(), 'etc', 'datadog-agent', 'checks.d')
 DEFAULT_DD_URL = 'https://app.datadoghq.com'
 DEFAULT_MIN_COLLECTION_INTERVAL = 15
 DEFAULT_AGGREGATOR_INTERVAL = 1.0
@@ -21,8 +22,8 @@ DEFAULT_DOGSTATSD_PORT = 8125
 DEFAULT_BIND_HOST = 'localhost'
 DEFAULT_LOGGING_CONFIG = {
     'disable_file_logging': False,
-    'agent_log_file': os.path.join(os.getcwd(), 'agent.log'),
-    'dogstatsd_log_file': os.path.join(os.getcwd(), 'dogstatsd.log'),
+    'agent_log_file': os.path.join(os.getcwd(), 'var', 'log', 'datadog', 'agent.log'),
+    'dogstatsd_log_file': os.path.join(os.getcwd(), 'var', 'log', 'datadog', 'dogstatsd.log'),
 }
 
 # This is used to ensure that metrics with a timestamp older than
@@ -47,6 +48,7 @@ def init(config):
         'logging': DEFAULT_LOGGING_CONFIG,
         'forwarder_timeout': DEFAULT_FORWARDER_TO,
         'forwarder_retry_queue_max_size': DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE,
+        'confd_path': DEFAULT_CONFD_PATH,
         'additional_checksd': DEFAULT_ADDITIONAL_CHECKSD,
         'host_metadata_interval': DEFAULT_HOST_METADATA_INTERVAL,
         'external_host_tags_interval': DEFAULT_EXT_HOST_TAGS_INTERVAL,

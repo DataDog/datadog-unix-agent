@@ -150,7 +150,6 @@ else
     pip install ./deps/psutil/$PSUTIL_WHEEL
     pip install -r requirements.txt --no-index --find-links file://$(cd $DEST; pwd)/datadog-unix-agent/deps/env/
 fi
-deactivate
 
 echo "Installing non-core integrations..."
 INTEGRATIONS=$(ls $2/datadog-unix-agent/checks/bundled)
@@ -166,9 +165,14 @@ for integration in $INTEGRATIONS; do
 done
 cd -
 
+echo "Creating self-contained dir structure..."
+mkdir -p $2/datadog-unix-agent/var/log/datadog
+mkdir -p $2/datadog-unix-agent/etc/datadog-agent/conf.d
+mkdir -p $2/datadog-unix-agent/etc/datadog-agent/checks.d
 
 echo "Cleaning up..."
 rm /tmp/datadog-unix-agent.tar
+deactivate
 
 echo "You should be good to go!"
 cd $START_PATH 

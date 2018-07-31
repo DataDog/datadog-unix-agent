@@ -7,6 +7,7 @@ import os
 
 # Defaults
 
+DEFAULT_LOG_PATH = os.path.join(os.getcwd(), 'var', 'log', 'datadog-agent')
 DEFAULT_CONFD_PATH = os.path.join(os.getcwd(), 'etc', 'datadog-agent', 'conf.d')
 DEFAULT_ADDITIONAL_CHECKSD = os.path.join(os.getcwd(), 'etc', 'datadog-agent', 'checks.d')
 DEFAULT_DD_URL = 'https://app.datadoghq.com'
@@ -22,8 +23,8 @@ DEFAULT_DOGSTATSD_PORT = 8125
 DEFAULT_BIND_HOST = 'localhost'
 DEFAULT_LOGGING_CONFIG = {
     'disable_file_logging': False,
-    'agent_log_file': os.path.join(os.getcwd(), 'var', 'log', 'datadog', 'agent.log'),
-    'dogstatsd_log_file': os.path.join(os.getcwd(), 'var', 'log', 'datadog', 'dogstatsd.log'),
+    'agent_log_file': os.path.join(DEFAULT_LOG_PATH, 'agent.log'),
+    'dogstatsd_log_file': os.path.join(DEFAULT_LOG_PATH, 'dogstatsd.log'),
 }
 
 # This is used to ensure that metrics with a timestamp older than

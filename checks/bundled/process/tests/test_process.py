@@ -7,7 +7,7 @@ import os
 from mock import patch
 import psutil
 
-from checks.corechecks.system import process
+from datadog_checks.process import Process
 from aggregator import MetricsAggregator
 
 import pytest
@@ -190,7 +190,7 @@ def aggregator():
 
 def test_psutil_wrapper_simple(aggregator):
     # Load check with empty config
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     name = myprocess.psutil_wrapper(
         get_psutil_proc(),
         'name',
@@ -201,7 +201,7 @@ def test_psutil_wrapper_simple(aggregator):
 
 def test_psutil_wrapper_simple_fail(aggregator):
     # Load check with empty config
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     name = myprocess.psutil_wrapper(
         get_psutil_proc(),
         'blah',
@@ -213,7 +213,7 @@ def test_psutil_wrapper_simple_fail(aggregator):
 
 def test_psutil_wrapper_accessors(aggregator):
     # Load check with empty config
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     meminfo = myprocess.psutil_wrapper(
         get_psutil_proc(),
         'memory_info',
@@ -226,7 +226,7 @@ def test_psutil_wrapper_accessors(aggregator):
 
 def test_psutil_wrapper_accessors_fail(aggregator):
     # Load check with empty config
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     meminfo = myprocess.psutil_wrapper(
         get_psutil_proc(),
         'memory_infoo',
@@ -245,7 +245,7 @@ def test_ad_cache(aggregator):
             'ignore_denied_access': False,
         }
     }
-    myprocess = process.Process(CHECK_NAME, {}, config['instance'], aggregator)
+    myprocess = Process(CHECK_NAME, {}, config['instance'], aggregator)
 
     def deny_name(obj):
         raise psutil.AccessDenied()
@@ -262,8 +262,8 @@ def test_ad_cache(aggregator):
     assert myprocess.should_refresh_ad_cache('python') is False
 
     # Reset caches
-    process.last_ad_cache_ts = {}
-    process.last_pid_cache_ts = {}
+    myprocess.last_ad_cache_ts = {}
+    myprocess.last_pid_cache_ts = {}
 
     # Shouldn't throw an exception
     myprocess.check(config['instance'])
@@ -302,14 +302,14 @@ def generate_expected_tags(instance, service_check=False):
 @patch('psutil.Process', return_value=MockProcess())
 def test_check(mock_process, aggregator):
 
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     config = get_config_stubs()
     for idx in range(len(config)):
         instance = config[idx]['instance']
         if 'search_string' not in instance.keys():
             myprocess.check(instance)
         else:
-            with patch('checks.corechecks.system.process.Process.find_pids',
+            with patch('datadog_checks.process.Process.find_pids',
                        return_value=mock_find_pid(instance['name'], instance['search_string'])):
                 myprocess.check(instance)
                 # test for something
@@ -322,7 +322,7 @@ def test_check_collect_children(mock_process, aggregator):
         'pid': 1,
         'collect_children': True
     }
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     myprocess.check(instance)
 
     expected_metrics = {
@@ -347,8 +347,8 @@ def test_check_filter_user(mock_process, aggregator):
         'user': 'Bob'
     }
 
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
-    with patch('checks.corechecks.system.process.Process._filter_by_user', return_value={1, 2}):
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
+    with patch('datadog_checks.process.Process._filter_by_user', return_value={1, 2}):
         myprocess.check(instance)
 
     expected_metrics = {
@@ -370,11 +370,11 @@ def test_check_missing_pid(aggregator):
         'name': 'foo',
         'pid_file': '/foo/bar/baz'
     }
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     myprocess.check(instance)
 
     expected_service_checks = {
-        'process.up': (process.Process.CRITICAL, generate_expected_tags(instance, True))
+        'process.up': (Process.CRITICAL, generate_expected_tags(instance, True))
     }
     service_checks = myprocess.aggregator.flush_service_checks()
 
@@ -397,7 +397,7 @@ def test_check_real_process(aggregator):
         'ignored_denied_access': True,
         'thresholds': {'warning': [1, 10], 'critical': [1, 100]},
     }
-    myprocess = process.Process(CHECK_NAME, {}, {}, aggregator)
+    myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     expected_tags = generate_expected_tags(instance)
     myprocess.check(instance)
 
@@ -407,7 +407,7 @@ def test_check_real_process(aggregator):
         assert sorted(list(metric['tags'])) == expected_tags
 
     expected_service_checks = {
-        'process.up': (process.Process.OK, generate_expected_tags(instance, True))
+        'process.up': (Process.OK, generate_expected_tags(instance, True))
     }
     service_checks = myprocess.aggregator.flush_service_checks()
 

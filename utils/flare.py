@@ -9,14 +9,19 @@ import logging
 import datetime
 import shutil
 import urlparse
+import tempfile
+
+import requests
 
 from .network import get_proxy
 from .hostname import get_hostname
+from config import config
 
 log = logging.getLogger(__name__)
 
 
 class Flare(object):
+    TIMEOUT = 60
     MAX_UPLOAD_SIZE = 10485000
     DATADOG_SUPPORT_URL = '/support/flare'
 
@@ -41,7 +46,7 @@ class Flare(object):
     def create_archive(self):
         flarepath = self.get_archive_path()
         with zipfile.ZipFile(flarepath, self._mode, self._compression) as flare_zip:
-            for path in paths:
+            for path in self._paths:
                 try:
                     for root, dirs, files in os.walk(path):
                         for fp in files:
@@ -52,25 +57,27 @@ class Flare(object):
         return flarepath
 
     def _validate_size(self):
-        return (os.path.getsize(get_archive_path()) <= self.MAX_UPLOAD_SIZE)
+        return (os.path.getsize(self.get_archive_path()) <= self.MAX_UPLOAD_SIZE)
 
-    def submit(self, api_key):
+    def submit(self):
         endpoint = self.DATADOG_SUPPORT_URL
         if self._case_id:
             endpoint = urlparse.urljoin(endpoint, str(self._case_id))
 
-        endpoint = urlparse.urljoin(endpoint, "?api_key={}".format(api_key))
+        endpoint = urlparse.urljoin(endpoint, "?api_key={}".format(config.get('api_key')))
+        url = urlparse.urljoin(config.get('dd_url'), endpoint)
 
-        if not os.path.exists(get_archive_path()):
+        flare_path = self.get_archive_path()
+        if not os.path.exists(flare_path):
             return False
 
         if not self._validate_size():
             log.info("%s won't be uploaded, its size is too large.\n"
-                        "You can send it directly to support by email.", get_archive_path())
+                        "You can send it directly to support by email.", flare_path)
             return False
 
-        log.info("Uploading {0} to Datadog Support".format(self.tar_path))
-        with open(get_archive_path(), 'rb') as flare_file:
+        log.info("Uploading {0} to Datadog Support".format(flare_path))
+        with open(flare_path, 'rb') as flare_file:
             try:
                 requests_options = {
                     'data': {
@@ -86,26 +93,24 @@ class Flare(object):
                 if proxies:
                     requests_options['proxies'] = proxies
 
-                resp = requests.post(endpoint, **request_options)
+                resp = requests.post(url, **requests_options)
             except requests.exceptions.Timeout:
-                log.error("Connection timout to: %s", endpoint)
+                log.error("Connection timout to: %s", url)
                 return False
 
             if resp.status_code in (400, 404, 413):
                 log.error("Error code %d received while uploading flare to %s: %s, dropping it",
-                        resp.status_code, endpoint, str(resp.text))
+                        resp.status_code, url, str(resp.text))
             elif resp.status_code == 403:
                 log.error("API Key invalid, cannot submit flare")
             elif resp.status_code >= 400:
-                log.error("error %q while sending flare to %q, try again later", resp.status_code, endpoint)
+                log.error("error %q while sending flare to %q, try again later", resp.status_code, url)
                 return False
             else:
-                log.debug("Successfully posted payload to %s: %s", endpoint, resp.text)
+                log.debug("Successfully posted payload to %s: %s", url, resp.text)
 
         return True
 
     def cleanup(self):
         if os.path.exists(self._tempdir):
             shutil.rmtree(self._tempdir)
-
-

@@ -18,6 +18,7 @@ from utils.logs import initialize_logging
 from utils.hostname import get_hostname
 from utils.daemon import Daemon
 from utils.pidfile import PidFile
+from utils.network import get_proxy
 from metadata import get_metadata
 
 from collector import Collector
@@ -115,9 +116,14 @@ class Agent(Daemon):
             logging.error('No API key configured - cannot continue')
             sys.exit(1)
 
+        # get proxy settings
+        proxies = get_proxy()
+        logging.debug('Proxy configuration used: %s', proxies)
+
         forwarder = Forwarder(
             api_key,
-            dd_url
+            dd_url,
+            proxies=proxies,
         )
         forwarder.start()
 

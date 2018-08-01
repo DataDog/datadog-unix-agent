@@ -55,6 +55,10 @@ def init(config):
         'aggregator_expiry_seconds': DEFAULT_AGGREGATOR_EXPIRY_SECS,
         'recent_point_threshold': DEFAULT_RECENT_POINT_THRESHOLD,
         'bind_host': DEFAULT_BIND_HOST,
+        'proxy': {
+            'http': None,
+            'https': None,
+        },
         'dogstatsd': {
             'port': DEFAULT_DOGSTATSD_PORT,
             'non_local_traffic': False,

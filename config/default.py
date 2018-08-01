@@ -7,9 +7,9 @@ import os
 
 # Defaults
 
-DEFAULT_LOG_PATH = os.path.join(os.getcwd(), 'var', 'log', 'datadog-agent')
-DEFAULT_CONFD_PATH = os.path.join(os.getcwd(), 'etc', 'datadog-agent', 'conf.d')
-DEFAULT_ADDITIONAL_CHECKSD = os.path.join(os.getcwd(), 'etc', 'datadog-agent', 'checks.d')
+DEFAULT_LOG_PATH = os.path.join(os.getcwd(), 'var', 'log', 'datadog')
+DEFAULT_CONF_PATH = os.path.join(os.getcwd(), 'etc', 'datadog-agent')
+DEFAULT_ADDITIONAL_CHECKSD = os.path.join(DEFAULT_CONF_PATH, 'checks.d')
 DEFAULT_DD_URL = 'https://app.datadoghq.com'
 DEFAULT_MIN_COLLECTION_INTERVAL = 15
 DEFAULT_AGGREGATOR_INTERVAL = 1.0
@@ -49,7 +49,7 @@ def init(config):
         'logging': DEFAULT_LOGGING_CONFIG,
         'forwarder_timeout': DEFAULT_FORWARDER_TO,
         'forwarder_retry_queue_max_size': DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE,
-        'confd_path': DEFAULT_CONFD_PATH,
+        'conf_path': DEFAULT_CONF_PATH,
         'additional_checksd': DEFAULT_ADDITIONAL_CHECKSD,
         'host_metadata_interval': DEFAULT_HOST_METADATA_INTERVAL,
         'external_host_tags_interval': DEFAULT_EXT_HOST_TAGS_INTERVAL,

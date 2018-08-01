@@ -102,7 +102,6 @@ class IOStat(AgentCheck):
             for name, value in metrics.iteritems():
                 self.gauge("system.iostat.{}".format(name), value, tags=tags)
 
-
     @classmethod
     def extract_with_unit(cls, value):
 

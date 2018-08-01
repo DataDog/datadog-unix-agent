@@ -123,7 +123,6 @@ def test_iostat_value_extract():
     for value, expected in valid_unit_set.iteritems():
         assert iostat.IOStat.extract_with_unit(value) == expected
 
-
     invalid_unit_set = [
         '100000P',
         '100000H',

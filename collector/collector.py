@@ -74,16 +74,23 @@ class Collector(object):
                             self._check_classes[check_name] = check_class
                         if errors:
                             self._check_classes_errors[check_name] = errors
+
+                        if check_class:
+                            log.debug("Class found for %s...", check_name)
+                            break
                     except Exception:
                         log.exception("unexpected error loading check %s", check_name)
 
     def instantiate_checks(self):
         for source, check_configs in self._config.get_check_configs().iteritems():
-            for check_name, configs in check_configs.iteritems().iteritems():
+            for check_name, configs in check_configs.iteritems():
+                log.debug('Trying to instantiate: %s', check_name)
                 check_class = self._check_classes.get(check_name)
                 if check_class:
                     for config in configs:
                         init_config = config.get('init_config', {})
+                        if init_config is None:
+                            init_config = {}
                         instances = config.get('instances')  # should be single instance
                         for instance in instances:
                             signature = (check_name, init_config, instance)
@@ -96,9 +103,9 @@ class Collector(object):
                                 check_instance = check_class(check_name, init_config, instance, self._aggregator)
                                 self._check_instances[check_name].append(check_instance)
                                 self._check_instance_signatures[signature_hash] = signature
-                            except Exception:
-                                log.error("unable to instantiate instance %s for %s",
-                                          instance, check_name)
+                            except Exception as e:
+                                log.error("unable to instantiate instance %s for %s: %s",
+                                          instance, check_name, e)
 
         for check_name in self.CORE_CHECKS:
             if check_name in self._check_instances:

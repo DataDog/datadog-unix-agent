@@ -20,6 +20,7 @@ lib/
 lib64/
 parts/
 sdist/
+etc/
 var/
 wheels/
 *.egg-info/

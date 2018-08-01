@@ -4,7 +4,7 @@ test:
   script:
   - pip install -r requirements.txt
   - flake8
-  - pytest -v
+  - python -m pytest -v .
 
 # checking that every python file as a license header (at least the first line)
 check-license-py:

@@ -26,7 +26,7 @@ class Flare(object):
     DATADOG_SUPPORT_URL = '/support/flare'
 
     def __init__(self, paths=[], compression=zipfile.ZIP_DEFLATED, case_id=None, email=None):
-        self._filename = "datadog-agent-{}".format(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+        self._filename = "datadog-agent-{}.zip".format(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
         self._tempdir = tempfile.mkdtemp(suffix='flare')
         self._compression = zipfile.ZIP_DEFLATED
         self._mode = 'w'
@@ -98,6 +98,7 @@ class Flare(object):
                 log.error("Connection timout to: %s", url)
                 return False
 
+            success = False
             if resp.status_code in (400, 404, 413):
                 log.error("Error code %d received while uploading flare to %s: %s, dropping it",
                         resp.status_code, url, str(resp.text))
@@ -105,11 +106,11 @@ class Flare(object):
                 log.error("API Key invalid, cannot submit flare")
             elif resp.status_code >= 400:
                 log.error("error %q while sending flare to %q, try again later", resp.status_code, url)
-                return False
             else:
                 log.debug("Successfully posted payload to %s: %s", url, resp.text)
+                success = True
 
-        return True
+        return success
 
     def cleanup(self):
         if os.path.exists(self._tempdir):

@@ -14,7 +14,7 @@ if [ -e $1/etc ]; then
     cp -rf $1/etc  $TMPDIR
 fi
 
-tar xf ./archive.tar -C /
+tar xf ./archive.tar
 
 if [ -e $TMPDIR/datadog.yaml ]; then
     echo "restoring previously found configuration file..."

@@ -1,0 +1,49 @@
+#!/bin/bash
+set -e 
+
+usage() {
+    echo "$0 version [source]"
+    echo -e "\nversion: version for the installer archive"
+    echo -e "\nsource: source directory for payload"
+}
+
+if [ "$#" -lt 1 ]; then
+    echo "bad number of arguments"
+    usage()
+fi
+
+if [ "$#" -eq 1 ]; then
+    echo "reusing previous archive..."
+    if [ ! -e ./payload/archive.tar ];
+    then
+        echo "archive unavailable..."
+        exit 1
+    fi
+elif [ "$#" -eq 2 ]; then
+    echo "removing previous archive..."
+    rm ./payload/archive.tar
+    echo "creating installer archive..."
+    tar cf ./payload/archive.tar $2 
+fi
+
+
+cd payload
+tar cf ../payload.tar ./*
+cd ..
+
+if [ -e "payload.tar" ]; then
+    gzip payload.tar
+
+    if [ -e "payload.tar.gz" ]; then
+        cat decompress payload.tar.gz > datadog-aix-installer.$1.bsx
+    else
+        echo "payload.tar.gz does not exist"
+        exit 1
+    fi
+else
+    echo "payload.tar does not exist"
+    exit 1
+fi
+
+echo "datadog-aix-installer.$1.bsx created"
+exit 0

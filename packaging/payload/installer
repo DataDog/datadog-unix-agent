@@ -1,0 +1,27 @@
+#!/bin/bash
+
+YAML_BACKUP=
+ETC_BACKUP=
+
+echo "Running Installer..."
+if [ -e $1/datadog.yaml ]; then
+    echo "existing configuration file found, backing up..."
+    cp $1/datadog.yaml $TMPDIR 
+fi
+
+if [ -e $1/etc ]; then
+    echo "existing configuration directory found, backing up..."
+    cp -rf $1/etc  $TMPDIR
+fi
+
+tar xf ./archive.tar -C /
+
+if [ -e $TMPDIR/datadog.yaml ]; then
+    echo "restoring previously found configuration file..."
+    cp $TMPDIR/datadog.yaml $1/datadog.yaml
+fi
+
+if [ -e $TMPDIR/etc ]; then
+    echo "restoring previously found configuration directory..."
+    cp -rf $TMPDIR/etc $1/
+fi

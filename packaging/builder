@@ -9,7 +9,7 @@ usage() {
 
 if [ "$#" -lt 1 ]; then
     echo "bad number of arguments"
-    usage()
+    usage
 fi
 
 if [ "$#" -eq 1 ]; then
@@ -20,8 +20,11 @@ if [ "$#" -eq 1 ]; then
         exit 1
     fi
 elif [ "$#" -eq 2 ]; then
-    echo "removing previous archive..."
-    rm ./payload/archive.tar
+    if [ -e ./payload/archive.tar ];
+    then
+        echo "removing previous archive..."
+        rm ./payload/archive.tar
+    fi
     echo "creating installer archive..."
     tar cf ./payload/archive.tar $2 
 fi

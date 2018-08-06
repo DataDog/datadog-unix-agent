@@ -64,13 +64,13 @@ echo "Installing non-core integrations..."
 INTEGRATIONS=$(ls $2/datadog-unix-agent/checks/bundled)
 
 cd $2/datadog-unix-agent/checks/bundled
-pip install $2/datadog-unix-agent/checks/bundled/datadog_checks_base
+pip install ./datadog_checks_base
 for integration in $INTEGRATIONS; do
     # skip the base one, already done.
     if [ "$integration" = "datadog_checks_base" ]; then continue; fi
 
     # install integration.
-    pip install $integration 
+    pip install ./$integration
 done
 cd -
 

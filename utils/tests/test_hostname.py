@@ -45,4 +45,4 @@ def test_get_hostname_socket(subprocess, socket):
 def test_get_hostname_error(subprocess, socket):
     with pytest.raises(Exception) as err:
         get_hostname()
-    assert "Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file" in str(err)
+    assert "Unable to reliably determine hostname or hostname not RFC1123 compliant." in str(err)

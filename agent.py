@@ -15,7 +15,7 @@ from threading import Thread, Event
 from config import config
 from config.providers import FileConfigProvider
 from utils.logs import initialize_logging
-from utils.hostname import get_hostname
+from utils.hostname import HostnameException, get_hostname
 from utils.daemon import Daemon
 from utils.pidfile import PidFile
 from utils.network import get_proxy
@@ -101,7 +101,11 @@ class Agent(Daemon):
         return True
 
     def run(self):
-        hostname = get_hostname()
+        try:
+            hostname = get_hostname()
+        except HostnameException as e:
+            logging.critical("{} - You can define one in datadog.yaml or in your hosts file".format(e))
+            sys.exit(1)
 
         logging.info("Starting the agent, hostname: %s", hostname)
 

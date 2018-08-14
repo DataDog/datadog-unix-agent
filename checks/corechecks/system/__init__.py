@@ -4,16 +4,18 @@
 # Copyright 2018 Datadog, Inc.
 
 from .cpu import Cpu
+from .filesystem import Filesystem
+from .iostat import IOStat
 from .load import Load
 from .memory import Memory
-from .filesystem import Filesystem
 from .uptime_check import UptimeCheck
 
 
 __all__ = [
     'Cpu',
+    'Filesystem',
+    'IOStat',
     'Load',
     'Memory',
-    'Filesystem',
     'UptimeCheck',
 ]

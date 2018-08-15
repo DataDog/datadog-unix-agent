@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+echo ""
+echo "Self Extracting Installer"
+echo ""
+
+export TMPDIR="/tmp/datadog-aix-installer.$$"
+AGENT_PATH="/opt/datadog/datadog-unix-agent"
+
+mkdir $TMPDIR
+
+ARCHIVE=`awk '/^__ARCHIVE_BELOW__/ {print NR + 1; exit 0; }' $0`
+
+CDIR=`pwd`
+cd $TMPDIR
+
+echo "extracting payload in $(basename $0)..."
+tail -n +$ARCHIVE $CDIR/$(basename $0) > installer.tar.gz
+gunzip -q installer.tar.gz
+tar xf installer.tar
+rm installer.tar
+
+./installer $AGENT_PATH
+
+cd $CDIR
+rm -rf $TMPDIR
+
+exit 0
+
+__ARCHIVE_BELOW__

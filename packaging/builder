@@ -1,34 +1,81 @@
 #!/bin/bash
 set -e 
 
+ARCHIVE=
+BRANCH=
+VERSION=
+
 usage() {
-    echo "$0 version [source]"
-    echo -e "\nversion: version for the installer archive"
-    echo -e "\nsource: source directory for payload"
+    echo "usage: $0 [-a <archive> | -b <branch> ] -v <version>"
+    echo -e "\n-a <archive>: provide archive with source tarball"
+    echo -e "\n-b <branch>: provide remote branch to pull from github"
+    echo -e "\n-v <version>: provides the version for the installer"
 }
 
-if [ "$#" -lt 1 ]; then
-    echo "bad number of arguments"
+while getopts ":a:b:v:h" opt; do
+    case $opt in
+        a)
+            if [ ! -f $OPTARG ]; then
+                echo "path to archive does not exist."
+                usage
+                exit 1
+            fi
+            ARCHIVE="$(cd $(dirname $OPTARG); pwd)/$(basename $OPTARG)"
+            echo "Using local archive: $ARCHIVE" >&2
+
+            ;;
+        b)
+            echo "Pulling archive for branch: $OPTARG" >&2
+            BRANCH=$OPTARG
+            ;;
+        v)
+            echo "Setting version: $OPTARG" >&2
+            VERSION=$OPTARG
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            usage
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [ -z $VERSION ]; then
+    echo "please specify a version for the package..."
     usage
+    exit 1
 fi
 
-if [ "$#" -eq 1 ]; then
-    echo "reusing previous archive..."
-    if [ ! -e ./payload/archive.tar ];
+if [ ! -z $ARCHIVE ]; then
+    echo "using provided archive: $ARCHIVE"
+    if [ ! -e $ARCHIVE ];
     then
         echo "archive unavailable..."
         exit 1
     fi
-elif [ "$#" -eq 2 ]; then
-    if [ -e ./payload/archive.tar ];
+    cp $ARCHIVE ./payload/archive.tar.gz
+elif [ ! -z $BRANCH ]; then
+    if [ -e ./payload/archive.tar.gz ];
     then
         echo "removing previous archive..."
-        rm ./payload/archive.tar
+        rm ./payload/archive.tar.gz
     fi
-    echo "creating installer archive..."
-    tar cf ./payload/archive.tar $2 
+    echo "Downloading tarball for branch $BRANCH"
+    curl -L -o ./payload/archive.tar.gz https://api.github.com/repos/DataDog/datadog-unix-agent/tarball/$BRANCH
+else
+    echo "No local archive or remote branch was specified, exiting..."
+    usage
+    exit 1
 fi
-
 
 cd payload
 tar cf ../payload.tar ./*
@@ -38,7 +85,7 @@ if [ -e "payload.tar" ]; then
     gzip payload.tar
 
     if [ -e "payload.tar.gz" ]; then
-        cat decompress payload.tar.gz > datadog-aix-installer.$1.bsx
+        cat decompress payload.tar.gz > datadog-aix-installer.$VERSION.bsx
     else
         echo "payload.tar.gz does not exist"
         exit 1
@@ -48,5 +95,5 @@ else
     exit 1
 fi
 
-echo "datadog-aix-installer.$1.bsx created"
+echo "datadog-aix-installer.$VERSION.bsx created"
 exit 0

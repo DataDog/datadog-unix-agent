@@ -63,7 +63,8 @@ class AgentRunner(Thread):
 
 def init_config():
     # init default search path
-    config.add_search_path("/etc/datadog-unix-agent")
+    config.add_search_path("/etc/datadog-agent")
+    config.add_search_path("./etc/datadog-agent")
     config.add_search_path(".")
     try:
         config.load()

@@ -9,4 +9,4 @@ test:
 # checking that every python file as a license header (at least the first line)
 check-license-py:
   script:
-  - if git grep -L '# Unless explicitly stated otherwise all files in this repository are licensed' | grep '\.py'; then exit 1; else echo "all good"; fi
+  - if git grep -L '# Unless explicitly stated otherwise all files in this repository are licensed' | grep -e '.*\.py$'; then exit 1; else echo "all good"; fi

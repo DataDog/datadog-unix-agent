@@ -45,7 +45,7 @@ def test_iostat_aix(get_subprocess_output):
 
     c = iostat.IOStat("iostat", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.iostat.physical.kbps': GAUGE,

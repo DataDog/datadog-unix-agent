@@ -2,7 +2,7 @@
 
 YAML_BACKUP=
 ETC_BACKUP=
-PSUTIL=
+PSUTIL_WHEEL=
 AIX_VERSION=$(uname -v)
 AIX_RELEASE=$(uname -r)
 
@@ -12,8 +12,30 @@ install() {
     tar xf ./archive.tar
     find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $1
 
-    echo "building virtual environment from scratch..."
     cd $1
+    echo "preparing system-wide python..."
+    echo -e "\tchecking for pip..."
+    python -c "import pip"
+    if [ $? -ne 0 ]; then
+        echo "\t\tpip unavailable - installing..."
+        python get-pip.py --no-index --find-links=$(cd $1; pwd)/deps/sys/
+    else
+        echo "pip already installed, will use existing system pip"
+    fi
+
+    declare -a deps=("setuptools" "wheel" "virtualenv")
+    for dep in "${deps[@]}"; do
+        echo -e "\tchecking for $dep..."
+        python -c "import $dep"
+        if [ $? -ne 0 ]; then
+            echo "\t\t$dep unavailable - installing..."
+            python -m pip install --no-index --find-links file://$(cd $1; pwd)/deps/sys/ $dep 
+        else
+            echo "$dep already installed, will use existing system $dep"
+        fi
+    done
+
+    echo "building virtual environment from scratch..."
     python -m virtualenv --python python2.7 venv
     source ./venv/bin/activate
 
@@ -27,12 +49,18 @@ install() {
     mkdir -p $1/etc/datadog-agent/conf.d
 }
 
+set -e
 
 echo "Installation for $AIX_VERSION.$AIX_RELEASE..."
 
 case "$AIX_VERSION" in
     6|7) 
-        PSUTIL_WHEEL="psutil-5.4.6-cp27-cp27-aix_${AIX_VERSION}_${AIX_RELEASE}.whl"
+        M=
+        python -c "import platform; print platform.architecture()[0]" | grep '64bit'
+        if [ $? -eq 0 ]; then
+            M='m'
+        fi
+        PSUTIL_WHEEL="psutil-5.4.6-cp27-cp27${M}-aix_${AIX_VERSION}_${AIX_RELEASE}.whl"
         ;;
     *) 
         echo "unsupported AIX version: $AIX_VERSION.$AIX_RELEASE - bailing out"

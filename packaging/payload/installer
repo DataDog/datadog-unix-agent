@@ -12,7 +12,8 @@ install() {
     tar xf ./archive.tar
 
     echo "Copying..."
-    mkdir -p $1
+    PARENT_DIR=$(dirname $1)
+    mkdir -p $PARENT_DIR
     find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $1
 
     cd $1

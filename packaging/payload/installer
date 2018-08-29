@@ -7,12 +7,17 @@ AIX_VERSION=$(uname -v)
 AIX_RELEASE=$(uname -r)
 
 install() {
-    echo "unpacking..."
+    echo "Unpacking..."
     gunzip ./archive.tar.gz
     tar xf ./archive.tar
+
+    echo "Copying..."
+    mkdir -p $1
     find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $1
 
     cd $1
+
+    set +e
     echo "preparing system-wide python..."
     echo -e "\tchecking for pip..."
     python -c "import pip"
@@ -34,6 +39,8 @@ install() {
             echo "$dep already installed, will use existing system $dep"
         fi
     done
+
+    set -e
 
     echo "building virtual environment from scratch..."
     python -m virtualenv --python python2.7 venv

@@ -1,0 +1,116 @@
+#!/bin/bash
+
+YAML_BACKUP=
+ETC_BACKUP=
+PSUTIL_WHEEL=
+AIX_VERSION=$(uname -v)
+AIX_RELEASE=$(uname -r)
+
+install() {
+    echo "Unpacking..."
+    gunzip ./archive.tar.gz
+    tar xf ./archive.tar
+
+    echo "Copying..."
+    PARENT_DIR=$(dirname $1)
+    mkdir -p $PARENT_DIR
+    find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $1
+
+    cd $1
+
+    set +e
+    echo "preparing system-wide python..."
+    echo -e "\tchecking for pip..."
+    python -c "import pip"
+    if [ $? -ne 0 ]; then
+        echo "\t\tpip unavailable - installing..."
+        python get-pip.py --no-index --find-links=$(cd $1; pwd)/deps/sys/
+    else
+        echo "pip already installed, will use existing system pip"
+    fi
+
+    declare -a deps=("setuptools" "wheel" "virtualenv")
+    for dep in "${deps[@]}"; do
+        echo -e "\tchecking for $dep..."
+        python -c "import $dep"
+        if [ $? -ne 0 ]; then
+            echo "\t\t$dep unavailable - installing..."
+            python -m pip install --no-index --find-links file://$(cd $1; pwd)/deps/sys/ $dep 
+        else
+            echo "$dep already installed, will use existing system $dep"
+        fi
+    done
+
+    set -e
+
+    echo "building virtual environment from scratch..."
+    python -m virtualenv --python python2.7 venv
+    source ./venv/bin/activate
+
+    echo "installing python dependencies..."
+    pip install ./deps/psutil/$PSUTIL_WHEEL
+    pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/
+    cd - 
+
+    echo "finalizing directory structure defaults..."
+    mkdir -p $1/var/log/datadog
+    mkdir -p $1/etc/datadog-agent/conf.d
+}
+
+set -e
+
+echo "Installation for $AIX_VERSION.$AIX_RELEASE..."
+
+case "$AIX_VERSION" in
+    6|7) 
+        M=
+        python -c "import platform; print platform.architecture()[0]" | grep '64bit'
+        if [ $? -eq 0 ]; then
+            M='m'
+        fi
+        PSUTIL_WHEEL="psutil-5.4.6-cp27-cp27${M}-aix_${AIX_VERSION}_${AIX_RELEASE}.whl"
+        ;;
+    *) 
+        echo "unsupported AIX version: $AIX_VERSION.$AIX_RELEASE - bailing out"
+        exit 1
+        ;;
+esac
+
+
+echo "Running Installer..."
+if [ -e $1/datadog.yaml ]; then
+    echo "existing configuration file found, backing up..."
+    cp $1/datadog.yaml $TMPDIR 
+fi
+
+if [ -e $1/etc ]; then
+    echo "existing configuration directory found, backing up..."
+    cp -rf $1/etc  $TMPDIR
+fi
+
+if [ -d $1 ]; then
+    echo "Previous installation found, it will be overwritten (existing configuration will be preserved however)."
+    read -p "Are you sure you want to continue? " -n 1 -r
+    echo 
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+        rm -rf $1
+    else
+        echo "will not continue with installation, exiting..."
+        exit 0
+    fi
+fi
+
+install $1
+
+if [ -e $TMPDIR/datadog.yaml ]; then
+    echo "restoring previously found configuration file..."
+    cp $TMPDIR/datadog.yaml $1/datadog.yaml
+fi
+
+if [ -e $TMPDIR/etc ]; then
+    echo "restoring previously found configuration directory..."
+    cp -rf $TMPDIR/etc $1/
+fi
+
+echo "Installation complete!"

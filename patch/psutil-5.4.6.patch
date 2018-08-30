@@ -1,7 +1,7 @@
-diff --git psutil/_psutil_aix.c psutil/_psutil_aix.c
-index 916254d5..898da6b2 100644
---- psutil/_psutil_aix.c
-+++ psutil/_psutil_aix.c
+diff --git a/psutil/_psutil_aix.c b/psutil/_psutil_aix.c
+index 916254d5..54a173fa 100644
+--- a/psutil/_psutil_aix.c
++++ b/psutil/_psutil_aix.c
 @@ -46,6 +46,7 @@
  #include <arpa/inet.h>
  #include <net/if.h>
@@ -47,7 +47,7 @@ index 916254d5..898da6b2 100644
          if (!py_cputime)
              goto error;
          if (PyList_Append(py_retlist, py_cputime))
-@@ -916,6 +925,10 @@ struct module_state {
+@@ -916,6 +925,11 @@ struct module_state {
  #define GETSTATE(m) (&_state)
  #endif
  
@@ -55,10 +55,11 @@ index 916254d5..898da6b2 100644
 +extern "C" {
 +#endif
 +
++
  #if PY_MAJOR_VERSION >= 3
  
  static int
-@@ -986,3 +999,7 @@ void init_psutil_aix(void)
+@@ -986,3 +1000,7 @@ void init_psutil_aix(void)
      return module;
  #endif
  }
@@ -66,21 +67,21 @@ index 916254d5..898da6b2 100644
 +#ifdef __cplusplus
 +}
 +#endif
-diff --git psutil/_psutil_posix.c psutil/_psutil_posix.c
-index cc827273..3b19eb9b 100644
---- psutil/_psutil_posix.c
-+++ psutil/_psutil_posix.c
-@@ -655,6 +655,10 @@ struct module_state {
- #define GETSTATE(m) (&_state)
- #endif
+diff --git a/psutil/_psutil_posix.c b/psutil/_psutil_posix.c
+index cc827273..e670103c 100644
+--- a/psutil/_psutil_posix.c
++++ b/psutil/_psutil_posix.c
+@@ -649,6 +649,10 @@ struct module_state {
+     PyObject *error;
+ };
  
 +#ifdef __cplusplus
 +extern "C" {
 +#endif
 +
  #if PY_MAJOR_VERSION >= 3
- 
- static int
+ #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+ #else
 @@ -708,3 +712,7 @@ void init_psutil_posix(void)
      return module;
  #endif

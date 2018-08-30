@@ -77,6 +77,7 @@ class Config(object):
                 if os.path.isfile(conf_path):
                     with open(conf_path, "r") as f:
                         self.data = yaml.load(f)
+                    log.info("loaded config from: %s", conf_path)
                     break
             else:
                 log.error("Could not find %s in search_paths: %s", self.conf_name, self.search_paths)

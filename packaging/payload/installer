@@ -266,7 +266,6 @@ function install {
     done
     cd - 
 
-
     echo "finalizing directory structure defaults..."
     mkdir -p $1/var/log/datadog
     mkdir -p $1/etc/datadog-agent/conf.d

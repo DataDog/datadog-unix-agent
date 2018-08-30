@@ -74,7 +74,7 @@ class AgentCheck(object):
         if message is None:
             message = ""
 
-        self.aggregator.submit_service_check(self, self.name, name, status, tags, message)
+        self.aggregator.service_check(name, status, tags, message=message)
 
     def event(self, event):
         # Enforce types of some fields, considerably facilitates handling in go bindings downstream

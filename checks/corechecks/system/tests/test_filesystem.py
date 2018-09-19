@@ -43,7 +43,7 @@ def test_load_aix(get_subprocess_output):
 
     c = filesystem.Filesystem("fs", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.fs.total': GAUGE,

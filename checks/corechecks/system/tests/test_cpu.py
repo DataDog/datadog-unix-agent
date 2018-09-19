@@ -42,7 +42,7 @@ def test_cpu_first_run(cpu_count, cpu_times):
 
     c = cpu.Cpu("cpu", {}, {}, aggregator)
     c.check({})
-    assert c.aggregator.flush() == []
+    assert c.aggregator.flush()[:-1] == []  # we remove the datadog.agent.running metric
 
     cpu_times.return_value = cputimes(user=16683.74,
             nice=6.25,
@@ -55,7 +55,7 @@ def test_cpu_first_run(cpu_count, cpu_times):
             guest_nice=0.0)
 
     c.check({})
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
     expected_metrics = {
         'system.cpu.system': (GAUGE, 0.2),
         'system.cpu.user': (GAUGE, 0.12),

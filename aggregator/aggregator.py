@@ -18,6 +18,7 @@ from .types import (
 
 from config.default import DEFAULT_RECENT_POINT_THRESHOLD
 from .formatters import api_formatter
+from .types import MetricTypes
 from. stats import AggregatorStats
 
 
@@ -604,6 +605,16 @@ class MetricsAggregator(Aggregator):
                 del self.metrics[context]
             else:
                 metrics += metric.flush(timestamp, self.interval)
+
+        # Add datadog.agent.running metric
+        metrics.append(api_formatter(
+            metric='datadog.agent.running',
+            value=1,
+            timestamp=int(time()),
+            tags=[],
+            hostname=self.hostname,
+            metric_type=MetricTypes.GAUGE,
+        ))
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:

@@ -16,7 +16,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
+        metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
 
         assert len(metrics) == 5
 
@@ -44,7 +44,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
+        metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
 
         assert len(metrics) == 5
 
@@ -69,8 +69,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
-
+        metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
         assert len(metrics) == 7
 
         value_by_type = {}
@@ -133,8 +132,7 @@ class TestHistogram():
         for i in xrange(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
-        metrics = stats.flush()
-
+        metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
         assert len(metrics) == 4
 
         value_by_type = {}

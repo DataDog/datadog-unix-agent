@@ -27,7 +27,7 @@ def test_load(getloadavg, cpu_count):
 
     c = load.Load("load", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.load.1': (GAUGE, 0.42),
@@ -66,7 +66,7 @@ def test_load_no_cpu_count(getloadavg, cpu_count):
     except Exception as e:
         assert str(e) == "Cannot determine number of cores"
 
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.load.1': (GAUGE, 0.42),
@@ -98,7 +98,7 @@ def test_load_aix(getloadavg, get_subprocess_output, cpu_count):
 
     c = load.Load("load", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.load.1': (GAUGE, 1.19),

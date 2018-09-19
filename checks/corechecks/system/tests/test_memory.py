@@ -51,7 +51,7 @@ def test_memory_linux(swap_memory, virtual_memory):
     c = memory.Memory("memory", {}, {}, aggregator)
     c.check({})
 
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.mem.total': (GAUGE, 8752),

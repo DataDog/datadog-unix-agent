@@ -26,7 +26,7 @@ def test_uptime_check(uptime):
     expected_metrics = {
         'system.uptime': ('gauge', 21),
     }
-    metrics = u.aggregator.flush()
+    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     assert len(metrics) != 0
     for metric in metrics:
@@ -55,7 +55,7 @@ def test_uptime_check_subprocess(uptime, subprocess):
     expected_metrics = {
         'system.uptime': ('gauge', 694569.0),
     }
-    metrics = u.aggregator.flush()
+    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     assert len(metrics) != 0
     for metric in metrics:
@@ -84,7 +84,7 @@ def test_uptime_check_subprocess_nodays(uptime, subprocess):
     expected_metrics = {
         'system.uptime': ('gauge', 3369.0),
     }
-    metrics = u.aggregator.flush()
+    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     assert len(metrics) != 0
     for metric in metrics:

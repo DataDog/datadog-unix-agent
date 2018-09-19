@@ -17,6 +17,9 @@ MAX_HOSTNAME_LEN = 255
 log = logging.getLogger(__name__)
 
 
+class HostnameException(Exception):
+    pass
+
 def is_valid_hostname(hostname):
     if hostname.lower() in [
         'localhost',
@@ -42,7 +45,7 @@ def get_hostname():
 
     Tries, in order:
 
-      * agent config (datadog.conf, "hostname:")
+      * agent config (datadog.yaml, "hostname:")
       * 'hostname -f' (on unix)
       * socket.gethostname()
     """
@@ -67,5 +70,4 @@ def get_hostname():
     except socket.error:
         socket_hostname = None
 
-    log.critical('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
-    raise Exception('Unable to reliably determine host name. You can define one in datadog.conf or in your hosts file')
+    raise HostnameException('Unable to reliably determine hostname or hostname not RFC1123 compliant.')

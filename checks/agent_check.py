@@ -42,17 +42,17 @@ class AgentCheck(object):
     def set_aggregator(self, aggregator):
         self.aggregator = aggregator
 
-    def _submit_metric(self, mtype, name, value, tags=None):
+    def _submit_metric(self, mtype, name, value, tags=None, timestamp=None):
         if not self.aggregator or value is None:
             # ignore metric sample
             return
 
         tags = self._normalize_tags(tags)
         source = (self.name, self.signature)
-        self.aggregator.submit_metric(name, float(value), mtype, tags=tags, source=source)
+        self.aggregator.submit_metric(name, float(value), mtype, tags=tags, timestamp=timestamp, source=source)
 
-    def gauge(self, name, value, tags=None):
-        self._submit_metric(TextualMetricTypes.GAUGE, name, value, tags=tags)
+    def gauge(self, name, value, tags=None, timestamp=None):
+        self._submit_metric(TextualMetricTypes.GAUGE, name, value, tags=tags, timestamp=timestamp)
 
     def count(self, name, value, tags=None):
         self._submit_metric(TextualMetricTypes.COUNT, name, value, tags=tags)

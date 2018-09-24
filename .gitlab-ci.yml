@@ -5,6 +5,7 @@ test:
   - pip install -r requirements.txt
   - flake8
   - python -m pytest -v .
+  - for d in $(find checks/bundled -not -name '.*' -type d -d 1); do python -m pytest -v $d; done
 
 # checking that every python file as a license header (at least the first line)
 check-license-py:

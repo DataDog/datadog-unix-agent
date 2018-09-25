@@ -12,6 +12,7 @@ import re
 import paramiko
 
 # project
+from utils import skip_blank_lines
 from checks import AgentCheck
 from aggregator import MetricTypes
 
@@ -419,7 +420,7 @@ class HMC(AgentCheck):
         except Exception:
             pass
 
-    def hmc_meminfo(self, ssh_client, environment={}):
+    def hmc_meminfo(self, ssh_client, environment={}, tags=[]):
         try:
             # Sample output
             #
@@ -429,20 +430,34 @@ class HMC(AgentCheck):
             # Buffers:        397776 kB
             #
             # Cached:        1457064 kB
-
-            ssh_client.exec_command(self.HMC_MEMINFO_CMD, environment=environment)
+            _, stdout, _  = ssh_client.exec_command(self.HMC_MEMINFO_CMD, environment=environment)
         except Exception:
-            pass
+           raise
 
-    def hmc_monhmc_swap(self, ssh_client, environment={}):
+        for line in skip_blank_lines(stdout.read().splitlines()):
+            m = line.split()
+            metric = m[0][:-1]
+            self.gauge('hmc.system.memory.{metric}'.format(metric=metric), float(m[1]), tags=tags)
+
+
+    def hmc_monhmc_swap(self, ssh_client, environment={}, tags=[]):
         try:
             # Sample output
             #
             # Swap: 2040244k total, 266000k used, 1774244k free, 2282460k cached
 
-            ssh_client.exec_command(self.HMC_MON_CMD, environment=environment)
+            _, stdout, _  = ssh_client.exec_command(self.HMC_MON_CMD, environment=environment)
         except Exception:
-            pass
+           raise
+
+        swap = stdout.read()
+        swap = ' '.join(swap.split()[1:])
+        swap = swap.split(',')
+        for stat in swap:
+            val, metric = stat.split()
+            val = re.sub("\D", "", val)
+            self.gauge('hmc.system.memory.swap.{metric}'.format(metric=metric), float(val), tags=tags)
+
 
     def hmc_procstat(self, ssh_client, environment={}):
         try:

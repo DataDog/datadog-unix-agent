@@ -34,7 +34,9 @@ def get_config_stubs():
 
 class FakeSSHClient(object):
     CMD_FIXTURE_MAP = {
-        'lshmc -v': os.path.join(__here__, 'fixtures','lshmc.txt'),
+        HMC.HMC_GET_VERSION: os.path.join(__here__, 'fixtures','lshmc.txt'),
+        HMC.HMC_MEMINFO_CMD: os.path.join(__here__, 'fixtures', 'hmc_meminfo.txt'),
+        HMC.HMC_MON_CMD: os.path.join(__here__, 'fixtures', 'hmc_monhmc.txt'),
         'lssyscfg -r sys': os.path.join(__here__, 'fixtures','lssyscfg.sys.txt'),
         'lssyscfg -r lpar': {
             '-m DD00': os.path.join(__here__, 'fixtures','lssyscfg.lpar.DD00.txt'),
@@ -82,15 +84,12 @@ class FakeSSHClient(object):
         pass
 
     def exec_command(self, cmd, environment={}):
+        # direct match
+        if cmd in self.CMD_FIXTURE_MAP:
+            fixture = self.CMD_FIXTURE_MAP[cmd]
+            return None, open(fixture), None
+
         cmd_split = cmd.split()
-        if len(cmd_split) <= 2:
-            # direct entry in dictionary
-            fixture = self.CMD_FIXTURE_MAP.get(cmd)
-            if fixture:
-                return None, open(fixture), None
-
-            return None, None, None
-
         fixture = self.CMD_FIXTURE_MAP.get(' '.join(cmd_split[0:3]))
         if isinstance(fixture, dict):
             try:

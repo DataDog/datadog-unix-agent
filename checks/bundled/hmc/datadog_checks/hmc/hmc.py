@@ -12,7 +12,7 @@ import re
 import paramiko
 
 # project
-from utils import skip_blank_lines
+from utils.strings import skip_blank_lines
 from checks import AgentCheck
 from aggregator import MetricTypes
 

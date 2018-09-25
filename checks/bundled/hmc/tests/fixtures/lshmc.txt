@@ -1,0 +1,15 @@
+vpd=*FC ???????? 
+*VC 20.0 
+*N2 Wed Aug 26 08:13:14 CDT 2015 
+*FC ???????? 
+*DS Hardware Management Console 
+*TM 7042-CR7 
+*SE 10DA45C 
+*MN IBM 
+*PN 42D01T 
+*SZ 8363966464 
+*OS Embedded Operating Systems 
+*NA 9.3.242.97 
+*FC ???????? 
+*DS Platform Firmware 
+*RM V8R8.4.0.0 

@@ -1,0 +1,2 @@
+Swap: 2040244k total, 266000k used, 1774244k free, 2282460k cached
+

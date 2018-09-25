@@ -16,15 +16,18 @@ from checks import AgentCheck
 from aggregator import MetricTypes
 
 SYSTEMS = ['HMC', 'LPAR', 'POOL', 'PROCPOOL', 'MEMPOOL', 'SYS']
+DISABLED = ['HMC']
 
 
 class ManagedServer(object):
     ##
-    def __init__(self, name):
+    def __init__(self, name, model, serial):
         self._name = name
+        self._model = model
+        self._serial = serial
         self._sample_rate = None
         self._last_tm = {}  # local-time
-        self._last_sample = {}  # hmc-time
+        self._last_sample_ts = {}  # hmc-time
         for sys in SYSTEMS:
             self._last_tm[sys] = None
             self._last_sample_ts[sys] = None
@@ -47,11 +50,11 @@ class ManagedServer(object):
     def get_last_sample_ts(self, subsys):
         return self._last_sample_ts[subsys]
 
-    def set_last_tm(self, subsys):
-        return self._last_tm[subsys]
+    def set_last_tm(self, subsys, tm):
+        self._last_tm[subsys] = tm
 
-    def set_last_sample_ts(self, subsys):
-        return self._last_sample_ts[subsys]
+    def set_last_sample_ts(self, subsys, ts):
+        self._last_sample_ts[subsys] = ts
 
 
 class HMC(AgentCheck):
@@ -63,7 +66,6 @@ class HMC(AgentCheck):
         ('password', False, None, str),
         ('private_key_file', False, None, str),
         ('private_key_type', False, 'rsa', str),
-        ('sftp_check', False, True, bool),
         ('add_missing_keys', False, False, bool),
     ]
 
@@ -96,12 +98,12 @@ class HMC(AgentCheck):
     HMC_LPAR_STATS_TEMPLATE = 'lslparutil -r {subsys} --startyear {year} --startmonth {month} --startday {day} '\
         '--starthour {hour} --startminute {minute} -m {name} -F time,{fields} --filter \"event_types=sample\"'
     HMC_LPAR_STATS_FIELDS = {
-        'HMC': None,
+        'HMC': [],
         'LPAR': [
             ('lpar_name', None),
             ('curr_proc_units', MetricTypes.GAUGE),
             ('curr_procs', MetricTypes.GAUGE),
-            ('curr_sharing_mode', MetricTypes.GAUGE),
+            ('curr_sharing_mode', None),
             ('entitled_cycles', MetricTypes.GAUGE),
             ('capped_cycles', MetricTypes.GAUGE),
             ('uncapped_cycles', MetricTypes.GAUGE),
@@ -132,9 +134,8 @@ class HMC(AgentCheck):
         ],
     }
 
-    # dictionrary of tuples: key is subsys; tuple is (hmc compatibility,
+    # dictionary of tuples: key is subsys; tuple is (hmc compatibility,
     HMC_LPAR_STATS_EXTRA_FIELDS = {
-        'HMC': None,
         'LPAR': [
             (700, [
                 ('shared_cycles_while_active', MetricTypes.GAUGE),
@@ -151,10 +152,6 @@ class HMC(AgentCheck):
                 ('idle_cycles', MetricTypes.GAUGE),
             ]),
         ],
-        'POOL': None,
-        'PROCPOOL': None,
-        'MEMPOOL': None,
-        'SYS': None
     }
 
     # CoD
@@ -242,7 +239,7 @@ class HMC(AgentCheck):
                 servers = self.hmc_get_managed_servers(client, environment=self.HMC_LSLPARUTIL_ENV)
                 for server in servers:
                     if server not in self._managed_servers:
-                        self._managed_servers[server] = ManagedServer(server)
+                        self._managed_servers[server] = ManagedServer(server[0], server[1], server[2])
 
                 for server in self._managed_servers:
                     if server not in servers:
@@ -260,7 +257,7 @@ class HMC(AgentCheck):
                         self.log.error('Unable to collect sample rate for {}'.format(server.name))
                         continue
 
-                tags = ['server:{name}'.format(server.name)]
+                tags = ['server:{name}'.format(name=server.name)]
                 for subsys in SYSTEMS:
                     self.hmc_sample(
                         client,
@@ -274,7 +271,7 @@ class HMC(AgentCheck):
             env = {'LANG': 'C'}
             self.hmc_ls(client, environment=env)
             self.hmc_meminfo(client, environment=env)
-            self.hmc_monhmc(client, environment=env)
+            self.hmc_monhmc_swap(client, environment=env)
             self.hmc_procstat(client, environment=env)
 
         finally:
@@ -284,11 +281,11 @@ class HMC(AgentCheck):
     def hmc_get_version(self, ssh_client, environment={}):
         # "lshmc -v" 2>/dev/null|egrep "RM |DS "|tail -2`;
         try:
-            output = ssh_client.exec_command(self.HMC_GET_VERSION, environment=environment)
+            _, stdout, _ = ssh_client.exec_command(self.HMC_GET_VERSION, environment=environment)
         except Exception:
             raise
 
-        lines = [l for l in output.splitlines() if re.search('DS |RM ', l)]
+        lines = [l for l in stdout.read().splitlines() if re.search('DS |RM ', l)]
         if not lines:
             return None
 
@@ -305,12 +302,12 @@ class HMC(AgentCheck):
 
     def hmc_get_managed_servers(self, ssh_client, environment={}):
         try:
-            output = ssh_client.exec_command(self.HMC_LS_CMD, environment=environment)
+            _, stdout, _ = ssh_client.exec_command(self.HMC_GET_SERVERS, environment=environment)
         except Exception:
-            pass
+           raise
 
         servers = []
-        for line in output.splitlines():
+        for line in stdout.read().splitlines():
             server = line.split(',')
             servers.append(tuple(server))
 
@@ -318,12 +315,13 @@ class HMC(AgentCheck):
 
     def hmc_get_sample_rate(self, ssh_client, server, environment={}):
         try:
-            command = self.HMC_LPAR_SAMPLE_RATE.format(name=server.name)
-            output = ssh_client.exec_command(command, environment=environment)
+            command = self.HMC_GET_LPAR_SAMPLE_RATE.format(name=server.name)
+            _, stdout, _ = ssh_client.exec_command(command, environment=environment)
         except Exception:
-            pass
+            raise
 
         try:
+            output = stdout.read()
             sample_rate = int(output)
         except ValueError:
             self.log.error("unable to collect sample rate for {}: {}".format(server.name, output))
@@ -332,6 +330,9 @@ class HMC(AgentCheck):
         return sample_rate
 
     def hmc_sample(self, ssh_client, hmc_version, subsys, server, environment={}, tags=[]):
+        if subsys in DISABLED:
+            self.log.debug('subsystem %s disabled - skipping', subsys)
+            return
 
         last_tm = server.get_last_tm(subsys)
         if last_tm:
@@ -339,16 +340,19 @@ class HMC(AgentCheck):
             if elapsed < server.sample_rate:
                 self.log.info('skipping HMC sampling, not enough time has passed for new samples')
                 return
+        else:
+            # TODO: this might not be aligned with the HMC server time - grab it from there.
+            last_tm = time.localtime(time.time())
 
         fields = self.HMC_LPAR_STATS_FIELDS[subsys]
-        extra_fields = self.HMC_LPAR_STATS_EXTRA_FIELDS[subsys]
+        extra_fields = self.HMC_LPAR_STATS_EXTRA_FIELDS.get(subsys, {})
         for version, extras in extra_fields:
             if version <= hmc_version:
                 fields.extend(extras)
 
         try:
             command = self.HMC_LPAR_STATS_TEMPLATE.format(
-                subsys=subsys,
+                subsys=subsys.lower(),
                 year=last_tm.tm_year,
                 month=last_tm.tm_mon,
                 day=last_tm.tm_mday,
@@ -357,12 +361,12 @@ class HMC(AgentCheck):
                 name=server.name,
                 fields=','.join([f[0] for f in fields])
             )
-            output = ssh_client.exec_command(command, environment=environment)
+            _, stdout, _ = ssh_client.exec_command(command, environment=environment)
         except Exception:
             raise
 
         samples = []
-        lines = output.splitlines()
+        lines = stdout.read().splitlines()
         for line in lines:
             sample = line.split(',')
             if len(fields) != len(sample[1:]):

@@ -51,7 +51,7 @@ function install_python() {
     pkgrelease=()
     inst_list=()
 
-    ls *.rpm | while read rpm_file
+    while read rpm_file
     do
         pkgname[${#pkgname[@]}]=`rpm -qp --qf "%{NAME}" $rpm_file`
         pkgversion[${#pkgversion[@]}]=`rpm -qp --qf "%{VERSION}" $rpm_file`

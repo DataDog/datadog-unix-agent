@@ -44,8 +44,8 @@ function install_python() {
     
     cd $1/deps/rpms
 
-    echo "\n"
-    echo "Checking if any of the rpms are already installed...\n"
+    echo -e "\n"
+    echo -e "Checking if any of the rpms are already installed...\n"
     pkgname=()
     pkgversion=()
     pkgrelease=()
@@ -213,20 +213,20 @@ function install() {
     set +e
     echo "preparing system-wide python..."
     echo -e "\tchecking for pip..."
-    python -c "import pip"
+    python -c "import pip" >/dev/null 2>&1
     if [ $? -ne 0 ]; then
         echo "\t\tpip unavailable - installing..."
-        python get-pip.py --no-index --find-links=$(cd $1; pwd)/deps/sys/
+        python $(cd $1; pwd)/deps/sys/get-pip.py --no-index --find-links=$(cd $1; pwd)/deps/sys/
     else
         echo "pip already installed, will use existing system pip"
     fi
 
-    declare -a deps=("setuptools" "wheel" "virtualenv")
+    deps=("setuptools" "wheel" "virtualenv")
     for dep in "${deps[@]}"; do
         echo -e "\tchecking for $dep..."
-        python -c "import $dep"
+        python -c "import $dep" >/dev/null 2>&1
         if [ $? -ne 0 ]; then
-            echo "\t\t$dep unavailable - installing..."
+            echo -e "\t\t$dep unavailable - installing..."
             python -m pip install --no-index --find-links file://$(cd $1; pwd)/deps/sys/ $dep 
         else
             echo "$dep already installed, will use existing system $dep"

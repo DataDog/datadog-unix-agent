@@ -197,8 +197,6 @@ function install_python() {
 }
 
 function unpack() {
-    cd $1
-
     echo "Unpacking..."
     gunzip ./archive.tar.gz
     tar xf ./archive.tar
@@ -207,9 +205,6 @@ function unpack() {
     PARENT_DIR=$(dirname $1)
     mkdir -p $PARENT_DIR
     find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $1
-
-    cd -
-
 }
 
 function install() {

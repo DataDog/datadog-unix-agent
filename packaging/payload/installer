@@ -300,6 +300,7 @@ then
     echo "install python via rpm..."
     install_python $1
     if [ $? -ne 0 ];
+    then
         echo "problem installing python..."
         exit 1
     fi

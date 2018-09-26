@@ -241,7 +241,16 @@ function install() {
 
     echo "installing python dependencies..."
     pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/
+
+    echo "installing bundled (non-core) checks..."
+    pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/ $(cd $1; pwd)/checks/bundled/datadog_checks_base
+    for check in $(ls -d $(cd $1; pwd)/checks/bundled/* | grep -iv 'datadog_checks_base');
+    do
+        echo "installing $(basename $check)..."
+        pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/ $check
+    done
     cd - 
+
 
     echo "finalizing directory structure defaults..."
     mkdir -p $1/var/log/datadog

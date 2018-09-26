@@ -178,7 +178,7 @@ function install_python() {
         return 1
     fi
 
-    echo "\nInstalling the packages.\n"
+    echo -e "\nInstalling the packages.\n"
     rpm -Uvh ${inst_list[@]}
 
     if [[ $? -eq 0 ]]
@@ -215,7 +215,7 @@ function install() {
     echo -e "\tchecking for pip..."
     python -c "import pip" >/dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo "\t\tpip unavailable - installing..."
+        echo -e "\t\tpip unavailable - installing..."
         python $(cd $1; pwd)/deps/sys/get-pip.py --no-index --find-links=$(cd $1; pwd)/deps/sys/
     else
         echo "pip already installed, will use existing system pip"

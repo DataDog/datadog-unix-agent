@@ -2,7 +2,8 @@
 
 A full fledged Agent specifically designed for Unix-based systems. 
 
-Note: This agent is currently in beta for AIX. It has not been tested on other systems.
+Note: This agent is currently in development for AIX. It has not been tested on other systems. If
+you're interested in using it, please contact our [support team](https://docs.datadoghq.com/help/).
 
 This agent targets miscellaneous Unix operating systems not supported by our currently available
 agents. To do so, it has been stripped of unnecessary bloat and cut around irrelevant use-cases 

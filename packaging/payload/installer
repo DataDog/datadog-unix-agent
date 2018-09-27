@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 YAML_BACKUP=
 ETC_BACKUP=
@@ -7,7 +7,7 @@ AIX_VERSION=$(uname -v)
 AIX_RELEASE=$(uname -r)
 
 #Compares the two packages version number
-function cmp_version() {
+function cmp_version {
     large=$(echo  ${pkgcurr[1]} ${pkgversion[$index]}  | \
         awk '{ split($1, a, ".");
     split($2, b, ".");
@@ -26,7 +26,7 @@ return $large
 }
 
 #Compares the two packages release number
-function cmp_release() {
+function cmp_release {
     if [[ $1 < $2 ]]
     then
         return 3
@@ -39,24 +39,24 @@ function cmp_release() {
     fi
 }
 
-function install_python() {
+function install_python {
     #Check if some packages are already installed from the yum_bundle.
     
     cd $1/deps/rpms
 
-    echo -e "\n"
-    echo -e "Checking if any of the rpms are already installed...\n"
-    pkgname=()
-    pkgversion=()
-    pkgrelease=()
-    inst_list=()
+    echo "\n"
+    echo "Checking if any of the rpms are already installed...\n"
+    set -A pkgname
+    set -A pkgversion
+    set -A pkgrelease
+    set -A inst_list
 
-    while read rpm_file
+    ls *.rpm | while read rpm_file
     do
-        pkgname[${#pkgname[@]}]=`rpm -qp --qf "%{NAME}" $rpm_file`
-        pkgversion[${#pkgversion[@]}]=`rpm -qp --qf "%{VERSION}" $rpm_file`
-        pkgrelease[${#pkgrelease[@]}]=`rpm -qp --qf "%{RELEASE}" $rpm_file`
-    done < <(ls *.rpm)
+        pkgname[${#pkgname[*]}]=`rpm -qp --qf "%{NAME}" $rpm_file`
+        pkgversion[${#pkgversion[*]}]=`rpm -qp --qf "%{VERSION}" $rpm_file`
+        pkgrelease[${#pkgrelease[*]}]=`rpm -qp --qf "%{RELEASE}" $rpm_file`
+    done
 
     let "index=0"
     for pk in ${pkgname[@]}
@@ -64,7 +64,7 @@ function install_python() {
         # We need to match exact package name, as we might have packages like python python-devel etc..
         # Packages name will be followed by the version number with "-" as a seperator.
 
-        pkgcurr=("")
+        set -A pkgcurr ""
         let "flag=0"
         rpm_file=`ls *.rpm | grep  "^$pk-[0-9]"`
         line=`rpm -qa | grep "^$pk-[0-9]"`
@@ -75,7 +75,7 @@ function install_python() {
             # For example python-devel
             oldIFS=$IFS
             IFS='-'
-            name_ver=($line)
+            set -A name_ver $line
             IFS=$oldIFS
             count=`echo ${#name_ver[@]}` #Count number of fields in a package. 
             # Exclude release, version field plus array index starts with 0.
@@ -102,10 +102,10 @@ function install_python() {
             ver=`echo ${name_ver[$j]}`
          
             # Now set the name version field.
-            pkgtest=($name $ver)
+            set -A pkgtest "$name" "$ver"
         elif [[ -z $line ]]
         then
-            pkgtest=($line)
+            set -A pkgtest "$line"
         fi
 
         #get the release field from the installed package.
@@ -113,7 +113,7 @@ function install_python() {
         # If package from yum_bundle is installed.
         if [[ ${pkgtest[0]} == $pk ]]
         then
-            pkgcurr=($name $ver)
+            set -A pkcurr "$name" "$ver"
             #compare versions of installed package & from the yum bundle.
             cmp_version ${pkgtest[1]} ${pkgversion[$index]}
             rc=$?
@@ -178,7 +178,7 @@ function install_python() {
         return 1
     fi
 
-    echo -e "\nInstalling the packages.\n"
+    echo "\nInstalling the packages.\n"
     rpm -Uvh ${inst_list[@]}
 
     if [[ $? -eq 0 ]]
@@ -196,7 +196,7 @@ function install_python() {
     cd - >/dev/null 2>&1
 }
 
-function unpack() {
+function unpack {
     echo "Unpacking..."
     gunzip ./archive.tar.gz
     tar xf ./archive.tar
@@ -207,26 +207,26 @@ function unpack() {
     find . -type d -name 'DataDog-datadog-unix-agent*' 2>/dev/null | head -n 1 | xargs -t -I {} cp -R {} $1
 }
 
-function install() {
+function install {
     cd $1
 
     set +e
     echo "preparing system-wide python..."
-    echo -e "\tchecking for pip..."
+    echo "\tchecking for pip..."
     python -c "import pip" >/dev/null 2>&1
     if [ $? -ne 0 ]; then
-        echo -e "\t\tpip unavailable - installing..."
+        echo "\t\tpip unavailable - installing..."
         python $(cd $1; pwd)/deps/sys/get-pip.py --no-index --find-links=$(cd $1; pwd)/deps/sys/
     else
         echo "pip already installed, will use existing system pip"
     fi
 
-    deps=("setuptools" "wheel" "virtualenv")
+    set -A deps "setuptools" "wheel" "virtualenv"
     for dep in "${deps[@]}"; do
-        echo -e "\tchecking for $dep..."
+        echo "\tchecking for $dep..."
         python -c "import $dep" >/dev/null 2>&1
         if [ $? -ne 0 ]; then
-            echo -e "\t\t$dep unavailable - installing..."
+            echo "\t\t$dep unavailable - installing..."
             python -m pip install --no-index --find-links file://$(cd $1; pwd)/deps/sys/ $dep 
         else
             echo "$dep already installed, will use existing system $dep"
@@ -237,7 +237,11 @@ function install() {
 
     echo "building virtual environment from scratch..."
     python -m virtualenv --python python2.7 venv
-    source ./venv/bin/activate
+
+    # we need to +e due to the korn shell
+    set +e
+    . ./venv/bin/activate
+    set -e
 
     echo "installing python dependencies..."
     pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/
@@ -289,14 +293,15 @@ fi
 
 if [ -d $1 ]; then
     echo "Previous installation found, it will be overwritten (existing configuration will be preserved however)."
-    read -p "Are you sure you want to continue? " -n 1 -r
-    echo 
-    if [[ $REPLY =~ ^[Yy]$ ]]
+    echo "Are you sure you want to continue (Yy/Nn) ?"
+    read RESP 
+
+    if [[ "$(echo $RESP | grep -E '[Yy]')" == "" ]];
     then
-        rm -rf $1
-    else
         echo "will not continue with installation, exiting..."
         exit 0
+    else
+        rm -rf $1
     fi
 fi
 

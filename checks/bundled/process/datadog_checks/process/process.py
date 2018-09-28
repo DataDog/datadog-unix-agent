@@ -284,14 +284,7 @@ class Process(AgentCheck):
         if name is None:
             raise KeyError('The "name" of process groups is mandatory')
 
-        if search_string is not None:
-            pids = self.find_pids(
-                name,
-                search_string,
-                exact_match,
-                ignore_ad=ignore_ad
-            )
-        elif pid is not None:
+        if pid is not None:
             # we use Process(pid) as a means to search, if pid not found
             # psutil.NoSuchProcess is raised.
             pids = self._get_pid_set(pid)
@@ -304,6 +297,13 @@ class Process(AgentCheck):
                 # pid file doesn't exist, assuming the process is not running
                 self.log.debug('Unable to find pid file: {}'.format(e))
                 pids = set()
+        elif search_string is not None:
+            pids = self.find_pids(
+                name,
+                search_string,
+                exact_match,
+                ignore_ad=ignore_ad
+            )
         else:
             raise ValueError('The "search_string" or "pid" options are required for process identification')
 

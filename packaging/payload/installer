@@ -247,11 +247,11 @@ function install {
     pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/
 
     echo "installing bundled (non-core) checks..."
-    pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/ $(cd $1; pwd)/checks/bundled/datadog_checks_base
+    pip install -c requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/ $(cd $1; pwd)/checks/bundled/datadog_checks_base
     for check in $(ls -d $(cd $1; pwd)/checks/bundled/* | grep -iv 'datadog_checks_base');
     do
         echo "installing $(basename $check)..."
-        pip install -r requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/ $check
+        pip install -c requirements.txt --no-index --find-links file://$(cd $1; pwd)/deps/env/ $check
     done
     cd - 
 

@@ -232,6 +232,11 @@ class HMC(AgentCheck):
 
                 raise
 
+            custom = instance.get('custom')
+            if custom:
+                self.hmc_run_custom(client, cmd=custom)
+                return
+
             if conf not in self._hmc_versions:
                 version = self.hmc_get_version(client, environment=self.HMC_LSLPARUTIL_ENV)
                 self._hmc_versions[conf] = version
@@ -278,6 +283,16 @@ class HMC(AgentCheck):
         finally:
             # Always close the client, failure to do so leaks one thread per connection left open
             client.close()
+
+    def hmc_run_custom(self, ssh_client, cmd, environment={}):
+        # this will not submit any metrics and is only for debugging purposes
+        try:
+            _, stdout, stderr = ssh_client.exec_command(cmd, environment=environment)
+
+            self.log.debug("command %s STDOUT: %s", stdout.read())
+            self.log.debug("command %s STDERR: %s", stderr.read())
+        except Exception:
+            raise
 
     def hmc_get_version(self, ssh_client, environment={}):
         # "lshmc -v" 2>/dev/null|egrep "RM |DS "|tail -2`;

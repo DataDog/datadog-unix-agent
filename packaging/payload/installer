@@ -39,6 +39,17 @@ function cmp_release {
     fi
 }
 
+function install_filesets {
+    cd $1/deps/bffs
+    echo "\n"
+    echo "Installing required fileset..."
+    installp -aXYgd . -e $TMPDIR/install.log all
+    RET=$?
+
+    cd -
+    return $RET
+}
+
 function install_python {
     #Check if some packages are already installed from the yum_bundle.
     
@@ -264,22 +275,6 @@ function install {
 
 echo "Installation for $AIX_VERSION.$AIX_RELEASE..."
 
-# case "$AIX_VERSION" in
-#     6|7) 
-#         M=
-#         python -c "import platform; print platform.architecture()[0]" | grep '64bit'
-#         if [ $? -eq 0 ]; then
-#             M='m'
-#         fi
-#         PSUTIL_WHEEL="psutil-5.4.6-cp27-cp27${M}-aix_${AIX_VERSION}_${AIX_RELEASE}.whl"
-#         ;;
-#     *) 
-#         echo "unsupported AIX version: $AIX_VERSION.$AIX_RELEASE - bailing out"
-#         exit 1
-#         ;;
-# esac
-
-
 echo "Running Installer..."
 if [ -e $1/datadog.yaml ]; then
     echo "existing configuration file found, backing up..."
@@ -306,6 +301,13 @@ if [ -d $1 ]; then
 fi
 
 unpack $1
+
+install_filesets $1
+if [ $? -ne -0 ];
+then
+    echo "There was a problem installing the required filesets..."
+    exit 1
+fi
 
 which python >/dev/null 2>&1
 if [ $? -ne 0 ];

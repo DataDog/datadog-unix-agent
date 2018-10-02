@@ -289,8 +289,8 @@ class HMC(AgentCheck):
         try:
             _, stdout, stderr = ssh_client.exec_command(cmd, environment=environment)
 
-            self.log.debug("command %s STDOUT: %s", stdout.read())
-            self.log.debug("command %s STDERR: %s", stderr.read())
+            self.log.debug("command %s STDOUT: %s", cmd, stdout.read())
+            self.log.debug("command %s STDERR: %s", cmd, stderr.read())
         except Exception:
             raise
 

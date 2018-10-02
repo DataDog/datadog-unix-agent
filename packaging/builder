@@ -85,7 +85,7 @@ if [ -e "payload.tar" ]; then
     gzip payload.tar
 
     if [ -e "payload.tar.gz" ]; then
-        cat decompress payload.tar.gz > datadog-aix-installer.$VERSION.bsx
+        cat decompress payload.tar.gz > datadog-aix-installer.$VERSION.ksx
     else
         echo "payload.tar.gz does not exist"
         exit 1
@@ -95,5 +95,5 @@ else
     exit 1
 fi
 
-echo "datadog-aix-installer.$VERSION.bsx created"
+echo "datadog-aix-installer.$VERSION.ksx created"
 exit 0

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
 
@@ -8,6 +8,35 @@ echo ""
 
 export TMPDIR="/tmp/datadog-aix-installer.$$"
 AGENT_PATH="/opt/datadog/datadog-unix-agent"
+
+if [[ "$(id -u)" != "0" ]]
+then
+    echo "The installer should be run as a root"
+    exit 1
+fi
+
+#Check if /tmp has enough space to untar (150MB shouldn't need much more) 
+#Extracting rpm packages.
+# 45 MB for rpm.rte and 54 MB for yum_bundle.tar, 50 MB for rpm packages extracted.
+
+typeset -i total_req=`echo "(150)" | bc`
+tmp_free=$(df -m /tmp | sed -e /Filesystem/d | awk '{print $3}')
+if [[ "$(echo "if ($tmp_free < $total_req) 1" | bc)" -eq 1 ]];
+then
+    echo "Please make sure /tmp has at least 150MB of free space to proceed..."
+    exit 1
+fi
+
+#Check if /opt is having enough space to install the packages from yum_bundle.
+#Currently we need around 300MB of free space in /opt filesystem (might be less).
+typeset -i total_opt=`echo "(300)" | bc`
+opt_free=$(df -m /opt | sed -e /Filesystem/d | awk '{print $3}')
+if [[ "$(echo "if ($opt_free < $total_opt) 1" | bc)" -eq 1 ]];
+then
+    echo "Total free space required for /opt is around 300 MB."
+    echo "Please increase the /opt space and retry."
+    exit 1
+fi
 
 mkdir $TMPDIR
 

@@ -34,14 +34,14 @@ in the agent target directory will be wiped.
  - openssl >=1.0.1 (if you need to upgrade use the IBM fileset [here](http://www-01.ibm.com/support/docview.wss?uid=isg1fileset-1190419011)) 
  - RPM (if you need to install RPM, please use the IBM fileset [here](http://www-01.ibm.com/support/docview.wss?uid=isg1fileset1404816868))
 
-##### Runtime requirements
+### Runtime requirements
 We have provided an installer that should be able to provide all additional requirements, including
 python if it is not available. These requirements include:
 
-##### FileSets
+#### FileSets
  - cffi
 
-##### RPMs
+#### RPMs
  - ca-certificates-2016.10.7-2.aix6.1.ppc.rpm
  - curl-7.52.1-1.aix6.1.ppc.rpm
  - db-4.8.24-3.aix6.1.ppc.rpm
@@ -56,7 +56,7 @@ python if it is not available. These requirements include:
  - python-urlgrabber-3.10.1-1.aix6.1.noarch.rpm
  - readline-6.1-2.aix6.1.ppc.rpm
 
-##### Python Packages
+#### Python Packages
  - asn1crypto==0.24.0
  - atomicwrites==1.1.5
  - attrs==18.1.0

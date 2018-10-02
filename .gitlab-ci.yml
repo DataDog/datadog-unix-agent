@@ -2,6 +2,7 @@ image: python:2.7
 
 test:
   script:
+  - pip install -r requirements-dev.txt
   - pip install -r requirements.txt
   - flake8
   - python -m pytest -v .

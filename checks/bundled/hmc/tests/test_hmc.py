@@ -126,4 +126,3 @@ def test_simple_hmc(aggregator):
         }
         myhmc = HMC(CHECK_NAME, {}, {}, aggregator)
         myhmc.check(instance)
-

@@ -320,7 +320,7 @@ class HMC(AgentCheck):
         try:
             _, stdout, _ = ssh_client.exec_command(self.HMC_GET_SERVERS, environment=environment)
         except Exception:
-           raise
+            raise
 
         servers = []
         for line in stdout.read().splitlines():
@@ -428,7 +428,6 @@ class HMC(AgentCheck):
                 except ValueError:
                     self.log.exception("unable to submit metric for {}".format(field))
 
-
     def hmc_ls(self, ssh_client, environment={}):
         try:
             ssh_client.exec_command(self.HMC_LS_CMD, environment=environment)
@@ -447,13 +446,12 @@ class HMC(AgentCheck):
             # Cached:        1457064 kB
             _, stdout, _  = ssh_client.exec_command(self.HMC_MEMINFO_CMD, environment=environment)
         except Exception:
-           raise
+            raise
 
         for line in skip_blank_lines(stdout.read().splitlines()):
             m = line.split()
             metric = m[0][:-1]
             self.gauge('hmc.system.memory.{metric}'.format(metric=metric), float(m[1]), tags=tags)
-
 
     def hmc_monhmc_swap(self, ssh_client, environment={}, tags=[]):
         try:
@@ -463,7 +461,7 @@ class HMC(AgentCheck):
 
             _, stdout, _  = ssh_client.exec_command(self.HMC_MON_CMD, environment=environment)
         except Exception:
-           raise
+            raise
 
         swap = stdout.read()
         swap = ' '.join(swap.split()[1:])
@@ -472,7 +470,6 @@ class HMC(AgentCheck):
             val, metric = stat.split()
             val = re.sub("\D", "", val)
             self.gauge('hmc.system.memory.swap.{metric}'.format(metric=metric), float(val), tags=tags)
-
 
     def hmc_procstat(self, ssh_client, environment={}):
         try:

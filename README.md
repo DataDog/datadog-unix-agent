@@ -151,7 +151,21 @@ There are also facilities to run the agent via the known python `supervisor`, th
 might be your preferred way to manage the agent daemon if you are familiar with the 
 tool. There are currently entries for both the `agent` and `dogstatsd`.
 
-### Developer Notes
+
+### Integrations
+
+Additional integrations currently available or in development:
+ - process
+ - hmc
+
+For non-core integrations, a configuration file should be put in place to enable
+the integration. These are expected to be found in `./etc/datadog-agent/conf.d`.
+The name of the YAML configuration file should match that of the integration:
+`./etc/datadog-agent/conf.d/foo.yaml` will enable integration foo, and set its
+configuration.
+
+
+## Developer Notes
 
 You will typically want `setuptools`, `wheel` and `virtualenv` on your python 
 development environment.
@@ -167,7 +181,7 @@ installation should be seamless.
 pip install -r requirements.txt
 ```
 
-#### Building
+### Building
 
 We provide a script in packaging named `./packaging/builder` that will allow you
 to build a self-extractable installer. You may use it as follows:
@@ -181,7 +195,7 @@ the version for the agent release. This will result in a `ksx` self-extractable
 installer that should just work across supported AIX environments.
 
 
-#### Integrations
+### Integrations
 
 The agent has two types of checks or integrations. 
   - Core checks
@@ -200,7 +214,7 @@ Then install any wheel check you wish (HMC in this example):
 pip install -c requirements.txt --no-index --find-links file://path/to/repo/deps/env/ /path/to/repo/checks/bundled/hmc
 ```
 
-#### AIX
+### AIX
 If you wish to develop directly on an AIX rig, we recommend the following development
 requirements be met. We will assume these conditions are met when we discuss AIX
 development workflows:
@@ -240,7 +254,7 @@ lib (`-L`) directives may go.
 If the command succeeds you'll typically find the compiled wheel in the python-package `dist/`
 directory.
 
-##### psutil
+#### psutil
 
 We are currently working on merging some changes upstream into `psutil` to avoid having to apply 
 any patches manually, but until then please use the `psutil.patch` file provided in the `patch/`
@@ -253,7 +267,6 @@ clone this outside of `datadog-unix-agent`.
 git clone git@github.com:giampaolo/psutil.git
 patch -p0 < psutil.patch
 ```
-
 
 Happy DataDoggin'!
 

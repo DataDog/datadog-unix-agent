@@ -32,6 +32,12 @@ end
 def aix_env()
     env = with_standard_compiler_flags(with_embedded_path, :aix => { :use_gcc => true }) 
     env.merge({"LD_RUN_PATH" => "#{install_dir}/embedded/lib"})
+    env["CC"] = "gcc"
+    env["CXX"] = "gcc"
+    env["CFLAGS"] = "-maix64 #{env["CFLAGS"].gsub('-q64', '')}"
+    env["CPPFLAGS"] = "-maix64 #{env["CPPFLAGS"].gsub('-q64', '')}"
+    env["CXXFLAGS"] = "-maix64 #{env["CXXFLAGS"].gsub('-q64', '')}"
+    env["LDFLAGS"] = env["LDFLAGS"].gsub('-q64', '')
 
     return env
 end

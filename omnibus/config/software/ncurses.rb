@@ -27,8 +27,12 @@ source url: "http://ftp.gnu.org/gnu/ncurses/ncurses-5.9.tar.gz",
 
 relative_path "ncurses-5.9"
 
-env = with_embedded_path()
-env = with_standard_compiler_flags(env, aix: { use_gcc: true })
+if aix?
+  env = aix_env
+else
+  env = with_embedded_path()
+  env = with_standard_compiler_flags(env)
+end
 
 if ohai["platform"] == "solaris2"
   # gcc4 from opencsw fails to compile ncurses

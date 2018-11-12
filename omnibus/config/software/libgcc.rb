@@ -37,10 +37,22 @@ libgcc_file =
     nil
   end
 
+libgcc_dest_file =
+  case ohai["platform"]
+  when "solaris2"
+    "libgcc_s.so.1"
+  when "aix"
+    "libgcc_s.a"
+  when "freebsd"
+    "libgcc_s.so.1"
+  else
+    nil
+  end
+
 build do
   if libgcc_file
     if File.exists?(libgcc_file)
-      copy "#{libgcc_file}", "#{install_dir}/embedded/lib/"
+      copy "#{libgcc_file}", "#{install_dir}/embedded/lib/#{libgcc_dest_file}"
     else
       raise "cannot find libgcc -- where is your gcc compiler?"
     end

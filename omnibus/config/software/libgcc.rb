@@ -52,6 +52,7 @@ libgcc_dest_file =
 build do
   if libgcc_file
     if File.exists?(libgcc_file)
+      mkdir "#{install_dir}/embedded/lib"
       copy "#{libgcc_file}", "#{install_dir}/embedded/lib/#{libgcc_dest_file}"
     else
       raise "cannot find libgcc -- where is your gcc compiler?"

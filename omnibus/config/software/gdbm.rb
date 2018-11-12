@@ -28,7 +28,7 @@ version "1.18" do
   source :sha256 => "b8822cb4769e2d759c828c06f196614936c88c141c3132b18252fe25c2b635ce"
 end
 
-source :url => "https://ftp.gnu.org/gnu/gdbm/gdbm-#{version}.tar.gz",
+source :url => "https://ftp.gnu.org/gnu/gdbm/gdbm-#{version}.tar.gz"
 
 relative_path "gdbm-#{version}"
 

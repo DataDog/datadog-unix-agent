@@ -127,6 +127,9 @@ build do
   command "make clean", env: env
   command "make distclean", env: env
 
+  env_narrow = env.clone
+  env_narrow["CPPFLAGS"] = "-P -D_LARGE_FILES"
+
   cmd_array = ["./configure",
            "--prefix=#{install_dir}/embedded",
            "--with-termlib",
@@ -140,13 +143,13 @@ build do
 
   # cmd_array << "--with-libtool" if ohai["platform"] == "aix"
   command(cmd_array.join(" "),
-          env: env)
-  command "make", env: env
+          env: env_narrow)
+  command "make", env: env_narrow
 
   # installing the non-wide libraries will also install the non-wide
   # binaries, which doesn't happen to be a problem since we don't
   # utilize the ncurses binaries in private-chef (or oss chef)
-  command "make install", env: env
+  command "make install", env: env_narrow
 
   # Ensure embedded ncurses wins in the LD search path
   if ohai["platform"] == "smartos"

@@ -135,7 +135,7 @@ build do
            "--without-cxx-binding",
            "--enable-overwrite"]
 
-  i# cmd_array << "--with-libtool" if ohai["platform"] == "aix"
+  # cmd_array << "--with-libtool" if ohai["platform"] == "aix"
   command(cmd_array.join(" "),
           env: env)
   command "make", env: env

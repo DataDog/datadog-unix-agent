@@ -34,10 +34,12 @@ def aix_env()
     env.merge({"LD_RUN_PATH" => "#{install_dir}/embedded/lib"})
     env["CC"] = "gcc"
     env["CXX"] = "gcc"
+    env["ARFLAGS"] = "-X64"
     env["CFLAGS"] = "-maix64 #{env["CFLAGS"].gsub('-q64', '')}"
-    env["CPPFLAGS"] = "-maix64 #{env["CPPFLAGS"].gsub('-q64', '')}"
+    env["CPPFLAGS"] = "-maix64 -P #{env["CPPFLAGS"].gsub('-q64', '')}"
     env["CXXFLAGS"] = "-maix64 #{env["CXXFLAGS"].gsub('-q64', '')}"
     env["LDFLAGS"] = env["LDFLAGS"].gsub('-q64', '')
+    env["NM"] = "/usr/bin/nm -X64"
 
     return env
 end

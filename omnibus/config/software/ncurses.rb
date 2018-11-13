@@ -29,7 +29,6 @@ relative_path "ncurses-5.9"
 
 if aix?
   env = aix_env
-  env["CPPFLAGS"] = "-P"
 else
   env = with_embedded_path()
   env = with_standard_compiler_flags(env)
@@ -64,7 +63,9 @@ end
 
 build do
   ship_license "https://gist.githubusercontent.com/remh/41a4f7433c77841c302c/raw/d15db09a192ca0e51022005bfb4c3a414a996896/ncurse.LICENSE"
-  env.delete("CPPFLAGS")
+  unless aix?
+    env.delete("CPPFLAGS")
+  end
 
   if ohai["platform_family"] == "debian" || ohai["platform_family"] == "rhel"
     patch source: "ncurses-5.9-gcc-5.patch", plevel: 1

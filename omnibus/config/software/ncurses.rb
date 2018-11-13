@@ -29,6 +29,7 @@ relative_path "ncurses-5.9"
 
 if aix?
   env = aix_env
+  env["CPPFLAGS"] = "-P"
 else
   env = with_embedded_path()
   env = with_standard_compiler_flags(env)
@@ -105,39 +106,44 @@ build do
   # build wide-character libraries
   cmd_array = ["./configure",
            "--prefix=#{install_dir}/embedded",
-           "--with-shared",
            "--with-termlib",
            "--without-debug",
-           "--without-normal", # AIX doesn't like building static libs
+           "--with-normal",
+           "--without-shared",
+           # "--without-normal", # AIX doesn't like building static libs
+           # "--with-shared",
            "--without-cxx-binding",
            "--enable-overwrite",
            "--enable-widec"]
 
-  cmd_array << "--with-libtool" if ohai["platform"] == "aix"
+  # cmd_array << "--with-libtool" if ohai["platform"] == "aix"
   command(cmd_array.join(" "),
           env: env)
-  command "make -j #{workers}", env: env
-  command "make -j #{workers} install", env: env
+  command "make", env: env
+  command "make install", env: env
 
   # build non-wide-character libraries
   command "make distclean"
   cmd_array = ["./configure",
            "--prefix=#{install_dir}/embedded",
-           "--with-shared",
            "--with-termlib",
            "--without-debug",
-           "--without-normal",
+           "--with-normal",
+           "--without-shared",
+           # "--without-normal", # AIX doesn't like building static libs
+           # "--with-shared",
            "--without-cxx-binding",
            "--enable-overwrite"]
-  cmd_array << "--with-libtool" if ohai["platform"] == "aix"
+
+  i# cmd_array << "--with-libtool" if ohai["platform"] == "aix"
   command(cmd_array.join(" "),
           env: env)
-  command "make -j #{workers}", env: env
+  command "make", env: env
 
   # installing the non-wide libraries will also install the non-wide
   # binaries, which doesn't happen to be a problem since we don't
   # utilize the ncurses binaries in private-chef (or oss chef)
-  command "make -j #{workers} install", env: env
+  command "make install", env: env
 
   # Ensure embedded ncurses wins in the LD search path
   if ohai["platform"] == "smartos"

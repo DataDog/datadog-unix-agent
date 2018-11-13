@@ -84,7 +84,7 @@ build do
 
     configure env: env
 
-    make "-j #{workers}", env: env
-    make "-j #{workers} install", env: env
+    make, env: env
+    make "install", env: env
   end
 end

@@ -124,7 +124,12 @@ build do
   command "make install", env: env
 
   # build non-wide-character libraries
-  command "make distclean"
+  command "make clean", env: env
+  command "make distclean", env: env
+
+  # add more flags
+  env["CFLAGS"] = "#{env["CFLAGS"]} -D_XOPEN_SOURCE_EXTENDED -D_GNU_SOURCE"
+
   cmd_array = ["./configure",
            "--prefix=#{install_dir}/embedded",
            "--with-termlib",

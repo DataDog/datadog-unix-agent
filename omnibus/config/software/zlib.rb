@@ -84,7 +84,7 @@ build do
 
     configure env: env
 
-    make, env: env
-    make "install", env: env
+    command "make", env: env
+    command "make install", env: env
   end
 end

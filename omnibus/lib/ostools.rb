@@ -38,7 +38,7 @@ def aix_env()
     env["CFLAGS"] = "-maix64 #{env["CFLAGS"].gsub('-q64', '')}"
     env["CPPFLAGS"] = "-maix64 -P #{env["CPPFLAGS"].gsub('-q64', '')}"
     env["CXXFLAGS"] = "-maix64 #{env["CXXFLAGS"].gsub('-q64', '')}"
-    env["LDFLAGS"] = env["LDFLAGS"].gsub('-q64', '')
+    env["LDFLAGS"] = "#{env["LDFLAGS"].gsub('-q64', '')} -Wl,-brtl"
     env["NM"] = "/usr/bin/nm -X64"
 
     return env

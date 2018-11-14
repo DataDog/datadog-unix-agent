@@ -25,7 +25,7 @@ build do
        "--prefix=#{install_dir}/embedded",
        "--disable-nls"].join(" "),
     :env => env)
-  command "make -j #{workers}", :env => env 
+  command "make", :env => env 
   command "make install"
   delete "#{install_dir}/embedded/bin/sqlite3"
 end

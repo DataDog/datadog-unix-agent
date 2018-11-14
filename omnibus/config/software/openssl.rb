@@ -85,7 +85,9 @@ build do
 
   configure_cmd =
     if aix?
-      "perl ./Configure aix64-cc"
+      # "perl ./Configure aix64-cc"
+      # Use GCC 
+      "perl ./Configure aix64-gcc"
     elsif mac_os_x?
       "./Configure darwin64-x86_64-cc"
     elsif smartos?

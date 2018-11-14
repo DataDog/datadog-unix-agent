@@ -1,6 +1,8 @@
 name "libsqlite3"
 default_version "3.7.7.1"
 
+dependency "readline"
+
 source :git => "git://github.com/LuaDist/libsqlite3.git"
 
 relative_path "libsqlite3"

@@ -38,6 +38,7 @@ build do
   ship_license "https://gist.githubusercontent.com/remh/227fefddabefc998235f/raw/cc614178cf79580e04671c4d6acfbe95028b1842/bzip2.LICENSE"
   patch :source => "makefile_take_env_vars.patch"
   patch :source => "soname_install_dir.patch" if ohai["platform_family"] == "mac_os_x"
+  patch :source => "aix-shared-lib-no-gnu-ld.patch" if ohai["platform_family"] == "aix"
 
   env = case ohai["platform"]
         when "aix"

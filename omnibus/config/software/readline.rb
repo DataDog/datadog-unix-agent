@@ -29,6 +29,11 @@ build do
   end
 
   command configure_command.join(" "), :env => env
+
+  # note: this patch is dependent on the environment we ./configure with
+  # if that changes this patch will likely have to be generated again.
+  patch :source => "readline-shlib-makefile-fix.patch", :plevel => 0 if ohai["platform_family"] == "aix"
+
   command "make", :env => env
   command "make install", :env => env
 end

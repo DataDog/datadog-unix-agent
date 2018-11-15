@@ -110,14 +110,13 @@ build do
            "--with-termlib",
            "--without-debug",
            "--with-normal",
-           "--without-shared",
-           # "--without-normal", # AIX doesn't like building static libs
-           # "--with-shared",
+           "--with-shared",
            "--without-cxx-binding",
            "--enable-overwrite",
+           "--enable-termcap",
            "--enable-widec"]
 
-  # cmd_array << "--with-libtool" if ohai["platform"] == "aix"
+  cmd_array << "--with-libtool" if ohai["platform"] == "aix"
   command(cmd_array.join(" "),
           env: env)
   command "make", env: env
@@ -135,13 +134,12 @@ build do
            "--with-termlib",
            "--without-debug",
            "--with-normal",
-           # "--without-shared",
-           # "--without-normal", # AIX doesn't like building static libs
-           # "--with-shared",
+           "--with-shared",
            "--without-cxx-binding",
-           "--enable-overwrite"]
+           "--enable-overwrite",
+           "--enable-termcap"]
 
-  # cmd_array << "--with-libtool" if ohai["platform"] == "aix"
+  cmd_array << "--with-libtool" if ohai["platform"] == "aix"
   command(cmd_array.join(" "),
           env: env_narrow)
   command "make", env: env_narrow

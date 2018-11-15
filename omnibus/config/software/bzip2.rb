@@ -51,6 +51,9 @@ build do
           }
         end
 
+  env["CFLAGS"] = "-maix64 #{env["CFLAGS"]}"
+  env["CXXFLAGS"] = "-maix64 #{env["CFLAGS"]}"
+
   command "make PREFIX=#{prefix} VERSION=#{version}", :env => env
   command "make PREFIX=#{prefix} VERSION=#{version} -f Makefile-libbz2_so", :env => env
   command "make install VERSION=#{version} PREFIX=#{prefix}", :env => env

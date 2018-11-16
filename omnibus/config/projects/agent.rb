@@ -52,6 +52,7 @@ end
 # ------------------------------------
 
 dependency 'cacerts'
+dependency "libffi"
 dependency 'python3'
 
 ## creates required build directories

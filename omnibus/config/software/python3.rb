@@ -55,5 +55,5 @@ build do
   command "make install", :env => env
   # delete "#{install_dir}/embedded/lib/python2.7/test"
 
-  # we dont need readline support
+  link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
 end

@@ -9,15 +9,6 @@ require 'json'
 name 'datadog-agent-integrations'
 
 dependency 'python3'
-dependency 'datadog-pip'
-
-# wheel dependencies
-
-
-if linux?
-  # add nfsiostat script
-  dependency 'nfsiostat'
-end
 
 # relative_path 'integrations-core'
 # whitelist_file "embedded/lib/python2.7"

@@ -34,6 +34,10 @@ build do
 
   if aix?
     env["M4"] = "/opt/freeware/bin/m4"
+
+    # Let's set the PIC flag and see how it goes.
+    env["CFLAGS"] = "-fPIC #{env["CFLAGS"]}"
+    env["CXXFLAGS"] = "-fPIC #{env["CXXFLAGS"]}"
   end
 
   ## NOTE: we might have to wrap ALL this remaining code in a `block do...end`

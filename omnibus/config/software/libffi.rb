@@ -41,6 +41,7 @@ build do
           with_standard_compiler_flags(with_embedded_path)
         end
 
+  # requires coreutil (linux toolkit) installed on the builder
   env["INSTALL"] = "/opt/freeware/bin/install" if aix?
 
   configure_command = []

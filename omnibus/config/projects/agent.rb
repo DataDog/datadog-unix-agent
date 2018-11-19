@@ -55,6 +55,9 @@ dependency 'cacerts'
 dependency "libffi"
 dependency 'python3'
 
+# integrations dependencies
+dependency 'datadog-agent-integrations'
+
 ## creates required build directories
 #dependency 'datadog-agent-prepare'
 #

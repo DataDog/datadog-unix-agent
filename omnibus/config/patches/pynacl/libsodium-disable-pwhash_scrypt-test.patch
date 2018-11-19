@@ -1,0 +1,54 @@
+diff --git a/src/libsodium/test/default/Makefile.am b/src/libsodium/test/default/Makefile.am
+index 96b677e..b9d726b 100644
+--- a/src/libsodium/test/default/Makefile.am
++++ b/src/libsodium/test/default/Makefile.am
+@@ -45,7 +45,6 @@ EXTRA_DIST = \
+ 	onetimeauth7.exp \
+ 	pwhash_argon2i.exp \
+ 	pwhash_argon2id.exp \
+-	pwhash_scrypt.exp \
+ 	pwhash_scrypt_ll.exp \
+ 	randombytes.exp \
+ 	scalarmult.exp \
+@@ -118,7 +117,6 @@ DISTCLEANFILES = \
+ 	onetimeauth7.res \
+ 	pwhash_argon2i.res \
+ 	pwhash_argon2id.res \
+-	pwhash_scrypt.res \
+ 	pwhash_scrypt_ll.res \
+ 	randombytes.res \
+ 	scalarmult.res \
+@@ -192,7 +190,6 @@ CLEANFILES = \
+ 	onetimeauth7.final \
+ 	pwhash_argon2i.final \
+ 	pwhash_argon2id.final \
+-	pwhash_scrypt.final \
+ 	pwhash_scrypt_ll.final \
+ 	randombytes.final \
+ 	scalarmult.final \
+@@ -261,7 +258,6 @@ CLEANFILES = \
+ 	onetimeauth7.nexe \
+ 	pwhash_argon2i.nexe \
+ 	pwhash_argon2id.nexe \
+-	pwhash_scrypt.nexe \
+ 	pwhash_scrypt_ll.nexe \
+ 	randombytes.nexe \
+ 	scalarmult.nexe \
+@@ -504,9 +500,6 @@ pwhash_argon2i_LDADD      = $(TESTS_LDADD)
+ pwhash_argon2id_SOURCE    = cmptest.h pwhash_argon2id.c
+ pwhash_argon2id_LDADD     = $(TESTS_LDADD)
+ 
+-pwhash_scrypt_SOURCE      = cmptest.h pwhash_scrypt.c
+-pwhash_scrypt_LDADD       = $(TESTS_LDADD)
+-
+ pwhash_scrypt_ll_SOURCE   = cmptest.h pwhash_scrypt_ll.c
+ pwhash_scrypt_ll_LDADD    = $(TESTS_LDADD)
+ 
+@@ -593,7 +586,6 @@ xchacha20_LDADD           = $(TESTS_LDADD)
+ 
+ if !MINIMAL
+ TESTS_TARGETS += \
+-	pwhash_scrypt \
+ 	pwhash_scrypt_ll \
+ 	siphashx24 \
+ 	xchacha20

@@ -47,7 +47,7 @@ build do
 
   ## NOTE: we might have to wrap ALL this remaining code in a `block do...end`
 
-  pip "install -r #{project_dir}/#{requirements_file}", :env => nix_build_env
+  pip "install -r #{project_dir}/#{requirements_file}", :env => env
 
     # install integrations
   # Dir.glob("#{project_dir}/*").each do |check_dir|

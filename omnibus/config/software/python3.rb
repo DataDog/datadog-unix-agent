@@ -1,4 +1,4 @@
-name "python"
+name "python3"
 
 default_version "3.6.7"
 

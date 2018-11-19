@@ -56,4 +56,5 @@ build do
   # delete "#{install_dir}/embedded/lib/python2.7/test"
 
   link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
+  link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"
 end

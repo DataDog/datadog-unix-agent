@@ -1,0 +1,20 @@
+diff --git a/psutil/arch/aix/net_kernel_structs.h b/psutil/arch/aix/net_kernel_structs.h
+index 09f320ff..8bd729db 100644
+--- a/psutil/arch/aix/net_kernel_structs.h
++++ b/psutil/arch/aix/net_kernel_structs.h
+@@ -17,7 +17,7 @@
+ #include <sys/socketvar.h>
+ #include <sys/protosw.h>
+ #include <sys/unpcb.h>
+-#include <sys/mbuf_base.h>
++#include <sys/mbuf.h>
+ #include <netinet/ip_var.h>
+ #include <netinet/tcp.h>
+ #include <netinet/tcpip.h>
+@@ -107,4 +107,4 @@ struct mbuf64
+ 
+ #define m_len               m_hdr.mh_len
+ 
+-#endif
+\ No newline at end of file
++#endif

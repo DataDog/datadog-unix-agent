@@ -22,6 +22,8 @@ build do
   end
 
   if aix?
+    patch source: "aix-net-kernel-mbuf-header-fix.patch", plevel: 1
+
     env["M4"] = "/opt/freeware/bin/m4"
   end
 

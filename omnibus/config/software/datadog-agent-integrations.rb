@@ -39,8 +39,8 @@ build do
     env["M4"] = "/opt/freeware/bin/m4"
 
     # Let's set the PIC flag and see how it goes.
-    env["CFLAGS"] = "-fPIC #{env["CFLAGS"]}"
-    env["CXXFLAGS"] = "-fPIC #{env["CXXFLAGS"]}"
+    env["CFLAGS"] = "-fPIC #{env["CFLAGS"]} -D__64BIT__"
+    env["CXXFLAGS"] = "-fPIC #{env["CXXFLAGS"]} -D__64BIT__"
   end
 
   ## NOTE: we might have to wrap ALL this remaining code in a `block do...end`

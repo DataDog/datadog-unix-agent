@@ -12,6 +12,7 @@ dependency 'python3'
 
 # some deps we need to build manually with omnibus
 dependency 'pynacl'
+dependency 'psutil'
 
 # relative_path 'integrations-core'
 # whitelist_file "embedded/lib/python2.7"

@@ -53,7 +53,7 @@ index 96b677e..b9d726b 100644
  	siphashx24 \
  	xchacha20
 diff --git a/src/libsodium/test/default/Makefile.in b/src/libsodium/test/default/Makefile.in
-index 1cbecb9..c78c685 100644
+index 1cbecb9..822028b 100644
 --- a/src/libsodium/test/default/Makefile.in
 +++ b/src/libsodium/test/default/Makefile.in
 @@ -94,7 +94,6 @@ host_triplet = @host@
@@ -64,15 +64,19 @@ index 1cbecb9..c78c685 100644
  @MINIMAL_FALSE@	pwhash_scrypt_ll \
  @MINIMAL_FALSE@	siphashx24 \
  @MINIMAL_FALSE@	xchacha20
-@@ -121,7 +120,6 @@ CONFIG_CLEAN_VPATH_FILES =
+@@ -121,8 +120,9 @@ CONFIG_CLEAN_VPATH_FILES =
  @EMSCRIPTEN_FALSE@@NATIVECLIENT_FALSE@am__EXEEXT_1 =  \
  @EMSCRIPTEN_FALSE@@NATIVECLIENT_FALSE@	sodium_utils2$(EXEEXT) \
  @EMSCRIPTEN_FALSE@@NATIVECLIENT_FALSE@	sodium_utils3$(EXEEXT)
 -@MINIMAL_FALSE@am__EXEEXT_2 = pwhash_scrypt$(EXEEXT) \
- @MINIMAL_FALSE@	pwhash_scrypt_ll$(EXEEXT) siphashx24$(EXEEXT) \
+-@MINIMAL_FALSE@	pwhash_scrypt_ll$(EXEEXT) siphashx24$(EXEEXT) \
++@MINIMAL_FALSE@am__EXEEXT_2 = \
++@MINIMAL_FALSE@ pwhash_scrypt_ll$(EXEEXT) \
++@MINIMAL_FALSE@ siphashx24$(EXEEXT) \
  @MINIMAL_FALSE@	xchacha20$(EXEEXT)
  am__EXEEXT_3 = aead_aes256gcm$(EXEEXT) aead_chacha20poly1305$(EXEEXT) \
-@@ -274,9 +272,6 @@ pwhash_argon2i_DEPENDENCIES = $(TESTS_LDADD)
+ 	aead_xchacha20poly1305$(EXEEXT) auth$(EXEEXT) auth2$(EXEEXT) \
+@@ -274,9 +274,6 @@ pwhash_argon2i_DEPENDENCIES = $(TESTS_LDADD)
  pwhash_argon2id_SOURCES = pwhash_argon2id.c
  pwhash_argon2id_OBJECTS = pwhash_argon2id.$(OBJEXT)
  pwhash_argon2id_DEPENDENCIES = $(TESTS_LDADD)
@@ -82,7 +86,7 @@ index 1cbecb9..c78c685 100644
  pwhash_scrypt_ll_SOURCES = pwhash_scrypt_ll.c
  pwhash_scrypt_ll_OBJECTS = pwhash_scrypt_ll.$(OBJEXT)
  pwhash_scrypt_ll_DEPENDENCIES = $(TESTS_LDADD)
-@@ -403,7 +398,7 @@ SOURCES = aead_aes256gcm.c aead_chacha20poly1305.c \
+@@ -403,7 +400,7 @@ SOURCES = aead_aes256gcm.c aead_chacha20poly1305.c \
  	generichash.c generichash2.c generichash3.c hash.c hash3.c \
  	kdf.c keygen.c kx.c metamorphic.c misuse.c onetimeauth.c \
  	onetimeauth2.c onetimeauth7.c pwhash_argon2i.c \
@@ -91,7 +95,7 @@ index 1cbecb9..c78c685 100644
  	randombytes.c scalarmult.c scalarmult2.c scalarmult5.c \
  	scalarmult6.c scalarmult7.c secretbox.c secretbox2.c \
  	secretbox7.c secretbox8.c secretbox_easy.c secretbox_easy2.c \
-@@ -419,7 +414,7 @@ DIST_SOURCES = aead_aes256gcm.c aead_chacha20poly1305.c \
+@@ -419,7 +416,7 @@ DIST_SOURCES = aead_aes256gcm.c aead_chacha20poly1305.c \
  	generichash.c generichash2.c generichash3.c hash.c hash3.c \
  	kdf.c keygen.c kx.c metamorphic.c misuse.c onetimeauth.c \
  	onetimeauth2.c onetimeauth7.c pwhash_argon2i.c \
@@ -100,7 +104,7 @@ index 1cbecb9..c78c685 100644
  	randombytes.c scalarmult.c scalarmult2.c scalarmult5.c \
  	scalarmult6.c scalarmult7.c secretbox.c secretbox2.c \
  	secretbox7.c secretbox8.c secretbox_easy.c secretbox_easy2.c \
-@@ -862,7 +857,6 @@ EXTRA_DIST = \
+@@ -862,7 +859,6 @@ EXTRA_DIST = \
  	onetimeauth7.exp \
  	pwhash_argon2i.exp \
  	pwhash_argon2id.exp \
@@ -108,7 +112,7 @@ index 1cbecb9..c78c685 100644
  	pwhash_scrypt_ll.exp \
  	randombytes.exp \
  	scalarmult.exp \
-@@ -935,7 +929,6 @@ DISTCLEANFILES = \
+@@ -935,7 +931,6 @@ DISTCLEANFILES = \
  	onetimeauth7.res \
  	pwhash_argon2i.res \
  	pwhash_argon2id.res \
@@ -116,7 +120,7 @@ index 1cbecb9..c78c685 100644
  	pwhash_scrypt_ll.res \
  	randombytes.res \
  	scalarmult.res \
-@@ -1008,7 +1001,6 @@ DISTCLEANFILES = \
+@@ -1008,7 +1003,6 @@ DISTCLEANFILES = \
  @NATIVECLIENT_TRUE@	onetimeauth7.final \
  @NATIVECLIENT_TRUE@	pwhash_argon2i.final \
  @NATIVECLIENT_TRUE@	pwhash_argon2id.final \
@@ -124,7 +128,7 @@ index 1cbecb9..c78c685 100644
  @NATIVECLIENT_TRUE@	pwhash_scrypt_ll.final \
  @NATIVECLIENT_TRUE@	randombytes.final \
  @NATIVECLIENT_TRUE@	scalarmult.final \
-@@ -1077,7 +1069,6 @@ DISTCLEANFILES = \
+@@ -1077,7 +1071,6 @@ DISTCLEANFILES = \
  @NATIVECLIENT_TRUE@	onetimeauth7.nexe \
  @NATIVECLIENT_TRUE@	pwhash_argon2i.nexe \
  @NATIVECLIENT_TRUE@	pwhash_argon2id.nexe \
@@ -132,7 +136,7 @@ index 1cbecb9..c78c685 100644
  @NATIVECLIENT_TRUE@	pwhash_scrypt_ll.nexe \
  @NATIVECLIENT_TRUE@	randombytes.nexe \
  @NATIVECLIENT_TRUE@	scalarmult.nexe \
-@@ -1211,8 +1202,6 @@ pwhash_argon2i_SOURCE = cmptest.h pwhash_argon2i.c
+@@ -1211,8 +1204,6 @@ pwhash_argon2i_SOURCE = cmptest.h pwhash_argon2i.c
  pwhash_argon2i_LDADD = $(TESTS_LDADD)
  pwhash_argon2id_SOURCE = cmptest.h pwhash_argon2id.c
  pwhash_argon2id_LDADD = $(TESTS_LDADD)
@@ -141,7 +145,7 @@ index 1cbecb9..c78c685 100644
  pwhash_scrypt_ll_SOURCE = cmptest.h pwhash_scrypt_ll.c
  pwhash_scrypt_ll_LDADD = $(TESTS_LDADD)
  randombytes_SOURCE = cmptest.h randombytes.c
-@@ -1477,10 +1466,6 @@ pwhash_argon2id$(EXEEXT): $(pwhash_argon2id_OBJECTS) $(pwhash_argon2id_DEPENDENC
+@@ -1477,10 +1468,6 @@ pwhash_argon2id$(EXEEXT): $(pwhash_argon2id_OBJECTS) $(pwhash_argon2id_DEPENDENC
  	@rm -f pwhash_argon2id$(EXEEXT)
  	$(AM_V_CCLD)$(LINK) $(pwhash_argon2id_OBJECTS) $(pwhash_argon2id_LDADD) $(LIBS)
  
@@ -152,7 +156,7 @@ index 1cbecb9..c78c685 100644
  pwhash_scrypt_ll$(EXEEXT): $(pwhash_scrypt_ll_OBJECTS) $(pwhash_scrypt_ll_DEPENDENCIES) $(EXTRA_pwhash_scrypt_ll_DEPENDENCIES) 
  	@rm -f pwhash_scrypt_ll$(EXEEXT)
  	$(AM_V_CCLD)$(LINK) $(pwhash_scrypt_ll_OBJECTS) $(pwhash_scrypt_ll_LDADD) $(LIBS)
-@@ -1640,7 +1625,6 @@ distclean-compile:
+@@ -1640,7 +1627,6 @@ distclean-compile:
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/onetimeauth7.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pwhash_argon2i.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pwhash_argon2id.Po@am__quote@
@@ -160,7 +164,7 @@ index 1cbecb9..c78c685 100644
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pwhash_scrypt_ll.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/randombytes.Po@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scalarmult.Po@am__quote@
-@@ -2355,13 +2339,6 @@ sodium_utils3.log: sodium_utils3$(EXEEXT)
+@@ -2355,13 +2341,6 @@ sodium_utils3.log: sodium_utils3$(EXEEXT)
  	--log-file $$b.log --trs-file $$b.trs \
  	$(am__common_driver_flags) $(AM_LOG_DRIVER_FLAGS) $(LOG_DRIVER_FLAGS) -- $(LOG_COMPILE) \
  	"$$tst" $(AM_TESTS_FD_REDIRECT)

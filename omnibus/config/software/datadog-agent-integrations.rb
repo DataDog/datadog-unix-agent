@@ -13,7 +13,7 @@ python_version = ENV['PYTHON_VERSION']
 if python_version.nil? || python_version.empty? || python_version == "3"
   dependency "python3"
 elsif python_version == "2"
-  dependency "python2"
+  dependency "python"
   dependency 'pip'
 end
 

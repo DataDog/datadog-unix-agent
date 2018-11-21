@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-name "python2"
+name "python"
 
 default_version "2.7.15"
 

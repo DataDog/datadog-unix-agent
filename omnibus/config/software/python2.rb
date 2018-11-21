@@ -37,15 +37,11 @@ build do
   patch :source => "python-2.7.11-avoid-allocating-thunks-in-ctypes.patch" if linux?
   patch :source => "python-2.7.11-fix-platform-ubuntu.diff" if linux?
 
-  env = case ohai["platform"]
-        when "aix"
-          aix_env
-        else
-          {
-            "CFLAGS" => "-I#{install_dir}/embedded/include -O2 -g -pipe",
-            "LDFLAGS" => "-Wl,-rpath,#{install_dir}/embedded/lib -L#{install_dir}/embedded/lib",
-          }
-        end
+  if aix?
+    env = aix_env
+  else
+    env = with_standard_compiler_flags(with_embedded_path)
+  end
   
   python_configure = ["./configure",
                       "--enable-universalsdk=/",

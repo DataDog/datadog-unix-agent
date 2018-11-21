@@ -36,6 +36,7 @@ build do
   ship_license "PSFL"
   patch :source => "python-2.7.11-avoid-allocating-thunks-in-ctypes.patch" if linux?
   patch :source => "python-2.7.11-fix-platform-ubuntu.diff" if linux?
+  patch :source => "python-2.7.15-aix-generated-sysconfigdata-fix.patch" if aix?
 
   if aix?
     env = aix_env

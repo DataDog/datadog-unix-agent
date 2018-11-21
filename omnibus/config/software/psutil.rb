@@ -1,7 +1,14 @@
 name "psutil"
 default_version "5.4.6"
 
-dependency "python3"
+python_version = ENV['PYTHON_VERSION']
+
+if python_version.nil? || python_version.empty? || python_version == "3"
+  dependency "python3"
+elsif python_version == "2"
+  dependency "python2"
+  dependency 'pip'
+end
 
 source :url => "https://github.com/giampaolo/psutil/archive/release-#{version}.tar.gz"
 

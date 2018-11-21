@@ -8,7 +8,14 @@ require 'json'
 
 name 'datadog-agent-integrations'
 
-dependency 'python3'
+python_version = ENV['PYTHON_VERSION']
+
+if python_version.nil? || python_version.empty? || python_version == "3"
+  dependency "python3"
+elsif python_version == "2"
+  dependency "python2"
+  dependency 'pip'
+end
 
 # some deps we need to build manually with omnibus
 dependency 'pynacl'

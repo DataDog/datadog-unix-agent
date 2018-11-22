@@ -3,6 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import os
+
 import psutil
 
 from checks import AgentCheck
@@ -14,9 +16,17 @@ class Cpu(AgentCheck):
         super(Cpu, self).__init__(*args, **kwargs)
         self._last = None
         self._nb_cpu = psutil.cpu_count()
+        self._ticks_per_sec = os.sysconf("SC_CLK_TCK")
 
     def check(self, instance):
         res = psutil.cpu_times()
+
+        # express in ticks_per_second
+        res.user = res.user / self._ticks_per_sec
+        res.sys = res.sys / self._ticks_per_sec
+        res.idle = res.idle / self._ticks_per_sec
+        res.wait = res.wait / self._ticks_per_sec
+
         if self._last:
             system = (res.system - self._last.system)
             try:

@@ -47,7 +47,7 @@ build do
     copy 'dogstatsd', "#{install_dir}/agent/"
     copy 'forwarder', "#{install_dir}/agent/"
     copy 'metadata', "#{install_dir}/agent/"
-    copy 'serializer', "#{install_dir}/agent/"
+    copy 'serialize', "#{install_dir}/agent/"
     copy 'utils', "#{install_dir}/agent/"
   
     copy '*.py', "#{install_dir}/agent/"
@@ -70,6 +70,6 @@ build do
     mkdir "#{install_dir}/scripts/"
   
     ## move around config files
-    copy 'datadog.yaml', "#{conf_dir}"
+    copy 'datadog.yaml.sample', "#{conf_dir}"
   end
 end

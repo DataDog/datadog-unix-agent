@@ -50,19 +50,19 @@ build do
     copy 'serializer', "#{install_dir}/agent/"
     copy 'utils', "#{install_dir}/agent/"
   
-    command "cp *.py \"#{install_dir}/agent/\""
-    command "cp requirements.txt \"#{install_dir}/agent/\""
+    copy '*.py', "#{install_dir}/agent/"
+    copy 'requirements.txt', "#{install_dir}/agent/"
   
     # removing some stuff we don't really need to ship like this
-    command "rm -rf \"#{install_dir}/agent/checks/bundled/\""
+    delete "#{install_dir}/agent/checks/bundled/"
   
     # Collect all the test dirs
     tests = Dir.glob("#{install_dir}/agent/*/tests")
     tests.each do |test|
-      command "rm -rf \"#{test}\""
+      delete "#{test}"
     end
   
-    conf_dir = "#{install_dir}/etc/datadog-agent"
+    conf_dir = "#{install_dir}/etc/datadog-agent/"
   
     mkdir conf_dir
     mkdir "#{install_dir}/run/"
@@ -70,6 +70,6 @@ build do
     mkdir "#{install_dir}/scripts/"
   
     ## move around config files
-    command "cp datadog.yaml \"#{conf_dir}\""
+    copy 'datadog.yaml', "#{conf_dir}"
   end
 end

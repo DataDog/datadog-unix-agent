@@ -7,52 +7,69 @@ require './lib/ostools.rb'
 require 'pathname'
 
 name 'datadog-agent'
-
-dependency 'python'
-
-license "Apache-2.0"
-license_file "../LICENSE"
+always_build true
 
 source path: '..'
-relative_path 'src/github.com/DataDog/datadog-unix-agent'
+
+python_version = ENV['PYTHON_VERSION']
+
+if python_version.nil? || python_version.empty? || python_version == "3"
+  dependency "python3"
+elsif python_version == "2"
+  dependency "python"
+  dependency 'pip'
+end
+dependency "datadog-agent-dependencies"
+
+license "Apache-2.0"
+license_file "./LICENSE"
 
 build do
-  # set GOPATH on the omnibus source dir for this software
-  gopath = Pathname.new(project_dir) + '../../../..'
-  etc_dir = "/etc/datadog-agent"
-  env = {
-    'GOPATH' => gopath.to_path,
-    'PATH' => "#{gopath.to_path}/bin:#{ENV['PATH']}",
-  }
-  # include embedded path (mostly for `pkg-config` binary)
-  env = with_embedded_path(env)
-
-  # we assume the go deps are already installed before running omnibus
-  command "invoke agent.build --rebuild --use-embedded-libs --no-development", env: env
-
-  conf_dir = "#{install_dir}/etc/datadog-agent"
-
-  mkdir conf_dir
-  mkdir "#{install_dir}/run/"
-  mkdir "#{install_dir}/scripts/"
-
-  ## move around bin and config files
-  # move 'bin/agent/dist/datadog.yaml', "#{conf_dir}/datadog.yaml.example"
-  # move 'bin/agent/dist/network-tracer.yaml', "#{conf_dir}/network-tracer.yaml.example"
-  # move 'bin/agent/dist/conf.d', "#{conf_dir}/"
-
-  copy 'bin', install_dir
-
-  if linux?
-    if debian?
-      erb source: "upstart_debian.conf.erb",
-          dest: "#{install_dir}/scripts/datadog-agent.conf",
-          mode: 0644,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
-      erb source: "sysvinit_debian.erb",
-          dest: "#{install_dir}/scripts/datadog-agent",
-          mode: 0755,
-          vars: { install_dir: install_dir, etc_dir: etc_dir }
+  block 'setup agent' do
+    etc_dir = "/etc/datadog-agent"
+  
+    if aix?
+      env = aix_env 
+      env["M4"] = "/opt/freeware/bin/m4"
+    else
+      env = with_standard_compiler_flags(with_embedded_path)
     end
+  
+    mkdir  "#{install_dir}/agent/"
+  
+    # Agent code
+    copy 'aggregator', "#{install_dir}/agent/"
+    copy 'api', "#{install_dir}/agent/"
+    copy 'collector', "#{install_dir}/agent/"
+    copy 'config', "#{install_dir}/agent/"
+    copy 'checks', "#{install_dir}/agent/"
+    copy 'docs', "#{install_dir}/agent/"
+    copy 'dogstatsd', "#{install_dir}/agent/"
+    copy 'forwarder', "#{install_dir}/agent/"
+    copy 'metadata', "#{install_dir}/agent/"
+    copy 'serializer', "#{install_dir}/agent/"
+    copy 'utils', "#{install_dir}/agent/"
+  
+    command "cp *.py \"#{install_dir}/agent/\""
+    command "cp requirements.txt \"#{install_dir}/agent/\""
+  
+    # removing some stuff we don't really need to ship like this
+    command "rm -rf \"#{install_dir}/agent/checks/bundled/\""
+  
+    # Collect all the test dirs
+    tests = Dir.glob("#{install_dir}/agent/*/tests")
+    tests.each do |test|
+      command "rm -rf \"#{test}\""
+    end
+  
+    conf_dir = "#{install_dir}/etc/datadog-agent"
+  
+    mkdir conf_dir
+    mkdir "#{install_dir}/run/"
+    mkdir "#{install_dir}/var/log/datadog/"
+    mkdir "#{install_dir}/scripts/"
+  
+    ## move around config files
+    command "cp datadog.yaml \"#{conf_dir}\""
   end
 end

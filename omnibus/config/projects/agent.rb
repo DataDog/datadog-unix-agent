@@ -63,18 +63,17 @@ elsif python_version == "2"
   dependency 'pip'
 end
 
-# integrations dependencies
-dependency 'datadog-agent-integrations'
-
 ## creates required build directories
-#dependency 'datadog-agent-prepare'
-#
-## Datadog agent
-#dependency 'datadog-agent'
+dependency 'datadog-agent-prepare'
 
-# Additional software
-# dependency 'datadog-pip'
-# dependency 'datadog-agent-integrations'
+## agent dependencies
+dependency 'datadog-agent-dependencies'
+
+## Datadog agent
+dependency 'datadog-agent'
+
+## Additional software
+dependency 'datadog-agent-integrations'
 dependency 'jmxfetch'
 
 # version manifest file

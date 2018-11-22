@@ -19,11 +19,3 @@ build do
     end
   end
 end
-
-if windows?
-  build do
-    block do
-      FileUtils.mkdir_p(File.expand_path(File.join(install_dir, "bin")))
-    end
-  end
-end

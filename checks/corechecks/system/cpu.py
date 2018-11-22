@@ -21,28 +21,26 @@ class Cpu(AgentCheck):
     def check(self, instance):
         res = psutil.cpu_times()
 
-        # express in ticks_per_second
-        res.user = res.user / self._ticks_per_sec
-        res.sys = res.sys / self._ticks_per_sec
-        res.idle = res.idle / self._ticks_per_sec
-        res.wait = res.wait / self._ticks_per_sec
-
         if self._last:
-            system = (res.system - self._last.system)
+            system = (res.system - self._last.system) / self._ticks_per_sec
             try:
+                # TODO: figure out if res.irq and res.softirq need to be in
+                #       in ticks/s
                 system += (res.irq + res.softirq) - (self._last.irq + self._last.softirq)
             except AttributeError:
                 pass
 
-            user = res.user - self._last.user
+            user = (res.user - self._last.user) / self._ticks_per_sec
             try:
+                # TODO: figure out if res.nice needs to be in ticks/s
                 user += (res.nice - self._last.nice)
             except AttributeError:
                 pass
 
             self.gauge("system.cpu.system", round(system / self._nb_cpu, 4))
             self.gauge("system.cpu.user", round(user / self._nb_cpu, 4))
-            self.gauge("system.cpu.idle", round((res.idle   - self._last.idle)   / self._nb_cpu, 4))
+            self.gauge("system.cpu.idle", round(
+                (res.idle   - self._last.idle) / self._ticks_per_sec / self._nb_cpu, 4))
 
             if hasattr(res, 'iowait'):
                 self.gauge("system.cpu.iowait", round((res.iowait   - self._last.iowait)   / self._nb_cpu, 4))

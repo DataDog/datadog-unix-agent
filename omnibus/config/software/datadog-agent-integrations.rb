@@ -18,6 +18,7 @@ elsif python_version == "2"
 end
 
 # some deps we need to build manually with omnibus
+dependency 'libffi'  # required by cffi
 dependency 'pynacl'
 dependency 'psutil'
 

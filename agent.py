@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/opt/datadog-agent/embedded/bin/python
 
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
@@ -15,6 +15,8 @@ from threading import Thread, Event
 
 from config import config
 from config.providers import FileConfigProvider
+from config.default import DEFAULT_PATH
+
 from utils.logs import initialize_logging
 from utils.hostname import HostnameException, get_hostname
 from utils.daemon import Daemon
@@ -31,7 +33,6 @@ from api import APIServer
 
 # Globals
 PID_NAME = 'datadog-unix-agent'
-PID_DIR = None
 
 log = logging.getLogger('agent')
 
@@ -66,6 +67,7 @@ class AgentRunner(Thread):
 def init_config():
     # init default search path
     config.add_search_path("/etc/datadog-agent")
+    config.add_search_path(os.path.join(DEFAULT_PATH, "etc/datadog-agent"))
     config.add_search_path("./etc/datadog-agent")
     config.add_search_path(".")
     try:
@@ -225,7 +227,16 @@ def main():
         logging.error("Problem initializing configuration: %s", e)
         return 1
 
-    agent = Agent(PidFile(PID_NAME, PID_DIR).get_path())
+    if (os.path.dirname(os.path.realpath(__file__)) !=
+        os.path.join(DEFAULT_PATH, 'agent')):
+        log.info("""You don't seem to be running a package installed agent (expected
+                 at %s). You may need to specify sane locations for your configs,
+                 logs, run path, etc. And remember to drop the configuration
+                 file in one of the supported locations.""" % DEFAULT_PATH)
+
+
+    pid_dir = config.get('run_path')
+    agent = Agent(PidFile(PID_NAME, pid_dir).get_path())
 
     foreground = not options.background
     if 'start' == command:

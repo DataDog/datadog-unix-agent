@@ -31,7 +31,7 @@ if [ ! -f "$CONFIG_DIR/datadog.yaml" ]; then
     # step-by-step instructions/an automation tool, and the config file will be added next.
     echo "No datadog.yaml file detected, not starting the agent"
 else
-  # TODO: restart the agent service 
+    echo "TODO: restart the agent service"
 fi
 
 exit 0

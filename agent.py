@@ -5,6 +5,7 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import os
 import signal
 import sys
 import time
@@ -19,6 +20,7 @@ from utils.hostname import HostnameException, get_hostname
 from utils.daemon import Daemon
 from utils.pidfile import PidFile
 from utils.network import get_proxy
+from utils.flare import Flare
 from metadata import get_metadata
 
 from collector import Collector
@@ -28,7 +30,7 @@ from forwarder import Forwarder
 from api import APIServer
 
 # Globals
-PID_NAME = "datadog-unix-agent"
+PID_NAME = 'datadog-unix-agent'
 PID_DIR = None
 
 log = logging.getLogger('agent')
@@ -53,11 +55,11 @@ class AgentRunner(Thread):
             time.sleep(self._config.get('min_collection_interval'))
 
     def stop(self):
-        log.info("Stopping Agent Runner...")
+        log.info('Stopping Agent Runner...')
         self._event.set()
 
     def run(self):
-        log.info("Starting Agent Runner...")
+        log.info('Starting Agent Runner...')
         self.collection()
 
 
@@ -68,6 +70,10 @@ def init_config():
     config.add_search_path(".")
     try:
         config.load()
+        config.add_search_path(config.get('conf_path'))
+
+        #  load again
+        config.load()
     except Exception:
         initialize_logging('agent')
         raise
@@ -77,6 +83,7 @@ def init_config():
 
     # add file provider
     file_provider = FileConfigProvider()
+    file_provider.add_place(os.path.join(config.get('conf_path'), 'conf.d'))
     file_provider.add_place(config.get('additional_checksd'))
     config.add_provider('file', file_provider)
 
@@ -91,6 +98,7 @@ class Agent(Daemon):
         'stop',
         'restart',
         'status',
+        'flare',
     ]
 
     @classmethod
@@ -100,6 +108,27 @@ class Agent(Daemon):
     @classmethod
     def info(cls):
         return True
+
+    @classmethod
+    def flare(cls, case_id):
+        email = raw_input('Please enter your contact email address: ').lower()
+        case_id = int(case_id) if case_id else None
+        myflare = Flare(case_id=case_id, email=email)
+        myflare.add_path(os.path.dirname(config.get('conf_path')))
+        myflare.add_path(os.path.dirname(config.get('logging').get('agent_log_file')))
+        myflare.add_path(os.path.dirname(config.get('logging').get('dogstatsd_log_file')))
+        myflare.add_path(config.get('additional_checksd'))
+
+        flarepath = myflare.create_archive()
+
+        print 'The flare is going to be uploaded to Datadog'
+        choice = raw_input('Do you want to continue [Y/n]? ')
+        if choice.strip().lower() not in ['yes', 'y', '']:
+            print 'Aborting (you can still use {0})'.format(flarepath)
+            sys.exit(0)
+
+        if myflare.submit():
+            myflare.cleanup()
 
     def run(self):
         try:
@@ -213,6 +242,10 @@ def main():
 
     elif 'status' == command:
         agent.status()
+
+    elif 'flare' == command:
+        case_id = raw_input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()
+        agent.flare(case_id)
 
 
 if __name__ == "__main__":

@@ -23,7 +23,9 @@ class PidFile(object):
         if os.path.exists(run_dir) and os.access(run_dir, os.W_OK):
             return os.path.realpath(run_dir)
         else:
-            return tempfile.gettempdir()
+            run_dir = tempfile.gettempdir()
+            log.info("Must resort to temporary directory for pidfile: %s" % run_dir)
+            return run_dir
 
     def __init__(self, program, pid_dir=None):
         self.pid_file = "%s.pid" % program

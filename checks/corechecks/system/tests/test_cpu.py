@@ -24,8 +24,8 @@ def test_cpu_first_run(cpu_count, cpu_times):
 
     cpu_times.return_value = cputimes(user=16683.71,
             nice=6.04,
-            system=11054.24,
-            idle=729913.18,
+            system=1105424,
+            idle=72991318,
             irq=0.0,
             softirq=104.31,
             steal=0.0,
@@ -46,8 +46,8 @@ def test_cpu_first_run(cpu_count, cpu_times):
 
     cpu_times.return_value = cputimes(user=16683.74,
             nice=6.25,
-            system=11054.34,
-            idle=729921.64,
+            system=1105434,
+            idle=72992164,
             irq=0.1,
             softirq=104.51,
             steal=0.0,
@@ -57,9 +57,9 @@ def test_cpu_first_run(cpu_count, cpu_times):
     c.check({})
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
     expected_metrics = {
-        'system.cpu.system': (GAUGE, 0.2),
-        'system.cpu.user': (GAUGE, 0.12),
-        'system.cpu.idle': (GAUGE, 4.2300),
+        'system.cpu.system': (GAUGE, 0.15),
+        'system.cpu.user': (GAUGE, 0.1052),
+        'system.cpu.idle': (GAUGE, 4.0),
         'system.cpu.stolen': (GAUGE, 0.0),
         'system.cpu.guest': (GAUGE, 0.0),
     }

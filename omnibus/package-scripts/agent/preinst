@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# Perform necessary datadog-agent setup steps before package is installed.
+#
+# .deb: STEP 2 of 5
+# .rpm: STEP 2 of 6
+# .bff: STEP ? of ? (TODO)
+
+INSTALL_DIR=/opt/datadog-agent
+LOG_DIR=/var/log/datadog
+SERVICE_NAME=datadog-agent
+
+set -e
+
+# TODO: When scripts are available, stop the service here
+
+# TODO: Setup user here
+# Set up `dd-agent` user and group
+# See linux scripts...
+
+# Delete all the .pyc/.pyo files in the embedded dir that are part of the old agent's package
+if [ -f "$INSTALL_DIR/embedded/.py_compiled_files.txt" ]; then
+    # (commented lines are filtered out)
+    cat $INSTALL_DIR/embedded/.py_compiled_files.txt | grep -v '^#' | xargs rm -f
+fi
+
+exit 0

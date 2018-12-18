@@ -163,7 +163,7 @@ def test_memory(get_subprocess_output):
 
     c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
     c.collect_memory(page_stats=False)
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     # NOTE: iomu, iomf, iohwm unavailable
     expected_metrics = [
@@ -196,7 +196,7 @@ def test_memory_page(get_subprocess_output):
 
     c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
     c.collect_memory(page_stats=True)
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     # NOTE: iomf unavailable
     expected_metrics = [
@@ -233,7 +233,7 @@ def test_memory_entitlements(get_subprocess_output):
 
     c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
     c.collect_memory_entitlements()
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = [
         'system.lpar.memory.entitlement.iomin',
@@ -269,7 +269,7 @@ def test_hypervisor(get_subprocess_output):
 
     c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
     c.collect_hypervisor()
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     # compile hypervisor calls from mock output
     output = filter(None, AIX_LPARSTATS_HYPERVISOR.splitlines())
@@ -297,7 +297,7 @@ def test_spurr(get_subprocess_output):
 
     c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
     c.collect_spurr()
-    metrics = c.aggregator.flush()
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = [
         'system.lpar.spurr.user',

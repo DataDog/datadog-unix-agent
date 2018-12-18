@@ -227,13 +227,11 @@ def main():
         logging.error("Problem initializing configuration: %s", e)
         return 1
 
-    if (os.path.dirname(os.path.realpath(__file__)) !=
-        os.path.join(DEFAULT_PATH, 'agent')):
+    if (os.path.dirname(os.path.realpath(__file__)) != os.path.join(DEFAULT_PATH, 'agent')):
         log.info("""You don't seem to be running a package installed agent (expected
                  at %s). You may need to specify sane locations for your configs,
                  logs, run path, etc. And remember to drop the configuration
                  file in one of the supported locations.""" % DEFAULT_PATH)
-
 
     pid_dir = config.get('run_path')
     agent = Agent(PidFile(PID_NAME, pid_dir).get_path())

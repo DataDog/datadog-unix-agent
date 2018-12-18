@@ -8,6 +8,7 @@ from .filesystem import Filesystem
 from .iostat import IOStat
 from .load import Load
 from .memory import Memory
+from .lparstats import LPARStats
 from .uptime_check import UptimeCheck
 
 
@@ -17,5 +18,6 @@ __all__ = [
     'IOStat',
     'Load',
     'Memory',
+    'LPARStats',
     'UptimeCheck',
 ]

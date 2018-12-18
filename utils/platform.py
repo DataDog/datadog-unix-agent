@@ -3,22 +3,27 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import os
 import platform
 import sys
 import uuid
 
+OS_PLATFORM = sys.platform
+
 
 def get_os():
     "Human-friendly OS name"
-    if sys.platform.find('freebsd') != -1:
+    if OS_PLATFORM.find('freebsd') != -1:
         return 'freebsd'
-    elif sys.platform.find('linux') != -1:
+    elif OS_PLATFORM.find('linux') != -1:
         return 'linux'
-    elif sys.platform.find('sunos') != -1:
+    elif OS_PLATFORM.find('sunos') != -1:
         return 'solaris'
-    # TODO: add AIX
+    elif OS_PLATFORM.startswith('aix'):
+        return 'aix'
     else:
-        return sys.platform
+        return OS_PLATFORM
+
 
 def get_uuid():
     # Generate a unique name that will stay constant between
@@ -31,18 +36,27 @@ def get_uuid():
     # on the back-end if need be, based on mac addresses.
     return uuid.uuid5(uuid.NAMESPACE_DNS, platform.node() + str(uuid.getnode())).hex
 
+
+def running_root():
+    return os.getuid() == 0
+
+
 class Platform(object):
     """
     Return information about the given platform.
     """
     @staticmethod
     def is_freebsd():
-        return sys.platform.startswith("freebsd")
+        return OS_PLATFORM.startswith("freebsd")
 
     @staticmethod
     def is_linux():
-        return 'linux' in sys.platform
+        return 'linux' in OS_PLATFORM
 
     @staticmethod
     def is_solaris():
-        return sys.platform == "sunos5"
+        return OS_PLATFORM == "sunos5"
+
+    @staticmethod
+    def is_aix():
+        return OS_PLATFORM.starswith('aix')

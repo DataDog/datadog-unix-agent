@@ -9,6 +9,7 @@ from aggregator import (
     MetricsAggregator
 )
 from types import (
+    MetricTypes,
     TextualMetricTypes,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     'Aggregator',
     'MetricsBucketAggregator',
     'MetricsAggregator',
+    'MetricTypes',
     'TextualMetricTypes',
 ]

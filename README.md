@@ -1,5 +1,7 @@
 # Datadog Unix Agent
 
+### DISCLAIMER: This agent and all artifacts made available are still in early development. 
+
 A full fledged Agent specifically designed for Unix-based systems. 
 
 Note: This agent is currently in development for AIX. It has not been tested on other systems. If
@@ -13,88 +15,87 @@ on packages with native support for the targeted OSes (AIX currently).
 
 ## AIX
 
-The installer is currently a rudimentary scripted self-extracting korn shell script. The tarball
-included with the installer should include all requirements other than the baseline requirements.
-The baseline requirements have been deemed too critical to be automated and require an attended
-install. The installer is self-contained and does not require internet access.
+### Omnibus Build
+
+An omnibus build is now available for the agent. The omnibus build provides a self-contained 
+environment aiming to address the short-comings of previous approaches where we attempted to
+provide dependencies externally. That approach proved error-prone since we always respected
+packages already available in target LPARs to avoid risking breaking the system. Unfortuantely,
+installed libraries could be potentially outdated or incompatible with the actual requirements.
+
+Although we have been able to successfully test the agent in those platforms the omnibus build
+is in its earliest iteration and some issues could surface given the wide disparity between LPAR 
+images. These issues are not expected but may occur due to the early maturity of this new build.
+
+#### Target Platforms
+
+The omnibus build has been tested on the target platformts:
+- AIX 6.1
+- AIX 7.1
+- AIX 7.2
+
+#### Baseline Requirements
+
+The omnibus build now ships all these dependencies, most notably opensl and python, all properly
+linked and only requiring AIX baseline system level dependencies expected to be available:
+- libc
+- libpthreads
+- libcrypt
+- libdl
+
+#### Runtime requirements
+
+As mentioned above all requirements are bundled with the omnibus installer. For more details take
+a look at the `omnibus/` directory to take a look at the implementation.
+
+#### Instructions
 
 The installer may be executed as follows (as root):
 
 ```bash
-./datadog-aix-installer.{version}.ksx
+installp -aXYgd ./datadog-unix-agent-<version>.powerpc.bff -e dd-aix-install.log datadog-unix-agent
 ```
 
-This will install the agent in `/opt/datadog/datadog-unix-agent`. 
+This will install the agent in `/opt/datadog-agent`. 
 
-Please bear in mind that on upgrades, though configuration will be preserved, all other contents
-in the agent target directory will be wiped.
+##### Removing Older Agents
 
+If you had used the previous scripted installer, the former location was `/opt/datadog/datadog-unix-agent`,
+you will have to remove that manually. Please be mindful to preserve you configurations from that
+setup if you wish to reuse them with the new agent. You can use the same files, and drop them into
+the same relative paths in `/opt/datadog-agent`.
 
-### Baseline Requirements
- - openssl >=1.0.1 (if you need to upgrade use the IBM fileset [here](http://www-01.ibm.com/support/docview.wss?uid=isg1fileset-1190419011)) 
- - RPM (if you need to install RPM, please use the IBM fileset [here](http://www-01.ibm.com/support/docview.wss?uid=isg1fileset1404816868))
+The reason the location was modified was to provide a consistent location across agent versions and 
+platforms, to match the user experience in Agent 5 and Agent 6.
 
-### Runtime requirements
-We have provided an installer that should be able to provide all additional requirements, including
-python if it is not available. These requirements include:
+This should allow you to disable the old running agent and safely delete the old location:
 
-#### FileSets
- - cffi
+```bash
+cd /opt/datadog/datadog-unix-agent
+. ./venv/bin/activate
+./agent.py stop 
+deactivate
+cd ~
+# remember to backup config files if required
+rm -rf /opt/datadog/datadog-unix-agent
+```
 
-#### RPMs
- - ca-certificates-2016.10.7-2.aix6.1.ppc.rpm
- - curl-7.52.1-1.aix6.1.ppc.rpm
- - db-4.8.24-3.aix6.1.ppc.rpm
- - gdbm-1.8.3-5.aix5.2.ppc.rpm
- - gettext-0.19.7-1.aix6.1.ppc.rpm
- - glib2-2.14.6-2.aix5.2.ppc.rpm
- - python-2.7.10-1.aix6.1.ppc.rpm
- - python-devel-2.7.10-1.aix6.1.ppc.rpm
- - python-iniparse-0.4-1.aix6.1.noarch.rpm
- - python-pycurl-7.19.3-1.aix6.1.ppc.rpm
- - python-tools-2.7.10-1.aix6.1.ppc.rpm
- - python-urlgrabber-3.10.1-1.aix6.1.noarch.rpm
- - readline-6.1-2.aix6.1.ppc.rpm
+RPM dependencies installed by the scripted installer are no longer required and may be removed if you
+so wish. This is the list of former RPM requirements:
+- ca-certificates-2016.10.7-2.aix6.1.ppc.rpm
+- curl-7.52.1-1.aix6.1.ppc.rpm
+- db-4.8.24-3.aix6.1.ppc.rpm
+- gdbm-1.8.3-5.aix5.2.ppc.rpm
+- gettext-0.19.7-1.aix6.1.ppc.rpm
+- glib2-2.14.6-2.aix5.2.ppc.rpm
+- python-2.7.10-1.aix6.1.ppc.rpm
+- python-devel-2.7.10-1.aix6.1.ppc.rpm
+- python-iniparse-0.4-1.aix6.1.noarch.rpm
+- python-pycurl-7.19.3-1.aix6.1.ppc.rpm
+- python-tools-2.7.10-1.aix6.1.ppc.rpm
+- python-urlgrabber-3.10.1-1.aix6.1.noarch.rpm
+- readline-6.1-2.aix6.1.ppc.rpm
 
-#### Python Packages
- - asn1crypto==0.24.0
- - atomicwrites==1.1.5
- - attrs==18.1.0
- - backports-abc==0.5
- - certifi==2018.4.16
- - cffi==1.11.5 (binary wheel)
- - chardet==3.0.4
- - configparser==3.5.0
- - cryptography==2.3.1 (binary wheel)
- - enum34==1.1.6
- - funcsigs==1.0.2
- - futures==3.2.0
- - idna==2.7
- - ipaddress==1.0.22
- - mccabe==0.6.1
- - meld3==1.0.2
- - more-itertools==4.2.0
- - paramiko==2.1.5 (binary wheel)
- - pbr==4.0.4
- - pluggy==0.6.0
- - psutil==5.4.6 (binary wheel)
- - py==1.5.3
- - pyasn1==0.4.4
- - pycodestyle==2.3.1
- - pycparser==2.18
- - pyflakes==1.6.0
- - PyNaCl==1.2.1 (binary wheel)
- - PyYAML==3.12
- - requests==2.19.1
- - requests-mock==1.5.0
- - singledispatch==3.4.0.3
- - six==1.11.0
- - supervisor==3.3.4
- - tornado==5.0.2
- - uptime==3.0.1
- - urllib3==1.23
-
-Requirements should be seamlessly installed by means of the installation script.
 
 ### Running the agent
 
@@ -157,6 +158,7 @@ tool. There are currently entries for both the `agent` and `dogstatsd`.
 
 Additional integrations currently available or in development:
  - process
+ - lparstats
  - hmc
 
 For non-core integrations, a configuration file should be put in place to enable
@@ -183,6 +185,82 @@ pip install -r requirements.txt
 ```
 
 ### Building
+
+#### Omnibus build
+
+This is the recommended way for building the agent. Hopefully setting up omnibus on
+the builder will be scripted, but until then getting the builder ready is a manual
+process.
+
+##### Platforms
+You will need a build machine that matches the target platform, thus:
+- AIX 6.1
+- AIX 7.1
+- AIX 7.2
+
+##### Omnibus Requirements 
+To setup omnibus on the target machine you will need:
+- [AIX Linux toolkit](https://www.ibm.com/developerworks/aix/library/aix-toolbox/alpha.html)
+- `coreutils` (via yum - provided with the linux toolkit)
+- `sudo` (via yum)
+- `libffi` and `libffi-devel` (via yum): required to bootstrap ruby.
+- `ruby` (via yum)
+- GNU `tar` (via yum)
+- `bundler` (via `gem install bundler`)
+
+Now let's install the omnibus dependencies, navigate to `omnibus/`:
+
+- `bundle install`: when the bundle get to `libyajl` it will fail on AIX, don't worry we 
+have a workaround. Please read on.
+
+On AIX You will need to install a modified version of libyajl before proceeding (you can
+run these commands in a scratch directory somewhere):
+- [`libyajl2-gem`](https://github.com/truthbk/libyajl2-gem) @ branch `jaime/aix`
+  - [yajl](https://github.com/lloyd/yajl/tree/12ee82ae5138ac86252c41f3ae8f9fd9880e4284): 
+  you will have to check `yajl` out in this location `libyajl2-gem/ext/libyajl/vendor/yajl`
+- `bundle install`
+- `rake prep`
+- `rake gem`
+- `gem install —local ./pkg/libyajl-1.2.0.gem`
+
+Once these steps are complete, you may go back to `omnibus/` in the agent repo and run
+`bundle install` or `bundle update` once again.
+
+If you got here you're doing good and you're almost ready to go.
+
+##### Build Runtime Requirements + Troubleshooting 
+
+- Make sure the ulimits are high enough if you receive out of memory errors:
+  - check ulimits with `ulimit -a`
+  - set high enough ulimits for `stack size`, `data seg size` and `max memory size`
+- Set the `PATH`: `export PATH="/opt/freeware/bin:$PATH"`
+- Set the `CONFIG_SHELL`: `export CONFIG_SHELL="/bin/bash"` 
+- Set the `TERM`: for convenience `export TERM=xterm`
+
+*Note*: please note that the `omnibus-ruby` installer currently requires the `datadog-5.5.0-aix`
+branch on AIX. That will probably be merged to `master`, but currently is required. No need
+for the developer to do anything as that specific branch is the current default for AIX builds.
+
+*Note*: You can override `omnibus-ruby` and `omnibus-software` gem versions if necessary with
+the `OMNIBUS_RUBY_VERSION` and `OMNIBUS_SOFTWARE_VERSION` respectively - followed by a
+`bundle update`.
+
+#### Building
+
+Triggering a build is the easiest part, we just need to specify a few more env vars currently:
+- `JMXFETCH_VERSION`: JMXFetch version to bundle with the agent.
+- `JMXFETCH_HASH`: SHA256 hash for the JMXFetch artifact.
+- `PYTHON_VERSION`: 2 or 3 - currently only Python 2 supported.
+
+Typically:
+```
+JMXFETCH_VERSION="<version>" JMXFETCH_HASH="<hash>" PYTHON_VERSION="2" bundle exec omnibus build agent --log-level=info
+```
+
+#### Deprecated: Scripted Installer
+
+This build method has been deprecated in favor of the omnibus build. Keeping here 
+for historical reasons.
 
 We provide a script in packaging named `./packaging/builder` that will allow you
 to build a self-extractable installer. You may use it as follows:

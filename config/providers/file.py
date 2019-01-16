@@ -42,7 +42,7 @@ class FileConfigProvider(ConfigProvider):
             yaml_path = os.path.join(config_path, config_file)
             with open(yaml_path, 'r') as stream:
                 try:
-                    yaml_config = yaml.load(stream)
+                    yaml_config = yaml.safe_load(stream)
                 except yaml.YAMLError as e:
                     log.warn('unable to load YAML for %s: %s', yaml_path, e)
                     continue

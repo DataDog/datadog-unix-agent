@@ -76,7 +76,7 @@ class Config(object):
                 conf_path = os.path.join(path, self.conf_name)
                 if os.path.isfile(conf_path):
                     with open(conf_path, "r") as f:
-                        self.data = yaml.load(f)
+                        self.data = yaml.safe_load(f)
                     log.info("loaded config from: %s", conf_path)
                     break
             else:

@@ -3,12 +3,12 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import mock
+import pytest
 
-from checks.corechecks.system import lparstats
-from aggregator import MetricsAggregator
+import utils.process
 
-GAUGE = 'gauge'
+
+ORIGINAL_SUBPROC_OUTPUT = utils.process.get_subprocess_output
 
 AIX_LPARSTATS_MEMORY = '''
 
@@ -140,184 +140,29 @@ Physical Processor Utilisation:
 0.008 0.012 0.000 0.180 3.6GHz[100%] 0.008 0.012 0.000 0.180
 '''
 
-
-def collect_column(input, row_idx):
-    collected = []
-    for row in input:
-        name = filter(None, row.split(' '))[row_idx]
-        collected.append(name)
-
-    return collected
-
-
-@mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_MEMORY, None, None))
-def test_memory(get_subprocess_output):
-
-    hostname = 'foo'
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=1.0,
-        histogram_aggregates=None,
-        histogram_percentiles=None,
-    )
-
-    c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
-    c.collect_memory(page_stats=False)
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
-
-    # NOTE: iomu, iomf, iohwm unavailable
-    expected_metrics = [
-        'system.lpar.memory.physb',
-        'system.lpar.memory.hpi',
-        'system.lpar.memory.hpit',
-        'system.lpar.memory.pmem',
-        'system.lpar.memory.iomin',
-        'system.lpar.memory.iomaf',
-        'system.lpar.memory.entc',
-        'system.lpar.memory.vcsw',
-    ]
-
-    # # we subtract two - one for /proc, and one for the heading
-    assert len(metrics) == len(expected_metrics)
-    for metric in metrics:
-        assert metric['metric'] in expected_metrics
+OUTPUT_MAP = {
+    ' '.join(['lparstat', '-m', '1', '1']): AIX_LPARSTATS_MEMORY,
+    ' '.join(['lparstat', '-m', '-pw', '1', '1']): AIX_LPARSTATS_MEMORY_PAGE,
+    ' '.join(['lparstat', '-H', '1', '1']): AIX_LPARSTATS_HYPERVISOR,
+    ' '.join(['lparstat', '-m', '-eR', '1', '1']): AIX_LPARSTATS_MEMORY_ENTITLEMENTS,
+    ' '.join(['lparstat', '-E', '1', '1']): AIX_LPARSTATS_SPURR,
+}
 
 
-@mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_MEMORY_PAGE, None, None))
-def test_memory_page(get_subprocess_output):
+def my_get_subprocess_output(command, log, raise_on_empty_output=True, env=None):
+    cmd_str = ' '.join(command)
+    if cmd_str  in OUTPUT_MAP:
+        return OUTPUT_MAP[cmd_str], None, None
 
-    hostname = 'foo'
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=1.0,
-        histogram_aggregates=None,
-        histogram_percentiles=None,
-    )
+    return None, None, None
 
-    c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
-    c.collect_memory(page_stats=True)
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+@pytest.fixture(scope="module",)
+def subprocess_patch(request):
 
-    # NOTE: iomf unavailable
-    expected_metrics = [
-        'system.lpar.memory.physb',
-        'system.lpar.memory.hpi',
-        'system.lpar.memory.hpit',
-        'system.lpar.memory.pmem',
-        'system.lpar.memory.iomu',
-        'system.lpar.memory.iomin',
-        'system.lpar.memory.iohwm',
-        'system.lpar.memory.iomaf',
-        'system.lpar.memory.pgcol',
-        'system.lpar.memory.mpgcol',
-        'system.lpar.memory.ccol',
-        'system.lpar.memory.entc',
-        'system.lpar.memory.vcsw',
-    ]
+    if utils.process.get_subprocess_output == ORIGINAL_SUBPROC_OUTPUT:
+        utils.process.get_subprocess_output = my_get_subprocess_output
 
-    assert len(metrics) == len(expected_metrics)
-    for metric in metrics:
-        assert metric['metric'] in expected_metrics
+    def fin():
+        utils.process.get_subprocess_output = ORIGINAL_SUBPROC_OUTPUT
+    request.addfinalizer(fin)
 
-
-@mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_MEMORY_ENTITLEMENTS, None, None))
-def test_memory_entitlements(get_subprocess_output):
-
-    hostname = 'foo'
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=1.0,
-        histogram_aggregates=None,
-        histogram_percentiles=None,
-    )
-
-    c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
-    c.collect_memory_entitlements()
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
-
-    expected_metrics = [
-        'system.lpar.memory.entitlement.iomin',
-        'system.lpar.memory.entitlement.iodes',
-        'system.lpar.memory.entitlement.iomu',
-        'system.lpar.memory.entitlement.iores',
-        'system.lpar.memory.entitlement.iohwm',
-        'system.lpar.memory.entitlement.iomaf',
-    ]
-
-    # compile entitlements from mock output
-    output = filter(None, AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines())
-    output = output[c.MEMORY_ENTITLEMENTS_START_IDX + 1:]
-    entitlements = collect_column(output, 0)
-
-    assert len(metrics) == (len(expected_metrics) * len(entitlements))
-    for metric in metrics:
-        for tag in metric['tags']:
-            if 'iompn' in tag:
-                assert tag.split(':')[1] in entitlements
-
-
-@mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_HYPERVISOR, None, None))
-def test_hypervisor(get_subprocess_output):
-
-    hostname = 'foo'
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=1.0,
-        histogram_aggregates=None,
-        histogram_percentiles=None,
-    )
-
-    c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
-    c.collect_hypervisor()
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
-
-    # compile hypervisor calls from mock output
-    output = filter(None, AIX_LPARSTATS_HYPERVISOR.splitlines())
-    output = output[c.HYPERVISOR_METRICS_START_IDX:-1]
-    calls = collect_column(output, 0)
-
-    assert len(metrics) == (len(c.HYPERVISOR_IDX_METRIC_MAP) * len(calls))
-    for metric in metrics:
-        assert metric['metric'] in c.HYPERVISOR_IDX_METRIC_MAP.values()
-        for tag in metric['tags']:
-            if 'call' in tag:
-                assert tag.split(':')[1] in calls
-
-
-@mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_SPURR, None, None))
-def test_spurr(get_subprocess_output):
-
-    hostname = 'foo'
-    aggregator = MetricsAggregator(
-        hostname,
-        interval=1.0,
-        histogram_aggregates=None,
-        histogram_percentiles=None,
-    )
-
-    c = lparstats.LPARStats("lparstats", {}, {}, aggregator)
-    c.collect_spurr()
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
-
-    expected_metrics = [
-        'system.lpar.spurr.user',
-        'system.lpar.spurr.sys',
-        'system.lpar.spurr.wait',
-        'system.lpar.spurr.idle',
-        'system.lpar.spurr.user.norm',
-        'system.lpar.spurr.sys.norm',
-        'system.lpar.spurr.wait.norm',
-        'system.lpar.spurr.idle.norm',
-        'system.lpar.spurr.user.pct',
-        'system.lpar.spurr.sys.pct',
-        'system.lpar.spurr.wait.pct',
-        'system.lpar.spurr.idle.pct',
-        'system.lpar.spurr.user.norm.pct',
-        'system.lpar.spurr.sys.norm.pct',
-        'system.lpar.spurr.wait.norm.pct',
-        'system.lpar.spurr.idle.norm.pct',
-    ]
-
-    assert len(metrics) == len(expected_metrics)
-    for metric in metrics:
-        assert metric['metric'] in expected_metrics

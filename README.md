@@ -201,10 +201,11 @@ You will need a build machine that matches the target platform, thus:
 ##### Omnibus Requirements 
 To setup omnibus on the target machine you will need:
 - [AIX Linux toolkit](https://www.ibm.com/developerworks/aix/library/aix-toolbox/alpha.html)
+- `gcc` (>= 6.3.0 via yum)
 - `coreutils` (via yum - provided with the linux toolkit)
 - `sudo` (via yum)
 - `libffi` and `libffi-devel` (via yum): required to bootstrap ruby.
-- `ruby` (via yum)
+- `ruby` and `ruby-devel` (via yum)
 - GNU `tar` (via yum)
 - `bundler` (via `gem install bundler`)
 
@@ -233,9 +234,15 @@ If you got here you're doing good and you're almost ready to go.
 - Make sure the ulimits are high enough if you receive out of memory errors:
   - check ulimits with `ulimit -a`
   - set high enough ulimits for `stack size`, `data seg size` and `max memory size`
+- Make sure you have enough space in `/opt` for the requirements + build
+- Make sure you have enough space in `/var` for the omnibus build
+- Omnibus uses git, make sure you have configured git username, etc. 
+- If you have issues installing `gcc` 6.3.0, you might need to manually remove `gcc-locale`
+before attempting the upgrade if `gcc` is already installed on your system.. 
 - Set the `PATH`: `export PATH="/opt/freeware/bin:$PATH"`
 - Set the `CONFIG_SHELL`: `export CONFIG_SHELL="/bin/bash"` 
 - Set the `TERM`: for convenience `export TERM=xterm`
+
 
 *Note*: please note that the `omnibus-ruby` installer currently requires the `datadog-5.5.0-aix`
 branch on AIX. That will probably be merged to `master`, but currently is required. No need

@@ -8,11 +8,12 @@ from checks import AgentCheck
 
 
 class Filesystem(AgentCheck):
+    KB = 1 << 10
 
     def check(self, instance):
         # -P  for POSIX portable format
         # units are in MB
-        output, _, _ = get_subprocess_output(['df', '-P', '-m'], self.log)
+        output, _, _ = get_subprocess_output(['df', '-P'], self.log)
 
         '''
         Filesystem    MB blocks      Used Available Capacity Mounted on
@@ -38,9 +39,9 @@ class Filesystem(AgentCheck):
             mount = fields[-1]
 
             tags = ['fs:{}'.format(filesystem), 'mount:{}'.format(mount)]
-            self.gauge('system.fs.total', blocks, tags=tags)
-            self.gauge('system.fs.used', used, tags=tags)
-            self.gauge('system.fs.available', available, tags=tags)
+            self.gauge('system.fs.total', round(blocks / self.KB), tags=tags)
+            self.gauge('system.fs.used', round(used / self.KB), tags=tags)
+            self.gauge('system.fs.available', round(available / self.KB), tags=tags)
             try:
                 self.gauge('system.fs.available.pct', (used/blocks)*100, tags=tags)
             except ZeroDivisionError:

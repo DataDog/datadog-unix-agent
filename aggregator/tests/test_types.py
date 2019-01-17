@@ -15,7 +15,7 @@ class TestMetricResolver():
     def test_metric_resolver(self):
         resolver = MetricResolver()
 
-        for mtype, typeclass in resolver.TYPES.iteritems():
+        for mtype, typeclass in resolver.TYPES.items():
             assert resolver[mtype] is not None
             assert resolver[mtype] == typeclass
 
@@ -29,7 +29,7 @@ class TestMetricResolver():
     def test_bucket_metric_resolver(self):
         resolver = BucketMetricResolver()
 
-        for mtype, typeclass in resolver.TYPES.iteritems():
+        for mtype, typeclass in resolver.TYPES.items():
             assert resolver[mtype] is not None
             assert resolver[mtype] == typeclass
 

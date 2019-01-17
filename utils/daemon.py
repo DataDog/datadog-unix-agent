@@ -215,7 +215,7 @@ class Daemon(object):
             fp = open(self.pidfile, 'w+')
             fp.write(str(pid))
             fp.close()
-            os.chmod(self.pidfile, 0644)
+            os.chmod(self.pidfile, 0o644)
         except Exception:
             msg = "Unable to write pidfile: %s" % self.pidfile
             log.exception(msg)

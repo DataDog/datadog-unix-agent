@@ -4,7 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 from threading import Thread, Event
-import Queue
+import queue
 import time
 import logging
 
@@ -27,7 +27,7 @@ class Worker(Thread):
         try:
             # blocking for 1 seconds so we can check the exit condition
             t = self.input_queue.get(True, 1)
-        except Queue.Empty:
+        except queue.Empty:
             return
 
         success = t.process()
@@ -35,7 +35,7 @@ class Worker(Thread):
             t.reschedule()
             try:
                 self.retry_queue.put_nowait(t)
-            except Queue.Full as e:
+            except queue.Full as e:
                 log.errorf("Could not retry transaction to '%s', queue is full (dropping it): %s", t.get_endpoint(), e)
 
     def run(self):
@@ -68,7 +68,7 @@ class RetryWorker(Worker):
 
             try:
                 self.input_queue.put_nowait(t)
-            except Queue.Full:
+            except queue.Full:
                 log.error("Can't retry connection, input queue is full: dropping transaction")
 
         self.transactions = keep[:self.retry_queue_max_size]
@@ -76,7 +76,7 @@ class RetryWorker(Worker):
     def _process_transactions(self, flush_time):
         try:
             t = self.retry_queue.get(True, self.GET_TIMEOUT)
-        except Queue.Empty:
+        except queue.Empty:
             pass
         else:
             self.transactions.append(t)

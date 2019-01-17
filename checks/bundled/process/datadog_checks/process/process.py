@@ -324,7 +324,7 @@ class Process(AgentCheck):
         if len(pids) == 0:
             self.warning("No matching process '{}' was found".format(name))
 
-        for attr, mname in ATTR_TO_METRIC.iteritems():
+        for attr, mname in ATTR_TO_METRIC.items():
             vals = [x for x in proc_state[attr] if x is not None]
             # skip []
             if vals:

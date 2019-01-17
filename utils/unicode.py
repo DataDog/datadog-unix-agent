@@ -5,14 +5,14 @@
 
 def unicode_metrics(metrics):
     for i, metric in enumerate(metrics):
-        for key, value in metric.items():
-            if isinstance(value, basestring):
-                metric[key] = unicode(value, errors='replace')
+        for key, value in list(metric.items()):
+            if isinstance(value, str):
+                metric[key] = str(value, errors='replace')
             elif isinstance(value, tuple) or isinstance(value, list):
                 value_list = list(value)
                 for j, value_element in enumerate(value_list):
-                    if isinstance(value_element, basestring):
-                        value_list[j] = unicode(value_element, errors='replace')
+                    if isinstance(value_element, str):
+                        value_list[j] = str(value_element, errors='replace')
                 metric[key] = tuple(value_list)
         metrics[i] = metric
     return metrics

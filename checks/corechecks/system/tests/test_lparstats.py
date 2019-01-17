@@ -144,7 +144,7 @@ Physical Processor Utilisation:
 def collect_column(input, row_idx):
     collected = []
     for row in input:
-        name = filter(None, row.split(' '))[row_idx]
+        name = [_f for _f in row.split(' ') if _f][row_idx]
         collected.append(name)
 
     return collected
@@ -245,7 +245,7 @@ def test_memory_entitlements(get_subprocess_output):
     ]
 
     # compile entitlements from mock output
-    output = filter(None, AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines())
+    output = [_f for _f in AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines() if _f]
     output = output[c.MEMORY_ENTITLEMENTS_START_IDX + 1:]
     entitlements = collect_column(output, 0)
 
@@ -272,13 +272,13 @@ def test_hypervisor(get_subprocess_output):
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     # compile hypervisor calls from mock output
-    output = filter(None, AIX_LPARSTATS_HYPERVISOR.splitlines())
+    output = [_f for _f in AIX_LPARSTATS_HYPERVISOR.splitlines() if _f]
     output = output[c.HYPERVISOR_METRICS_START_IDX:-1]
     calls = collect_column(output, 0)
 
     assert len(metrics) == (len(c.HYPERVISOR_IDX_METRIC_MAP) * len(calls))
     for metric in metrics:
-        assert metric['metric'] in c.HYPERVISOR_IDX_METRIC_MAP.values()
+        assert metric['metric'] in list(c.HYPERVISOR_IDX_METRIC_MAP.values())
         for tag in metric['tags']:
             if 'call' in tag:
                 assert tag.split(':')[1] in calls

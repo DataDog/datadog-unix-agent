@@ -334,10 +334,10 @@ class TestConfig():
             }
         }
 
-        for k, v in config_defaults.iteritems():
+        for k, v in config_defaults.items():
             config.bind_env_and_set_default(k, k, v)
 
-        for k, v in config_defaults.iteritems():
+        for k, v in config_defaults.items():
             assert config.defaults[k] == v
 
         assert len(config.env_bindings) == 7

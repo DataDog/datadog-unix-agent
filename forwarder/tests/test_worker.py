@@ -4,7 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import requests_mock
-import Queue
+import queue
 import time
 
 from forwarder.worker import Worker, RetryWorker
@@ -12,8 +12,8 @@ from forwarder.transaction import Transaction
 
 
 def test_init():
-    input_queue = Queue.Queue(2)
-    retry_queue = Queue.Queue(2)
+    input_queue = queue.Queue(2)
+    retry_queue = queue.Queue(2)
     w = Worker(input_queue, retry_queue)
 
     assert w.input_queue == input_queue
@@ -29,8 +29,8 @@ def test_init():
 
 @requests_mock.mock()
 def test_worker_process_transactions(m):
-    input_queue = Queue.Queue(2)
-    retry_queue = Queue.Queue(2)
+    input_queue = queue.Queue(2)
+    retry_queue = queue.Queue(2)
     w = Worker(input_queue, retry_queue)
 
     t_success = Transaction("data", "https://datadog.com", "/success", None)
@@ -56,8 +56,8 @@ def test_worker_process_transactions(m):
     assert t_error == retry_item
 
 def test_worker_stop():
-    input_queue = Queue.Queue()
-    retry_queue = Queue.Queue()
+    input_queue = queue.Queue()
+    retry_queue = queue.Queue()
     w = Worker(input_queue, retry_queue)
     w.start()
 
@@ -66,8 +66,8 @@ def test_worker_stop():
     assert not w.isAlive()
 
 def test_retry_worker_flush():
-    input_queue = Queue.Queue(1)
-    retry_queue = Queue.Queue(1)
+    input_queue = queue.Queue(1)
+    retry_queue = queue.Queue(1)
     w = RetryWorker(input_queue, retry_queue)
 
     t_ready = Transaction("data", "https://datadog.com", "/success", None)
@@ -90,8 +90,8 @@ def test_retry_worker_flush():
     assert t == t_ready
 
 def test_retry_worker_process_transaction():
-    input_queue = Queue.Queue(2)
-    retry_queue = Queue.Queue(2)
+    input_queue = queue.Queue(2)
+    retry_queue = queue.Queue(2)
 
     w = RetryWorker(input_queue, retry_queue, flush_interval=1)
 
@@ -119,7 +119,7 @@ def test_retry_worker_process_transaction():
     assert len(w.transactions) == 0
     try:
         t = input_queue.get(True, 1)
-    except Queue.Empty:
+    except queue.Empty:
         raise Exception("input_queue should not be empty")
     assert t == t1
 
@@ -127,8 +127,8 @@ def test_retry_worker_process_transaction():
     assert flush_time <= end + 1
 
 def test_retryworker_stop():
-    input_queue = Queue.Queue()
-    retry_queue = Queue.Queue()
+    input_queue = queue.Queue()
+    retry_queue = queue.Queue()
     w = RetryWorker(input_queue, retry_queue)
     w.start()
 

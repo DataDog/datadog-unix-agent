@@ -120,7 +120,7 @@ def test_iostat_value_extract():
         '1010392.132T': 1010392132000000000,
     }
 
-    for value, expected in valid_unit_set.iteritems():
+    for value, expected in valid_unit_set.items():
         assert iostat.IOStat.extract_with_unit(value) == expected
 
     invalid_unit_set = [

@@ -58,7 +58,7 @@ class IOStat(AgentCheck):
 
     def check(self, instance):
         output, _, _ = get_subprocess_output(['iostat', '-Dsal', '1', '1'], self.log)
-        stats = filter(None, output.splitlines())
+        stats = [_f for _f in output.splitlines() if _f]
         mode = ''
         for line in stats[4:]:
             if line.startswith(self.TABLE_SEP):
@@ -74,7 +74,7 @@ class IOStat(AgentCheck):
                     continue
 
             fields = line.split(' ')
-            fields = filter(None, fields)
+            fields = [_f for _f in fields if _f]
             if len(fields) != expected_fields_no:
                 continue
 
@@ -99,7 +99,7 @@ class IOStat(AgentCheck):
 
                 section_idx += len(self.SCHEMA[mode][section]['cols'])
 
-            for name, value in metrics.iteritems():
+            for name, value in metrics.items():
                 self.gauge("system.iostat.{}".format(name), value, tags=tags)
 
     @classmethod
@@ -116,7 +116,7 @@ class IOStat(AgentCheck):
         try:
             converted = float(value)
         except ValueError:
-            for unit, factor in unit_map.iteritems():
+            for unit, factor in unit_map.items():
                 if value.endswith(unit):
                     return float(value[:-1]) * factor
             raise

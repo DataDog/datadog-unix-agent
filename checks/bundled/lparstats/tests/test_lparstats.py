@@ -23,8 +23,10 @@ def collect_column(input, row_idx):
     return collected
 
 def test_memory(subprocess_patch):
-
+    # defer import to test to avoid breaking get_subprocess_output
+    # patching.
     from datadog_checks.lparstats import LPARStats
+
     hostname = 'foo'
     aggregator = MetricsAggregator(
         hostname,
@@ -56,6 +58,8 @@ def test_memory(subprocess_patch):
 
 
 def test_memory_page(subprocess_patch):
+    # defer import to test to avoid breaking get_subprocess_output
+    # patching.
     from datadog_checks.lparstats import LPARStats
 
     hostname = 'foo'
@@ -93,6 +97,8 @@ def test_memory_page(subprocess_patch):
 
 
 def test_memory_entitlements(subprocess_patch):
+    # defer import to test to avoid breaking get_subprocess_output
+    # patching.
     from datadog_checks.lparstats import LPARStats
 
     hostname = 'foo'
@@ -129,6 +135,8 @@ def test_memory_entitlements(subprocess_patch):
 
 
 def test_hypervisor(subprocess_patch):
+    # defer import to test to avoid breaking get_subprocess_output
+    # patching.
     from datadog_checks.lparstats import LPARStats
 
     hostname = 'foo'
@@ -157,6 +165,8 @@ def test_hypervisor(subprocess_patch):
 
 
 def test_spurr(subprocess_patch):
+    # defer import to test to avoid breaking get_subprocess_output
+    # patching.
     from datadog_checks.lparstats import LPARStats
 
     hostname = 'foo'

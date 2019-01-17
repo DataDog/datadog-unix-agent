@@ -151,7 +151,7 @@ OUTPUT_MAP = {
 
 def my_get_subprocess_output(command, log, raise_on_empty_output=True, env=None):
     cmd_str = ' '.join(command)
-    if cmd_str  in OUTPUT_MAP:
+    if cmd_str in OUTPUT_MAP:
         return OUTPUT_MAP[cmd_str], None, None
 
     return None, None, None
@@ -165,4 +165,3 @@ def subprocess_patch(request):
     def fin():
         utils.process.get_subprocess_output = ORIGINAL_SUBPROC_OUTPUT
     request.addfinalizer(fin)
-

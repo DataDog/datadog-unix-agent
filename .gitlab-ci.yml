@@ -2,10 +2,11 @@ image: python:2.7
 
 test:
   tags: [ "runner:main", "size:large" ]
-  script:
+  before_script:
   - pip install -r requirements-dev.txt
   - pip install -r requirements.txt
   - flake8
+  script:
   - python -m pytest -v .
   - for d in $(find checks/bundled -mindepth 1 -maxdepth 1 -not -name ".*" -not -name "datadog_checks_base" -type d); do python -m pytest -v $d; done
 
@@ -14,3 +15,12 @@ check-license-py:
   tags: [ "runner:main", "size:large" ]
   script:
   - if git grep -L '# Unless explicitly stated otherwise all files in this repository are licensed' -- -- './*' ':(exclude)./deps/*' | grep -e '.*\.py$'; then exit 1; else echo "all good"; fi
+
+# checking that every python file as a license header (at least the first line)
+check-py3-status:
+  tags: [ "runner:main", "size:large" ]
+  allow_failure: true
+  before_script:
+  - pip install -r requirements-dev.txt
+  script:
+  - for py in $(find . -type f -name '*.py' ! -path "./venv/*" ! -path "./*/.tox/*"); do echo "scanning $py..."; a7_validate $py; done

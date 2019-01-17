@@ -1,4 +1,4 @@
-image: python:2.7
+image: python:2.7-stretch
 
 test:
   tags: [ "runner:main", "size:large" ]
@@ -21,6 +21,7 @@ check-py3-status:
   tags: [ "runner:main", "size:large" ]
   allow_failure: true
   before_script:
+  - apt update && apt-get install -y jq
   - pip install -r requirements-dev.txt
   script:
-  - for py in $(find . -type f -name '*.py' ! -path "./venv/*" ! -path "./*/.tox/*"); do echo "scanning $py..."; a7_validate $py; done
+  - for py in $(find . -type f -name '*.py' ! -path "./venv/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(a7_validate $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}python3 compatible${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED

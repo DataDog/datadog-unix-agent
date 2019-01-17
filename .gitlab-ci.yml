@@ -20,6 +20,8 @@ check-license-py:
 check-py3-status:
   tags: [ "runner:main", "size:large" ]
   allow_failure: true
+  variables:
+    TERM: xterm
   before_script:
   - apt update && apt-get install -y jq
   - pip install -r requirements-dev.txt

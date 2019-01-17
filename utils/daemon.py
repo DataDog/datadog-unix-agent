@@ -82,9 +82,9 @@ class Daemon(object):
             # Redirect standard file descriptors
             sys.stdout.flush()
             sys.stderr.flush()
-            si = file(self.stdin, 'r')
-            so = file(self.stdout, 'a+')
-            se = file(self.stderr, 'a+', 0)
+            si = open(self.stdin, mode='r')
+            so = open(self.stdout, mode='a+')
+            se = open(self.stderr, mode='a+', buffering=0)
             os.dup2(si.fileno(), sys.stdin.fileno())
             os.dup2(so.fileno(), sys.stdout.fileno())
             os.dup2(se.fileno(), sys.stderr.fileno())
@@ -198,7 +198,7 @@ class Daemon(object):
     def pid(self):
         # Get the pid from the pidfile
         try:
-            pf = file(self.pidfile, 'r')
+            pf = open(self.pidfile, mode='r')
             pid = int(pf.read().strip())
             pf.close()
             return pid

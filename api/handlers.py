@@ -20,7 +20,7 @@ class APIStatusHandler(tornado.web.RequestHandler):
 
         check_stats = stats.pop('stats')
         stats['checks'] = {}
-        for signature, values in check_stats.iteritems():
+        for signature, values in check_stats.items():
             check = signature[0]
             if check in stats['checks']:
                 stats['checks'][check]['merics'] += values

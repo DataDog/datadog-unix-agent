@@ -3,6 +3,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from agent_check import AgentCheck
+from .agent_check import AgentCheck
 
 __all__ = ["AgentCheck"]

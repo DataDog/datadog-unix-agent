@@ -71,7 +71,9 @@ def get_hostname():
             hostname = get_hostname_solaris()
         else:
             hostname = get_hostname_std()
-        return hostname
+
+        if hostname:
+            return hostname
     except Exception:
         log.warning("unable to collect hostname via hostname OS-specific command")
 

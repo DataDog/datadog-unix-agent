@@ -252,7 +252,6 @@ def test_memory_entitlements(get_subprocess_output):
     output = output[c.MEMORY_ENTITLEMENTS_START_IDX + 1:]
     entitlements = collect_column(output, 0)
 
-
     assert len(metrics) == (len(expected_metrics) * len(entitlements))
     for metric in metrics:
         for tag in metric['tags']:

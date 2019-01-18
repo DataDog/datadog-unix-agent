@@ -8,9 +8,6 @@
 import random
 import time
 
-# testing
-import pytest
-
 # project
 from aggregator import MetricsAggregator
 from aggregator.aggregator import UNKNOWN_SOURCE

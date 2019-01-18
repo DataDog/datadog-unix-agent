@@ -4,7 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 from .config import Config
-from config import  default
+from config import default
 
 
 config = Config()

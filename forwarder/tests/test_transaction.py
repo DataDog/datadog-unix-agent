@@ -4,7 +4,6 @@
 # Copyright 2018 Datadog, Inc.
 
 import time
-import requests_mock
 
 from forwarder.transaction import Transaction
 

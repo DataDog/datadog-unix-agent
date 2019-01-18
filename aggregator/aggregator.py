@@ -35,6 +35,9 @@ class Aggregator(object):
     ALLOW_STRINGS = ['s', ]
     # Types that are not implemented and ignored
     IGNORE_TYPES = ['d', ]
+    # prefixes
+    SC_PREFIX = '_sc'
+    EVENT_PREFIX = '_e'
 
     def __init__(self, hostname, interval=1.0, expiry_seconds=300,
                  formatter=None, recent_point_threshold=None,
@@ -158,6 +161,7 @@ class Aggregator(object):
     def parse_event_packet(self, packet):
         try:
             name_and_metadata = packet.split(':', 1)
+
             if len(name_and_metadata) != 2:
                 raise Exception('Unparseable event packet: %s' % packet)
             # Event syntax:
@@ -165,6 +169,7 @@ class Aggregator(object):
             name = name_and_metadata[0]
             metadata = name_and_metadata[1]
             title_length, text_length = name.split(',')
+
             title_length = int(title_length[3:])
             text_length = int(text_length[:-1])
 
@@ -240,17 +245,20 @@ class Aggregator(object):
         # Keep a very conservative approach anyhow
         # Clients MUST always send UTF-8 encoded content
         if self.utf8_decoding:
-            packets = str(packets, 'utf-8', errors='replace')
+            try:
+                packets = packets.decode('utf-8')
+            except AttributeError:
+                pass
 
         for packet in packets.splitlines():
             if not packet.strip():
                 continue
 
-            if packet.startswith('_e'):
+            if packet.startswith(self.EVENT_PREFIX):
                 event = self.parse_event_packet(packet)
                 self.event(**event)
                 self.event_count += 1
-            elif packet.startswith('_sc'):
+            elif packet.startswith(self.SC_PREFIX):
                 service_check = self.parse_sc_packet(packet)
                 self.service_check(**service_check)
                 self.service_check_count += 1
@@ -444,7 +452,7 @@ class MetricsBucketAggregator(Aggregator):
         # Even if no data is submitted, Counters keep reporting "0" for expiry_seconds.  The other Metrics
         #  (Set, Gauge, Histogram) do not report if no data is submitted
         for context, last_sample_time in list(sample_time_by_context.items()):
-            if last_sample_time < expiry_timestamp:
+            if last_sample_time is None or last_sample_time < expiry_timestamp:
                 log.debug("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
                 self.last_sample_time_by_context.pop(context, None)
             else:
@@ -469,7 +477,7 @@ class MetricsBucketAggregator(Aggregator):
                     not_sampled_in_this_bucket = self.last_sample_time_by_context.copy()
                     # We mutate this dictionary while iterating so don't use an iterator.
                     for context, metric in list(metric_by_context.items()):
-                        if metric.last_sample_time < expiry_timestamp:
+                        if metric.last_sample_time is None or metric.last_sample_time < expiry_timestamp:
                             # This should never happen
                             log.warning("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
                             not_sampled_in_this_bucket.pop(context, None)
@@ -600,7 +608,7 @@ class MetricsAggregator(Aggregator):
         # while iterating so don't use an iterator.
         metrics = []
         for context, metric in list(self.metrics.items()):
-            if metric.last_sample_time < expiry_timestamp:
+            if metric.last_sample_time is None or metric.last_sample_time < expiry_timestamp:
                 log.debug("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
                 del self.metrics[context]
             else:

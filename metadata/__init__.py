@@ -3,6 +3,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from metadata import get_metadata
+from .metadata import get_metadata
 
 __all__ = ["get_metadata"]

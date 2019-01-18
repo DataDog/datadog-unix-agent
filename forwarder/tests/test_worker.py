@@ -3,7 +3,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import requests_mock
 import queue
 import time
 
@@ -27,7 +26,6 @@ def test_init():
     assert rw.flush_interval == rw.DEFAULT_FLUSH_INTERVAL
     assert rw.retry_queue_max_size == 30 # default value from config
 
-@requests_mock.mock()
 def test_worker_process_transactions(m):
     input_queue = queue.Queue(2)
     retry_queue = queue.Queue(2)

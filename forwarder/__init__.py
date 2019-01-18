@@ -3,6 +3,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from forwarder import Forwarder
+from .forwarder import Forwarder
 
 __all__ = ["Forwarder"]

@@ -11,4 +11,3 @@ import requests_mock
 def m():
     with requests_mock.Mocker() as m:
         yield m
-

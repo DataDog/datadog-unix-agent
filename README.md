@@ -1,6 +1,6 @@
 # Datadog Unix Agent
 
-### DISCLAIMER: This agent and all artifacts made available are still in early development. 
+#### NOTE: This agent and all artifacts made available are still in early development. 
 
 A full fledged Agent specifically designed for Unix-based systems. 
 

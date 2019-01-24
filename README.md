@@ -50,6 +50,7 @@ a look at the `omnibus/` directory to take a look at the implementation.
 
 #### Instructions
 
+##### Installation
 The installer may be executed as follows (as root):
 
 ```bash
@@ -58,12 +59,22 @@ installp -aXYgd ./datadog-unix-agent-<version>.powerpc.bff -e dd-aix-install.log
 
 This will install the agent in `/opt/datadog-agent`. 
 
+Note how we're logging to `dd-aix-install.log`, you may skip that by removing the `-e` switch.
+
+
+##### Uninstall
+To remove an installed agent you will run a similar `installp` command:
+```
+installp -e dd-aix-uninstall.log -uv datadog-unix-agent
+```
+Note how we're again logging to `dd-aix-install.log`, you may skip that by removing the `-e` switch.
+
 ##### Removing Older Agents
 
-If you had used the previous scripted installer, the former location was `/opt/datadog/datadog-unix-agent`,
-you will have to remove that manually. Please be mindful to preserve you configurations from that
-setup if you wish to reuse them with the new agent. You can use the same files, and drop them into
-the same relative paths in `/opt/datadog-agent`.
+If you had used the previous scripted installer to install a previous early-development version of the
+agent, the former location was `/opt/datadog/datadog-unix-agent`, you will have to remove that manually.
+Please be mindful to preserve you configurations from that setup if you wish to reuse them with the new
+agent. You can use the same files, and drop them into the same relative paths in `/opt/datadog-agent`.
 
 The reason the location was modified was to provide a consistent location across agent versions and 
 platforms, to match the user experience in Agent 5 and Agent 6.

@@ -62,7 +62,7 @@ class Serializer(object):
         try:
             metrics = {'series': series}
             return json.dumps(metrics), len(metrics['series'])
-        except UnicodeDecodeError:
+        except (UnicodeDecodeError, TypeError):
             metrics = {'series': unicode_metrics(series)}
             return json.dumps(metrics), len(metrics['series'])
 

@@ -3,7 +3,7 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-def unicode_metrics(metrics):
+def ensure_unicode(metrics):
     for i, metric in enumerate(metrics):
         for key, value in list(metric.items()):
             if isinstance(value, bytes):

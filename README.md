@@ -61,6 +61,73 @@ This will install the agent in `/opt/datadog-agent`.
 
 Note how we're logging to `dd-aix-install.log`, you may skip that by removing the `-e` switch.
 
+### Running the agent
+
+The configuration file is recommended to be placed here:
+```
+/opt/datadog-agent/etc/datadog-agent/datadog.yaml
+```
+
+That said, config file will be searched in this order (with the first match being
+taken):
+- `/etc/datadog-agent/datadog.yaml`
+- `./etc/datadog-agent/datadog.yaml`
+- `./datadog.yaml`
+
+A sample configuration file may be found in `/opt/datadog/datadog-unix-agent`.
+
+A basic configuration will typically require a destination `dd_url` and  your 
+datadog API key. Occassionally a proxy configuration must be specified depending
+on your network setup.
+
+With the configuration in place just start the agent as follows:
+
+```bash
+cd /opt/datadog-agent/agent
+./agent.py -b start
+```
+
+If you want to run the agent in the foreground, please omit the `-b` switch.
+
+If you wish to override any configuration setting defined in the config file, you 
+may resort to environment variables as follows:
+```bash
+DD_LOG_LEVEL=debug ./agent.py start
+```
+
+### Running dogstatsd
+
+Dogstatsd allows collecting and submitting custom metrics to datadog. It listens on
+a UDP port and statsd metrics may be submitted to it. These will then be relayed
+to Datadog.
+
+Dogstatsd relies on the same configuration file defined for the agent and runs in 
+a separate process. To run `dogstatsd` you may do the following:
+
+```bash
+cd /opt/datadog-agent/agent
+./dogstatsd.py 
+```
+
+Note that `dogstatsd` doesn't currently daemonize and will run in the foreground.
+
+There are also facilities to run the agent via the known python `supervisor`, this 
+might be your preferred way to manage the agent daemon if you are familiar with the 
+tool. There are currently entries for both the `agent` and `dogstatsd`.
+
+
+### Integrations
+
+Additional integrations currently available or in development:
+ - process
+ - lparstats
+ - hmc
+
+For non-core integrations, a configuration file should be put in place to enable
+the integration. These are expected to be found in `./etc/datadog-agent/conf.d`.
+The name of the YAML configuration file should match that of the integration:
+`./etc/datadog-agent/conf.d/foo.yaml` will enable integration foo, and set its
+configuration.
 
 ##### Uninstall
 To remove an installed agent you will run a similar `installp` command:
@@ -106,77 +173,6 @@ so wish. This is the list of former RPM requirements:
 - python-tools-2.7.10-1.aix6.1.ppc.rpm
 - python-urlgrabber-3.10.1-1.aix6.1.noarch.rpm
 - readline-6.1-2.aix6.1.ppc.rpm
-
-
-### Running the agent
-
-The configuration file is recommended to be placed here:
-```
-/opt/datadog/datadog-unix-agent/etc/datadog-agent/datadog.yaml
-```
-
-That said, config file will be searched in this order (with the first match being
-taken):
-- `/etc/datadog-agent/datadog.yaml`
-- `./etc/datadog-agent/datadog.yaml`
-- `./datadog.yaml`
-
-A sample configuration file may be found in `/opt/datadog/datadog-unix-agent`.
-
-A basic configuration will typically require a destination `dd_url` and  your 
-datadog API key. Occassionally a proxy configuration must be specified depending
-on your network setup.
-
-With the configuration in place just start the agent as follows:
-
-```bash
-cd /opt/datadog/datadog-unix-agent
-. ./venv/bin/activate
-./agent.py -b start
-```
-
-If you want to run the agent in the foreground, please omit the `-b` switch.
-
-If you wish to override any configuration setting defined in the config file, you 
-may resort to environment variables as follows:
-```bash
-DD_LOG_LEVEL=debug ./agent.py start
-```
-
-### Running dogstatsd
-
-Dogstatsd allows collecting and submitting custom metrics to datadog. It listens on
-a UDP port and statsd metrics may be submitted to it. These will then be relayed
-to Datadog.
-
-Dogstatsd relies on the same configuration file defined for the agent and runs in 
-a separate process. To run `dogstatsd` you may do the following:
-
-```bash
-cd /opt/datadog/datadog-unix-agent
-. ./venv/bin/activate
-./dogstatsd.py 
-```
-
-Note that `dogstatsd` doesn't currently daemonize and will run in the foreground.
-
-There are also facilities to run the agent via the known python `supervisor`, this 
-might be your preferred way to manage the agent daemon if you are familiar with the 
-tool. There are currently entries for both the `agent` and `dogstatsd`.
-
-
-### Integrations
-
-Additional integrations currently available or in development:
- - process
- - lparstats
- - hmc
-
-For non-core integrations, a configuration file should be put in place to enable
-the integration. These are expected to be found in `./etc/datadog-agent/conf.d`.
-The name of the YAML configuration file should match that of the integration:
-`./etc/datadog-agent/conf.d/foo.yaml` will enable integration foo, and set its
-configuration.
 
 
 ## Developer Notes

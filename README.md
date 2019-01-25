@@ -2,16 +2,16 @@
 
 #### NOTE: This agent and all artifacts made available are still in early development. 
 
-A full fledged Agent specifically designed for Unix-based systems. 
+A Datadog Agent specifically designed for Unix-based systems. 
 
 Note: This agent is currently in development for AIX. It has not been tested on other systems. If
-you're interested in using it, please contact our [support team](https://docs.datadoghq.com/help/).
+you have any questions, please contact our [support team](https://docs.datadoghq.com/help/).
 
 This agent targets miscellaneous Unix operating systems not supported by our currently available
 agents. To do so, it has been stripped of unnecessary bloat and cut around irrelevant use-cases 
 given the target platforms, sometimes at the expense of certain features. To maximize portability
 the agent will attempt to reduce the number of non pure-python dependencies to a minimum, and rely
-on packages with native support for the targeted OSes (AIX currently).
+on packages with native support for the targeted operating systems (currently AIX).
 
 ## AIX
 
@@ -36,7 +36,7 @@ The omnibus build has been tested on the target platformts:
 
 #### Baseline Requirements
 
-The omnibus build now ships all these dependencies, most notably opensl and python, all properly
+The omnibus build now ships all these dependencies, most notably openssl and python, all properly
 linked and only requiring AIX baseline system level dependencies expected to be available:
 - libc
 - libpthreads
@@ -48,9 +48,10 @@ linked and only requiring AIX baseline system level dependencies expected to be 
 As mentioned above all requirements are bundled with the omnibus installer. For more details take
 a look at the `omnibus/` directory to take a look at the implementation.
 
-#### Instructions
+### Installation
 
-##### Installation
+Download links for the latest releases can be found [on this page](https://github.com/DataDog/datadog-unix-agent/releases). 
+
 The installer may be executed as follows (as root):
 
 ```bash
@@ -61,7 +62,7 @@ This will install the agent in `/opt/datadog-agent`.
 
 Note how we're logging to `dd-aix-install.log`, you may skip that by removing the `-e` switch.
 
-### Running the agent
+#### Running the agent
 
 The configuration file is recommended to be placed here:
 ```
@@ -95,7 +96,7 @@ may resort to environment variables as follows:
 DD_LOG_LEVEL=debug ./agent.py start
 ```
 
-### Running dogstatsd
+#### Running dogstatsd
 
 Dogstatsd allows collecting and submitting custom metrics to datadog. It listens on
 a UDP port and statsd metrics may be submitted to it. These will then be relayed
@@ -129,14 +130,14 @@ The name of the YAML configuration file should match that of the integration:
 `./etc/datadog-agent/conf.d/foo.yaml` will enable integration foo, and set its
 configuration.
 
-##### Uninstall
+### Uninstall
 To remove an installed agent you will run a similar `installp` command:
 ```
 installp -e dd-aix-uninstall.log -uv datadog-unix-agent
 ```
 Note how we're again logging to `dd-aix-install.log`, you may skip that by removing the `-e` switch.
 
-##### Removing Older Agents
+#### Removing Older Agents
 
 If you had used the previous scripted installer to install a previous early-development version of the
 agent, the former location was `/opt/datadog/datadog-unix-agent`, you will have to remove that manually.
@@ -362,4 +363,3 @@ patch -p0 < psutil.patch
 ```
 
 Happy DataDoggin'!
-

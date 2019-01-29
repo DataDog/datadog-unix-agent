@@ -219,7 +219,7 @@ To setup omnibus on the target machine you will need:
 
 Now let's install the omnibus dependencies, navigate to `omnibus/`:
 
-- `bundle install`: when the bundle get to `libyajl` it will fail on AIX, don't worry we 
+- `bundle install`: when the bundle gets to `libyajl` it will fail on AIX, don't worry we 
 have a workaround. Please read on.
 
 On AIX You will need to install a modified version of libyajl before proceeding (you can

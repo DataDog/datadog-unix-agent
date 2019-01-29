@@ -60,6 +60,9 @@ PATH="/opt/freeware/sbin:/opt/freeware/bin:/opt/bin:$PATH"
 echo "removing unnecessary dependencies..."
 yum remove -y -q gcc-locale
 
+# exit on errors
+set -e
+
 # assuming 2GB of space necessary on /opt
 total_req=2048
 opt_free=$(echo "scale=0; $(df -Pm /opt | sed -e /Filesystem/d | awk '{print $4}') / 1" | bc)
@@ -90,12 +93,12 @@ echo "installing ruby dependencies..."
 gem install bundler
 $CURL_CMD /tmp/$LIBYAJL_GEM_TARBALL $LIBYAJL_GEM_URL 
 cd /tmp
-mkdir $LIBYAJL_GEM_DIR
+mkdir -p $LIBYAJL_GEM_DIR
 $GNU_TAR xvzf $LIBYAJL_GEM_TARBALL -C ./$LIBYAJL_GEM_DIR --strip=1
 
 cd /tmp/$LIBYAJL_GEM_DIR/ext/libyajl2/vendor/
 $CURL_CMD ./$YAJL_TARBALL $YAJL_URL 
-mkdir ./$YAJL_DIR 
+mkdir -p ./$YAJL_DIR
 $GNU_TAR xvzf $YAJL_TARBALL -C ./$YAJL_DIR --strip=1 
 
 cd /tmp/$LIBYAJL_GEM_DIR
@@ -108,6 +111,5 @@ gem install --local ./pkg/libyajl-1.2.0.gem
 echo "installing omnibus dependencies..." 
 cd $OMNIBUS_DIR
 bundle install
-
 
 echo "you should be ready to go..."

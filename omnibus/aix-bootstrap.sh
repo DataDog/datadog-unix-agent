@@ -56,10 +56,6 @@ fi
 
 PATH="/opt/freeware/sbin:/opt/freeware/bin:/opt/bin:$PATH"
 
-# removing unneeded stuff...
-echo "removing unnecessary dependencies..."
-yum remove -y -q gcc-locale
-
 # exit on errors
 set -e
 
@@ -73,6 +69,10 @@ then
    exit 1
 fi
 
+# removing unneeded stuff...
+echo "removing unnecessary dependencies..."
+yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+
 # installing compiler dependencies 
 echo "installing compiler build dependencies..."
 yum install -y -q gcc-$GCC_VERSION
@@ -80,7 +80,7 @@ yum install -y -q gcc-c++-$GCC_VERSION
 
 # installing build dependencies
 echo "installing additional build dependencies..."
-yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar git
+yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl git
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."
@@ -106,10 +106,19 @@ bundle install
 bundle exec rake prep
 bundle exec rake compile
 bundle exec rake package
-gem install --local ./pkg/libyajl-1.2.0.gem
+gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
 echo "installing omnibus dependencies..." 
 cd $OMNIBUS_DIR
 bundle install
+
+echo "setting git attributes (if available)..." 
+if [ ! -z "$GIT_NAME"]; then
+    git config --global user.name $GIT_NAME
+fi
+
+if [ ! -z "$GIT_EMAIL"]; then
+    git config --global user.email $GIT_EMAIL
+fi
 
 echo "you should be ready to go..."

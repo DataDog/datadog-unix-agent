@@ -121,7 +121,7 @@ class Daemon(object):
         if os.path.exists(self.pidfile):
             os.remove(self.pidfile)
 
-        if pid > 1:
+        if pid and pid > 1:
             try:
                 os.kill(pid, signal.SIGTERM)
                 log.info("Daemon is stopped")

@@ -7,7 +7,7 @@ import json
 from collections import defaultdict
 
 from utils.hostname import get_hostname
-from utils.unicode import unicode_metrics
+from utils.unicode import ensure_unicode
 
 
 class Serializer(object):
@@ -63,15 +63,19 @@ class Serializer(object):
             metrics = {'series': series}
             return json.dumps(metrics), len(metrics['series'])
         except (UnicodeDecodeError, TypeError):
-            metrics = {'series': unicode_metrics(series)}
+            metrics = {'series': ensure_unicode(series)}
             return json.dumps(metrics), len(metrics['series'])
 
     def serialize_service_checks(self, add_meta):
         service_checks = self._aggregator.flush_service_checks()
-        return json.dumps(service_checks), len(service_checks)
+        try:
+            return json.dumps(service_checks), len(service_checks)
+        except (UnicodeDecodeError, TypeError):
+            service_checks = ensure_unicode(service_checks)
+            return json.dumps(service_checks), len(service_checks)
 
     def serialize_events(self, add_meta):
-        events = self._aggregator.flush_events()
+        events = ensure_unicode(self._aggregator.flush_events())
         serialized_events = defaultdict(list)
         for event in events:
             source_type = event.get('source_type_name')

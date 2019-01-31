@@ -6,14 +6,14 @@
 import json
 import pytest
 
-from utils.unicode import unicode_metrics
+from utils.unicode import ensure_unicode
 
 
-def test_unicode_metrics(unicode_payload):
+def test_ensure_unicode(unicode_payload):
     # This test has been inherited from the python2 implementation
     # and doesn't make much sense anymore as all strings are unicode
     # on python3. Now we just check we can encode bytes to strings
-    # with the `unicode_metrics` function - which is the closest we
+    # with the `ensure_unicode` function - which is the closest we
     # can get to that previous scenario.
 
     # should raise
@@ -21,7 +21,7 @@ def test_unicode_metrics(unicode_payload):
         json.dumps(unicode_payload)
 
     payload = unicode_payload
-    payload['series'] = unicode_metrics(payload['series'])
+    payload['series'] = ensure_unicode(payload['series'])
     try:
         json.dumps(unicode_payload)
     except UnicodeDecodeError:

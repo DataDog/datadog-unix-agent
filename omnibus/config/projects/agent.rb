@@ -87,11 +87,10 @@ dependency 'version-manifest'
 # This must be the last dependency in the project.
 
 
-if linux?
-  extra_package_file '/etc/init/datadog-agent.conf'
-  extra_package_file "/etc/init.d/datadog-agent"
+if aix?
   extra_package_file '/etc/datadog-agent/'
   extra_package_file '/var/log/datadog/'
+  package_scripts_path "#{project_root}/package-scripts/#{name}/aix"
 end
 
 exclude '\.git*'

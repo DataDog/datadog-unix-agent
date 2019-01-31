@@ -192,7 +192,7 @@ class Agent(Daemon):
         api = APIServer(8888, aggregator.stats)
 
         def signal_handler(signal, frame):
-            log.info("SIGINT received: stopping the agent")
+            log.info("Signal {} received: stopping the agent".format(signal))
             log.info("Stopping the forwarder")
             runner.stop()
             forwarder.stop()
@@ -200,6 +200,7 @@ class Agent(Daemon):
             log.info("See you !")
             sys.exit(0)
 
+        signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
 
         runner.start()

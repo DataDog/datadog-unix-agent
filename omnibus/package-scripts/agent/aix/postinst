@@ -61,6 +61,9 @@ create_system_services()
     rmssys -s ${SERVICE_NAME} 2>&1 > /dev/null
     set -e
     mkssys -s ${SERVICE_NAME} -p "/opt/datadog-agent/agent/agent.py" -a "-b start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
+
+    # adding inittab entry
+    mkitab "${SERVICE_NAME}:2:respawn:/usr/bin/startsrc -s ${SERVICE_NAME}"
 }
 
 # TODO: on debian the user is created here, in rhel in the preinst

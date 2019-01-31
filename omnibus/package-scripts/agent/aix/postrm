@@ -16,6 +16,9 @@ DATADOG_GROUP=dd-agent
 purge_datadog_services()
 {
   set -e
+  # adding inittab entry
+  rmitab ${SERVICE_NAME}
+
   rmssys -s ${SERVICE_NAME} > /dev/null 2>&1
 }
 

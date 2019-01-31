@@ -90,7 +90,7 @@ dependency 'version-manifest'
 if aix?
   extra_package_file '/etc/datadog-agent/'
   extra_package_file '/var/log/datadog/'
-  package_scripts_path "#{project_root}/package-scripts/#{name}/aix"
+  package_scripts_path "#{Omnibus::Config.project_root}/package-scripts/#{name}/aix"
 end
 
 exclude '\.git*'

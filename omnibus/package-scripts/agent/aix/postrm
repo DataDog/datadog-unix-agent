@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# Perform necessary datadog-agent removal steps after package is uninstalled.
+#
+# .deb: STEP 3 of 5
+# .rpm: STEP 5 of 6
+# .bff: STEP ? of ? (TODO)
+
+INSTALL_DIR=/opt/datadog-agent
+LOG_DIR=/var/log/datadog
+CONFIG_DIR=/etc/datadog-agent
+SERVICE_NAME=datadog-agent
+DATADOG_USER=dd-agent
+DATADOG_GROUP=dd-agent
+
+purge_datadog_services()
+{
+  set -e
+  rmssys -s ${SERVICE_NAME} > /dev/null 2>&1
+}
+
+purge_datadog_files()
+{
+  # Remove the symlink to the binary.
+  rm -f "/usr/bin/datadog-agent"
+
+  echo "Force-deleting ${INSTALL_DIR}"
+  rm -rf ${INSTALL_DIR}
+  rm -rf ${LOG_DIR}
+  rm -rf ${CONFIG_DIR}
+}
+
+remove_datadog_user_aix()
+{
+  set -e 
+  rmuser -p ${DATADOG_USER}
+}
+
+remove_datadog_user_group()
+{
+  set +e
+  grep "^${DATADOG_USER}:" /etc/passwd > /dev/null
+  RC=$?
+  set -e
+  if [ "${RC}" == "0" ]; then
+    remove_datadog_user_aix
+  fi
+
+  set +e
+  grep "^${DATADOG_GROUP}:" /etc/group > /dev/null
+  RC=$?
+  set -e
+  if [ "${RC}" == "0" ]; then
+    rmgroup ${DATADOG_GROUP}
+  fi
+}
+
+
+# TODO: possible remove the user and group (debian purge in postinst (?))  
+# NOTE: it's not clear we want to do this, so let's figure it out ^^  
+
+purge_datadog_services
+purge_datadog_files
+remove_datadog_user_group
+
+exit 0

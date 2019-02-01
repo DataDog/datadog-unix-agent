@@ -23,7 +23,7 @@ class APIServer(object):
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
         ])
-        self._server = tornado.httpserver.HTTPServer(app)
+        self._server = tornado.httpserver.HTTPServer(self._app)
         self._ioloop = tornado.ioloop.IOLoop.current()
 
     def stop(self):

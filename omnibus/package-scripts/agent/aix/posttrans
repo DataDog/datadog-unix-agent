@@ -15,14 +15,17 @@ SERVICE_NAME=datadog-agent
 # TODO: Not sure if this should run on AIX (possibly if using RPMs)
 #       but probably not with BFFs. Steps detailed below...
 
+# Create a symlink to the agent's binary
+ln -sf $INSTALL_DIR/agent/agent.py /usr/bin/datadog-agent
+
 # TODO: enable the service with the init system
 
-if [ ! -f "$CONFIG_DIR/datadog.yaml" ]; then
+if [ -f "$CONFIG_DIR/datadog.yaml" ]; then
+    startsrc -s ${SERVICE_NAME}
+else
     # No datadog.yaml file is present. This is probably a clean install made with the
     # step-by-step instructions/an automation tool, and the config file will be added next.
     echo "No datadog.yaml file detected, not starting the agent"
-else
-    echo "TODO: restart the agent service"
 fi
 
 exit 0

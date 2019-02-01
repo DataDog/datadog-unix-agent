@@ -79,19 +79,18 @@ chown_datadog_dirs()
   chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${INSTALL_DIR}
 }
 
-# TODO: Enable and restart the agent service here on Debian platforms
-# On RHEL, this is done in the posttrans script
-
 create_datadog_user_group
 chown_datadog_dirs
 create_system_services
 
-if [ ! -f "$CONFIG_DIR/datadog.yaml" ]; then
-  # No datadog.yaml file is present. This is probably a clean install made with the
-  # step-by-step instructions/an automation tool, and the config file will be added next.
-  echo "No datadog.yaml file detected, not starting the agent"
-else
-  echo "TODO: restart the agent service"
-fi
+## TODO: Enable and restart the agent service here on Debian platforms
+## On RHEL, this is done in the posttrans script
+# if [ ! -f "$CONFIG_DIR/datadog.yaml" ]; then
+#   # No datadog.yaml file is present. This is probably a clean install made with the
+#   # step-by-step instructions/an automation tool, and the config file will be added next.
+#   echo "No datadog.yaml file detected, not starting the agent"
+# else
+#   echo "TODO: restart the agent service"
+# fi
 
 exit 0

@@ -17,7 +17,7 @@ build do
   # TODO too many things done here, should be split
   block do
     etc_dir = "/etc/datadog-agent"
-    var_dir = "/var/log/datadog-agent"
+    var_dir = "/var/log/datadog"
 
     # Conf files
     if aix?

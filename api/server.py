@@ -5,6 +5,7 @@
 
 import logging
 
+import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
@@ -22,13 +23,16 @@ class APIServer(object):
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
         ])
+        self._server = tornado.httpserver.HTTPServer(app)
         self._ioloop = tornado.ioloop.IOLoop.current()
 
     def stop(self):
         self._ioloop.stop()
+        self._server.stop()
         log.info("Stopped API Server...")
 
     def run(self):
         log.info("Starting API Server...")
-        self._app.listen(self._port)
+        self._server.bind(self._port)
+        self._server.start(0)  # forks subprocesses
         self._ioloop.start()

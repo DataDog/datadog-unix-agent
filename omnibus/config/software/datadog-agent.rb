@@ -26,8 +26,6 @@ license_file "./LICENSE"
 
 build do
   block 'setup agent' do
-    etc_dir = "/etc/datadog-agent"
-  
     if aix?
       env = aix_env 
       env["M4"] = "/opt/freeware/bin/m4"
@@ -70,6 +68,6 @@ build do
     mkdir "#{install_dir}/scripts/"
   
     ## move around config files
-    copy 'datadog.yaml.sample', "#{conf_dir}"
+    copy 'datadog.yaml.example', "#{conf_dir}"
   end
 end

@@ -59,11 +59,15 @@ remove_datadog_user_group()
 }
 
 
-# TODO: possible remove the user and group (debian purge in postinst (?))  
+# TODO: possibly remove the user and group (debian purge in postinst (?))  
 # NOTE: it's not clear we want to do this, so let's figure it out ^^  
 
 purge_datadog_services
 purge_datadog_files
 remove_datadog_user_group
+
+# Remove the symlink to the binary.
+rm -f "/usr/bin/datadog-agent"
+
 
 exit 0

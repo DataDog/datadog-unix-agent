@@ -19,10 +19,6 @@ build do
     # Conf files
 
     if aix?
-      # Move system service files
-      mkdir "/etc/init"
-      move "#{install_dir}/scripts/datadog-agent.conf", "/etc/init"
-
       # Move checks and configuration files
       mkdir "/etc/datadog-agent"
       move "#{install_dir}/etc/datadog-agent/datadog.yaml.example", "/etc/datadog-agent"

@@ -63,6 +63,9 @@ create_system_services()
     mkssys -s ${SERVICE_NAME} -p "/opt/datadog-agent/agent/agent.py" -a "-b start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
 
     # adding inittab entry
+    set +e
+    rmitab ${SERVICE_NAME}
+    set -e
     mkitab "${SERVICE_NAME}:2:respawn:/usr/bin/startsrc -s ${SERVICE_NAME}"
 }
 

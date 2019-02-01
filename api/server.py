@@ -34,5 +34,5 @@ class APIServer(object):
     def run(self):
         log.info("Starting API Server...")
         self._server.bind(self._port)
-        self._server.start(0)  # forks subprocesses
+        self._server.start(1)  # forks subprocesses
         self._ioloop.start()

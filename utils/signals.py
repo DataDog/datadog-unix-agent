@@ -24,8 +24,8 @@ class SignalHandler(object):
 
         self._components[identifier] = comp
 
-    def handle(self, signal):
-        signal.signal(signal, self._signal_handler)
+    def handle(self, signum):
+        signal.signal(signum, self._signal_handler)
 
     def _signal_handler(self, signal, frame):
         log.info("Signal {} received: stopping...".format(signal))

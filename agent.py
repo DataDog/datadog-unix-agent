@@ -20,6 +20,7 @@ from config.default import DEFAULT_PATH
 from utils.logs import initialize_logging
 from utils.hostname import HostnameException, get_hostname
 from utils.daemon import Daemon
+from utils.signals import SignalHandler
 from utils.pidfile import PidFile
 from utils.network import get_proxy
 from utils.flare import Flare
@@ -35,6 +36,7 @@ from api import APIServer
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')
+handler = SignalHandler()
 
 
 class AgentRunner(Thread):
@@ -191,17 +193,9 @@ class Agent(Daemon):
         # instantiate API
         api = APIServer(8888, aggregator.stats)
 
-        def signal_handler(signal, frame):
-            log.info("Signal {} received: stopping the agent".format(signal))
-            log.info("Stopping the forwarder")
-            runner.stop()
-            forwarder.stop()
-            api.stop()
-            log.info("See you !")
-            sys.exit(0)
-
-        signal.signal(signal.SIGTERM, signal_handler)
-        signal.signal(signal.SIGINT, signal_handler)
+        handler.register(('runner', runner))
+        handler.register(('forwarder', forwarder))
+        handler.register(('api', api))
 
         runner.start()
         api.run()  # blocking tornado in main thread
@@ -233,6 +227,9 @@ def main():
                  at %s). You may need to specify sane locations for your configs,
                  logs, run path, etc. And remember to drop the configuration
                  file in one of the supported locations.""" % DEFAULT_PATH)
+
+    handler.handle(signal.SIGTERM)
+    handler.handle(signal.SIGINT)
 
     pid_dir = config.get('run_path')
     agent = Agent(PidFile(PID_NAME, pid_dir).get_path())

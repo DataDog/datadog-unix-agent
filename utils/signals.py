@@ -8,6 +8,8 @@ import logging
 import sys
 import signal
 
+from collections import OrderedDict
+
 log = logging.getLogger(__name__)
 
 
@@ -15,7 +17,8 @@ class SignalHandler(object):
     """ A small helper class for pidfiles. """
 
     def __init__(self, components={}):
-        self._components = components
+        # we don't care about order for initial components, if any
+        self._components = OrderedDict(components)
 
     def register(self, component):
         identifier, comp = component
@@ -29,7 +32,7 @@ class SignalHandler(object):
 
     def _signal_handler(self, signal, frame):
         log.info("Signal {} received: stopping...".format(signal))
-        for identifier, component in self._components:
+        for identifier, component in self._components.items():
             log.info("Stopping {}".format(identifier))
             try:
                 component.stop()

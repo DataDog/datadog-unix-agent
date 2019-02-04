@@ -6,6 +6,7 @@
 # stdlib
 import logging
 import sys
+import signal
 
 log = logging.getLogger(__name__)
 

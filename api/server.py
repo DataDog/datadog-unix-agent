@@ -9,6 +9,8 @@ import tornado.ioloop
 import tornado.web
 from threading import Thread
 
+from tornado.platform import asyncio
+
 from .handlers import APIStatusHandler
 
 
@@ -20,6 +22,10 @@ class APIServer(Thread):
     def __init__(self, port, aggregator_stats):
         # start API
         super(APIServer, self).__init__()
+
+        # we'll need an event loop in the APIServer thread
+        asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
+
         self._port = port
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),

@@ -7,7 +7,6 @@
 import logging
 import fcntl
 import os
-import sys
 import select
 import signal
 from threading import Thread, Event

@@ -37,7 +37,7 @@ class APIServer(Thread):
     def stop(self):
         log.info("Stopping API Server...")
         self._server.stop()
-        self._ioloop.stop()
+        self._ioloop.add_callback(self._ioloop.stop)
 
     def run(self):
         log.info("Starting API Server...")

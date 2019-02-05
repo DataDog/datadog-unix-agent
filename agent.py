@@ -211,7 +211,7 @@ class Agent(Daemon):
         logging.info("Signal handler done...")
         runner.join()
         logging.info("Agent done...")
-        api.join(1.0)
+        api.join()
         logging.info("API done...")
         logging.info("Thank you for shopping at DataDog! Come back soon!")
 

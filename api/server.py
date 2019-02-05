@@ -3,13 +3,14 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import asyncio
 import logging
 
 import tornado.ioloop
 import tornado.web
 from threading import Thread
 
-from tornado.platform import asyncio
+from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
 from .handlers import APIStatusHandler
 

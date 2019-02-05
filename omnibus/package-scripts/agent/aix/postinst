@@ -45,7 +45,7 @@ create_datadog_user_group()
 	  mkgroup ${DATADOG_GROUP} 
     fi
 
-    # create sensu user
+    # create datadog user
     set +e
     grep "^${DATADOG_USER}:" /etc/passwd > /dev/null
     RC=$?
@@ -69,21 +69,7 @@ create_system_services()
     mkitab "${SERVICE_NAME}:2:respawn:/usr/bin/startsrc -s ${SERVICE_NAME}"
 }
 
-# TODO: on debian the user is created here, in rhel in the preinst
-#       figure out which one makes sense on AIX - not even sure this
-#       script applies, the other one definitely does.
-
-
-# TODO: Set proper rights to the dd-agent user
-chown_datadog_dirs()
-{
-  chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${CONFIG_DIR}
-  chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${LOG_DIR}
-  chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${INSTALL_DIR}
-}
-
 create_datadog_user_group
-chown_datadog_dirs
 create_system_services
 
 ## TODO: Enable and restart the agent service here on Debian platforms

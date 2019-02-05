@@ -31,13 +31,12 @@ class APIServer(Thread):
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
         ])
-        self._ioloop = tornado.ioloop.IOLoop.current()
 
     def stop(self):
         log.info("Stopping API Server...")
-        self._ioloop.stop()
+        tornado.ioloop.IOLoop.current().stop()
 
     def run(self):
         log.info("Starting API Server...")
         self._app.listen(self._port)
-        self._ioloop.start()
+        tornado.ioloop.IOLoop.current().start()

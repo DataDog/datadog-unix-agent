@@ -36,7 +36,6 @@ from api import APIServer
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')
-handler = SignalHandler()
 
 
 class AgentRunner(Thread):
@@ -193,12 +192,30 @@ class Agent(Daemon):
         # instantiate API
         api = APIServer(8888, aggregator.stats)
 
+        handler = SignalHandler()
+        # components
         handler.register(('runner', runner))
         handler.register(('forwarder', forwarder))
         handler.register(('api', api))
+        # signals
+        handler.handle(signal.SIGTERM)
+        handler.handle(signal.SIGINT)
+
+        # start signal handler
+        handler.start()
 
         runner.start()
-        api.run()  # blocking tornado in main thread
+        api.start()  # blocking tornado in main thread
+
+        handler.join()
+        logging.info("Signal handler done...")
+        runner.join()
+        logging.info("Agent done...")
+        api.join(1.0)
+        logging.info("API done...")
+        logging.info("Thank you for shopping at DataDog! Come back soon!")
+
+        sys.exit(0)
 
 
 def main():
@@ -227,9 +244,6 @@ def main():
                  at %s). You may need to specify sane locations for your configs,
                  logs, run path, etc. And remember to drop the configuration
                  file in one of the supported locations.""" % DEFAULT_PATH)
-
-    handler.handle(signal.SIGTERM)
-    handler.handle(signal.SIGINT)
 
     pid_dir = config.get('run_path')
     agent = Agent(PidFile(PID_NAME, pid_dir).get_path())

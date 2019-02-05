@@ -7,6 +7,7 @@ import logging
 
 import tornado.ioloop
 import tornado.web
+from threading import Thread
 
 from .handlers import APIStatusHandler
 
@@ -14,10 +15,11 @@ from .handlers import APIStatusHandler
 log = logging.getLogger(__name__)
 
 
-class APIServer(object):
+class APIServer(Thread):
 
     def __init__(self, port, aggregator_stats):
         # start API
+        super(APIServer, self).__init__()
         self._port = port
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
@@ -25,8 +27,8 @@ class APIServer(object):
         self._ioloop = tornado.ioloop.IOLoop.current()
 
     def stop(self):
+        log.info("Stopping API Server...")
         self._ioloop.stop()
-        log.info("Stopped API Server...")
 
     def run(self):
         log.info("Starting API Server...")

@@ -6,6 +6,7 @@
 import asyncio
 import logging
 
+import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 from threading import Thread
@@ -31,12 +32,15 @@ class APIServer(Thread):
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
         ])
+        self._server = tornado.httpserver.HTTPServer(self._app)
 
     def stop(self):
         log.info("Stopping API Server...")
-        tornado.ioloop.IOLoop.current().stop()
+        self._server.stop()
+        self._ioloop.stop()
 
     def run(self):
         log.info("Starting API Server...")
-        self._app.listen(self._port)
-        tornado.ioloop.IOLoop.current().start()
+        self._server.listen(self._port)
+        self._ioloop = tornado.ioloop.IOLoop.instance()
+        self._ioloop.start()

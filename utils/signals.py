@@ -29,26 +29,52 @@ class SignalHandler(Thread):
         self._wakeup_w = wakeup_w
         # we don't care about order for initial components, if any
         self._components = OrderedDict(components)
+        self._original_handlers = {}
         self._registered_signals = set()
-        self._stop_flag = Event()  # TODO: use events
+        self._stop_flag = Event()
+        self._stop_flag.set()
 
         signal.set_wakeup_fd(self._wakeup_w)
 
-    def register(self, component):
-        identifier, comp = component
+    def register(self, identifier, component):
         if identifier in self._components:
             raise KeyError("component ({}) alredy registered".format(identifier))
 
-        self._components[identifier] = comp
+        self._components[identifier] = component
+
+    def unregister(self, identifier):
+        if not self._stop_flag.is_set():
+            raise Exception('cannot unregister component if manager is running')
+
+        self._components.pop(identifier)
 
     def handle(self, signum):
+        if signum not in range(1, signal.NSIG):
+            raise ValueError('Invalid signal specified')
+
         self._registered_signals.add(signum)
-        # we handle the signals when we read them from the
-        # the pipe.
+        self._original_handlers[signum] = signal.getsignal(signum)
+
+        # we actually handle the signals when we read them from
+        # the pipe - hence the dummy handler.
         signal.signal(signum, self._dummy_handler)
 
+    def unhandle(self, signum):
+        if not self._stop_flag.is_set():
+            raise Exception('cannot unregister handler if manager is running')
+        if signum not in range(1, signal.NSIG):
+            raise ValueError('Invalid signal specified')
+
+        original_handler = self._original_handlers.pop(signum)
+        signal.signal(signum, original_handler)
+        self._registered_signals.remove(signum)
+
     def run(self):
+        self._stop_flag.clear()
         self.listen()
+
+    def running(self):
+        return not self._stop_flag.is_set()
 
     def stop(self):
         self._stop_flag.set()
@@ -57,26 +83,23 @@ class SignalHandler(Thread):
 
     def listen(self):
         while not self._stop_flag.is_set():
-            delivered = False
             readable, _, _ = select.select([self._wakeup_r], [], [], 1)
             for fp in readable:
-                signum = int.from_bytes(os.read(fp, 1), byteorder='big')
-                if signum not in self._registered_signals:
-                    continue
+                try:
+                    signum = int.from_bytes(os.read(fp, 1), byteorder='big')
+                    if signum not in self._registered_signals:
+                        continue
 
-                log.debug("Signal delivered: {}".format(signum))
-
-                self._signal_handler(signum, None)
-                delivered = True
-
-            if delivered:
-                self.stop()
+                    self._signal_handler(signum, None)
+                except OSError:
+                    # file descriptor closed we're about to end loop
+                    pass
 
     def _dummy_handler(self, signal, frame):
         pass
 
     def _signal_handler(self, signal, frame):
-        log.info("Signal {} received: stopping...".format(signal))
+        log.debug("Signal {} received".format(signal))
         for identifier, component in self._components.items():
             log.info("Stopping {}".format(identifier))
             try:

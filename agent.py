@@ -194,9 +194,9 @@ class Agent(Daemon):
 
         handler = SignalHandler()
         # components
-        handler.register(('runner', runner))
-        handler.register(('forwarder', forwarder))
-        handler.register(('api', api))
+        handler.register('runner', runner)
+        handler.register('forwarder', forwarder)
+        handler.register('api', api)
         # signals
         handler.handle(signal.SIGTERM)
         handler.handle(signal.SIGINT)
@@ -207,12 +207,16 @@ class Agent(Daemon):
         runner.start()
         api.start()  # blocking tornado in main thread
 
-        handler.join()
-        logging.info("Signal handler done...")
         runner.join()
         logging.info("Agent done...")
+
         api.join()
         logging.info("API done...")
+
+        handler.stop()
+        handler.join()
+        logging.info("Signal handler done...")
+
         logging.info("Thank you for shopping at DataDog! Come back soon!")
 
         sys.exit(0)

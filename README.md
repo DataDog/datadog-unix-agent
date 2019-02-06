@@ -75,7 +75,7 @@ taken):
 - `./etc/datadog-agent/datadog.yaml`
 - `./datadog.yaml`
 
-A sample configuration file may be found in `/opt/datadog/datadog-unix-agent`.
+A sample configuration file may be found in `/opt/datadog-agent/etc/datadog-agent`.
 
 A basic configuration will typically require a destination `dd_url` and  your 
 datadog API key. Occassionally a proxy configuration must be specified depending

@@ -3,6 +3,11 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from .forwarder import Forwarder
+import pytest
+import requests_mock
 
-__all__ = ["Forwarder"]
+
+@pytest.fixture()
+def m():
+    with requests_mock.Mocker() as m:
+        yield m

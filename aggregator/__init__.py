@@ -3,12 +3,12 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from aggregator import (
+from .aggregator import (
     Aggregator,
     MetricsBucketAggregator,
     MetricsAggregator
 )
-from types import (
+from .types import (
     MetricTypes,
     TextualMetricTypes,
 )

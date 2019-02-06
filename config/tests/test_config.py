@@ -89,7 +89,7 @@ class TestConfig():
 
     def test_load(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\nlist: [1, 2, 3]")
+        os.write(fd, b"---\ntest: 123\nlist: [1, 2, 3]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -103,7 +103,7 @@ class TestConfig():
 
     def test_get(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nlist: [1, 2, 3]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nlist: [1, 2, 3]")
 
         os.environ["DD_test2"] = "env_val"
         os.environ["DD_test3"] = "env_val2"
@@ -132,7 +132,7 @@ class TestConfig():
 
     def test_validate_aggregates_sane(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_aggregates: [min, max, median]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nhistogram_aggregates: [min, max, median]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -148,7 +148,7 @@ class TestConfig():
 
     def test_validate_aggregates_sanitized(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_aggregates: [min, max, median, foo]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nhistogram_aggregates: [min, max, median, foo]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -164,7 +164,7 @@ class TestConfig():
 
     def test_validate_percentiles(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.98, 0.23, 0.1321]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.98, 0.23, 0.1321]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -180,7 +180,7 @@ class TestConfig():
 
     def test_validate_percentiles_hich_precision(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.999, 0.23, 0.1321]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.999, 0.23, 0.1321]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -196,7 +196,7 @@ class TestConfig():
 
     def test_validate_percentiles_badval(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.98, foo]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nhistogram_percentiles: [0.98, foo]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -211,7 +211,7 @@ class TestConfig():
 
     def test_validate_percentiles_bounds(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
-        os.write(fd, "---\ntest: 123\ntest2: true\nhistogram_percentiles: [1, 0]")
+        os.write(fd, b"---\ntest: 123\ntest2: true\nhistogram_percentiles: [1, 0]")
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
@@ -334,10 +334,10 @@ class TestConfig():
             }
         }
 
-        for k, v in config_defaults.iteritems():
+        for k, v in config_defaults.items():
             config.bind_env_and_set_default(k, k, v)
 
-        for k, v in config_defaults.iteritems():
+        for k, v in config_defaults.items():
             assert config.defaults[k] == v
 
         assert len(config.env_bindings) == 7

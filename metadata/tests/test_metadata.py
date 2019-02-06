@@ -13,7 +13,7 @@ import time
 from metadata import metadata
 
 @mock.patch("platform.node", return_value="test-hostname")
-@mock.patch("uuid.getnode", return_value=11111111111L)
+@mock.patch("uuid.getnode", return_value=11111111111)
 @mock.patch("config.config.get", side_effect=lambda key: ["tag1", "tag2"] if key == "tags" else "my_api_key")
 @mock.patch("utils.platform.Platform.is_linux", return_value=False)
 @mock.patch("utils.platform.Platform.is_freebsd", return_value=False)

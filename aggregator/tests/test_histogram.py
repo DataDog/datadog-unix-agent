@@ -13,7 +13,7 @@ class TestHistogram():
     def test_default(self):
         stats = MetricsAggregator('myhost')
 
-        for i in xrange(20):
+        for i in range(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
         metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
@@ -41,7 +41,7 @@ class TestHistogram():
 
         assert stats.metric_config[Histogram]['percentiles'] == [0.40]
 
-        for i in xrange(20):
+        for i in range(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
         metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
@@ -66,7 +66,7 @@ class TestHistogram():
 
         assert stats.metric_config[Histogram]['percentiles'] == [0.4, 0.65, 0.99]
 
-        for i in xrange(20):
+        for i in range(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
         metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric
@@ -129,7 +129,7 @@ class TestHistogram():
         assert sorted(stats.metric_config[Histogram]['aggregates']) == \
             ['max', 'median', 'sum']
 
-        for i in xrange(20):
+        for i in range(20):
             stats.submit_packets('myhistogram:{0}|h'.format(i))
 
         metrics = stats.flush()[:-1]  # we remove the datadog.agent.running metric

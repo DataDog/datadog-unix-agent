@@ -53,7 +53,7 @@ def test_load_aix(get_subprocess_output):
     }
 
     # we subtract two - one for /proc, and one for the heading
-    assert len(metrics) == len(expected_metrics) * (len(filter(None, AIX_MOCK_FS.splitlines())) - 2)
+    assert len(metrics) == len(expected_metrics) * (len([_f for _f in AIX_MOCK_FS.splitlines() if _f]) - 2)
     for metric in metrics:
         assert metric['metric'] in expected_metrics
         assert len(metric['points']) == 1

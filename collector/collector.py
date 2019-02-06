@@ -67,7 +67,7 @@ class Collector(object):
 
     def load_check_classes(self):
         self.load_core_checks()
-        for _, check_configs in self._config.get_check_configs().iteritems():
+        for _, check_configs in self._config.get_check_configs().items():
             for check_name in check_configs:
                 if check_name in self._check_classes:
                     continue
@@ -87,8 +87,8 @@ class Collector(object):
                         log.exception("unexpected error loading check %s", check_name)
 
     def instantiate_checks(self):
-        for source, check_configs in self._config.get_check_configs().iteritems():
-            for check_name, configs in check_configs.iteritems():
+        for source, check_configs in self._config.get_check_configs().items():
+            for check_name, configs in check_configs.items():
                 log.debug('Trying to instantiate: %s', check_name)
                 check_class = self._check_classes.get(check_name)
                 if check_class:
@@ -129,7 +129,7 @@ class Collector(object):
                 log.error("unable to instantiate core check %s", check_name)
 
     def run_checks(self):
-        for name, checks in self._check_instances.iteritems():
+        for name, checks in self._check_instances.items():
             log.debug('running check %s...', name)
             for check in checks:
                 try:

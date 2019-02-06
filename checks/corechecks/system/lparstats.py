@@ -58,9 +58,9 @@ class LPARStats(AgentCheck):
         ----- ----- ----- ----- ------ ------ ------ ------ ----- ----- -----
          0.63     0     0  7.75   46.8   -     -     -       0   4.1 1249045057
         '''
-        stats = filter(None, output.splitlines())[self.MEMORY_METRICS_START_IDX:]
-        fields = filter(None, stats[0].split(' '))
-        values = filter(None, stats[2].split(' '))
+        stats = [_f for _f in output.splitlines() if _f][self.MEMORY_METRICS_START_IDX:]
+        fields = [_f for _f in stats[0].split(' ') if _f]
+        values = [_f for _f in stats[2].split(' ') if _f]
         for idx, field in enumerate(fields):
             try:
                 m = float(values[idx])
@@ -93,9 +93,9 @@ class LPARStats(AgentCheck):
                                                 ...
         --------------------------------------------------------------------------------
         '''
-        stats = filter(None, output.splitlines())[self.HYPERVISOR_METRICS_START_IDX:]
+        stats = [_f for _f in output.splitlines() if _f][self.HYPERVISOR_METRICS_START_IDX:]
         for stat in stats:
-            values = filter(None, stat.split(' '))
+            values = [_f for _f in stat.split(' ') if _f]
             call_tag = "call:{}".format(values[0])
             for idx, entry in enumerate(values[1:]):
                 try:
@@ -135,10 +135,10 @@ class LPARStats(AgentCheck):
                     vscsi0 16.50  16.50   0.13  16.50   0.18      0
                       sys0  0.00   0.00   0.00   0.00   0.00      0
                     '''
-        stats = filter(None, output.splitlines())[self.MEMORY_ENTITLEMENTS_START_IDX:]
-        fields = filter(None, stats[0].split(' '))[1:]
+        stats = [_f for _f in output.splitlines() if _f][self.MEMORY_ENTITLEMENTS_START_IDX:]
+        fields = [_f for _f in stats[0].split(' ') if _f][1:]
         for stat in stats[1:]:
-            values = filter(None, stat.split(' '))
+            values = [_f for _f in stat.split(' ') if _f]
             tag = "iompn:{}".format(values[0])
             for idx, field in enumerate(fields):
                 try:
@@ -163,9 +163,9 @@ class LPARStats(AgentCheck):
          ----  ----  ----  ----   ---------  ----  ----  ----  ----
         0.008 0.012 0.000 0.180 3.6GHz[100%] 0.008 0.012 0.000 0.180
         '''
-        table = filter(None, output.splitlines())[self.SPURR_PROCESSOR_UTILIZATION_START_IDX:]
-        fields = filter(None, table[0].split(' '))
-        stats = filter(None, table[2].split(' '))
+        table = [_f for _f in output.splitlines() if _f][self.SPURR_PROCESSOR_UTILIZATION_START_IDX:]
+        fields = [_f for _f in table[0].split(' ') if _f]
+        stats = [_f for _f in table[2].split(' ') if _f]
         metrics = {}
         total = 0
         total_norm = 0
@@ -185,7 +185,7 @@ class LPARStats(AgentCheck):
             else:
                 total += metrics[metric]
 
-        for metric, val in metrics.iteritems():
+        for metric, val in metrics.items():
             if 'norm' in metric:
                 val_pct = val / total_norm
             else:

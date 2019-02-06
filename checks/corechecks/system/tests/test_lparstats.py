@@ -141,11 +141,14 @@ Physical Processor Utilisation:
 '''
 
 
-def collect_column(input, row_idx):
+def collect_column(input, row_idx, as_bytes=True):
     collected = []
     for row in input:
-        name = filter(None, row.split(' '))[row_idx]
+        name = [_f for _f in row.split(' ') if _f][row_idx]
         collected.append(name)
+
+    if as_bytes:
+        return [item.encode('utf-8') for item in collected]
 
     return collected
 
@@ -245,15 +248,15 @@ def test_memory_entitlements(get_subprocess_output):
     ]
 
     # compile entitlements from mock output
-    output = filter(None, AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines())
+    output = [_f for _f in AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines() if _f]
     output = output[c.MEMORY_ENTITLEMENTS_START_IDX + 1:]
     entitlements = collect_column(output, 0)
 
     assert len(metrics) == (len(expected_metrics) * len(entitlements))
     for metric in metrics:
         for tag in metric['tags']:
-            if 'iompn' in tag:
-                assert tag.split(':')[1] in entitlements
+            if b'iompn' in tag:
+                assert tag.split(b':')[1] in entitlements
 
 
 @mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_HYPERVISOR, None, None))
@@ -272,16 +275,16 @@ def test_hypervisor(get_subprocess_output):
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     # compile hypervisor calls from mock output
-    output = filter(None, AIX_LPARSTATS_HYPERVISOR.splitlines())
+    output = [_f for _f in AIX_LPARSTATS_HYPERVISOR.splitlines() if _f]
     output = output[c.HYPERVISOR_METRICS_START_IDX:-1]
     calls = collect_column(output, 0)
 
     assert len(metrics) == (len(c.HYPERVISOR_IDX_METRIC_MAP) * len(calls))
     for metric in metrics:
-        assert metric['metric'] in c.HYPERVISOR_IDX_METRIC_MAP.values()
+        assert metric['metric'] in list(c.HYPERVISOR_IDX_METRIC_MAP.values())
         for tag in metric['tags']:
-            if 'call' in tag:
-                assert tag.split(':')[1] in calls
+            if b'call' in tag:
+                assert tag.split(b':')[1] in calls
 
 
 @mock.patch("checks.corechecks.system.lparstats.get_subprocess_output", return_value=(AIX_LPARSTATS_SPURR, None, None))

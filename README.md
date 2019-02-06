@@ -29,7 +29,7 @@ images. These issues are not expected but may occur due to the early maturity of
 
 #### Target Platforms
 
-The omnibus build has been tested on the target platformts:
+The omnibus build has been tested on the target platforms:
 - AIX 6.1
 - AIX 7.1
 - AIX 7.2

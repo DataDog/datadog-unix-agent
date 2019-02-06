@@ -82,9 +82,9 @@ class Daemon(object):
             # Redirect standard file descriptors
             sys.stdout.flush()
             sys.stderr.flush()
-            si = file(self.stdin, 'r')
-            so = file(self.stdout, 'a+')
-            se = file(self.stderr, 'a+', 0)
+            si = open(self.stdin, mode='r')
+            so = open(self.stdout, mode='a+')
+            se = open(self.stderr, mode='a+b', buffering=0)
             os.dup2(si.fileno(), sys.stdin.fileno())
             os.dup2(so.fileno(), sys.stdout.fileno())
             os.dup2(se.fileno(), sys.stderr.fileno())
@@ -121,7 +121,7 @@ class Daemon(object):
         if os.path.exists(self.pidfile):
             os.remove(self.pidfile)
 
-        if pid > 1:
+        if pid and pid > 1:
             try:
                 os.kill(pid, signal.SIGTERM)
                 log.info("Daemon is stopped")
@@ -198,7 +198,7 @@ class Daemon(object):
     def pid(self):
         # Get the pid from the pidfile
         try:
-            pf = file(self.pidfile, 'r')
+            pf = open(self.pidfile, mode='r')
             pid = int(pf.read().strip())
             pf.close()
             return pid
@@ -215,7 +215,7 @@ class Daemon(object):
             fp = open(self.pidfile, 'w+')
             fp.write(str(pid))
             fp.close()
-            os.chmod(self.pidfile, 0644)
+            os.chmod(self.pidfile, 0o644)
         except Exception:
             msg = "Unable to write pidfile: %s" % self.pidfile
             log.exception(msg)

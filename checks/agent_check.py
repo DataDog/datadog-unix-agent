@@ -78,9 +78,9 @@ class AgentCheck(object):
 
     def event(self, event):
         # Enforce types of some fields, considerably facilitates handling in go bindings downstream
-        for key, value in event.items():
+        for key, value in list(event.items()):
             # transform the unicode objects to plain strings with utf-8 encoding
-            if isinstance(value, unicode):
+            if isinstance(value, str):
                 try:
                     event[key] = event[key].encode('utf-8')
                 except UnicodeError:
@@ -104,7 +104,7 @@ class AgentCheck(object):
         :param fix_case A boolean, indicating whether to make sure that
                         the metric name returned is in underscore_case
         """
-        if isinstance(metric, unicode):
+        if isinstance(metric, str):
             metric_name = unicodedata.normalize('NFKD', metric).encode('ascii', 'ignore')
         else:
             metric_name = metric
@@ -165,13 +165,13 @@ class AgentCheck(object):
         normalized_tags = []
         if tags is not None:
             for tag in tags:
-                if not isinstance(tag, basestring):
+                if not isinstance(tag, str):
                     try:
                         tag = str(tag)
                     except Exception:
                         self.log.warning("Error converting tag to string, ignoring tag")
                         continue
-                elif isinstance(tag, unicode):
+                elif isinstance(tag, str):
                     try:
                         tag = tag.encode('utf-8')
                     except UnicodeError:
@@ -199,7 +199,7 @@ class AgentCheck(object):
             self.check(copy.deepcopy(self.instance))
             result = None
 
-        except Exception, e:
+        except Exception as e:
             result = {
                 "message": str(e),
                 "traceback": traceback.format_exc(),

@@ -57,9 +57,9 @@ def test_cpu_first_run(cpu_count, cpu_times):
     c.check({})
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
     expected_metrics = {
-        'system.cpu.system': (GAUGE, 0.15),
+        'system.cpu.system': (GAUGE, 0.2),
         'system.cpu.user': (GAUGE, 0.1052),
-        'system.cpu.idle': (GAUGE, 4.0),
+        'system.cpu.idle': (GAUGE, 4.23),
         'system.cpu.stolen': (GAUGE, 0.0),
         'system.cpu.guest': (GAUGE, 0.0),
     }

@@ -23,10 +23,10 @@ class Filesystem(AgentCheck):
         /dev/hd3         256.00    158.39     97.61      62% /tmp
         /dev/hd1         256.00    219.11     36.89      86% /home
         '''
-        stats = filter(None, output.splitlines())
+        stats = [_f for _f in output.splitlines() if _f]
         for line in stats[1:]:
             fields = line.split(' ')
-            fields = filter(None, fields)
+            fields = [_f for _f in fields if _f]
             filesystem = '_'.join(fields[0:-5])
             try:
                 blocks = float(fields[-5])

@@ -7,8 +7,8 @@ import os
 import socket
 import logging
 
-from urllib import getproxies
-from urlparse import urlparse
+from urllib.request import getproxies
+from urllib.parse import urlparse
 from socket import inet_pton
 
 from config import config
@@ -94,7 +94,7 @@ def set_no_proxy_settings(proxy_settings):
         if host not in no_proxy:
             no_proxy.append(host)
 
-    for host in filter(None, proxy_settings.get('no_proxy', '').split(',')):
+    for host in [_f for _f in proxy_settings.get('no_proxy', '').split(',') if _f]:
         if host not in no_proxy:
             no_proxy.append(host)
 

@@ -36,7 +36,7 @@ def requests_nok():
 @pytest.fixture(scope="module")
 def zip_contents():
     zip_location = tempfile.mkdtemp(suffix='flare')
-    for key, value in CONTENTS.iteritems():
+    for key, value in CONTENTS.items():
         with open(os.path.join(zip_location, key), 'w') as fp:
             fp.write(value)
 

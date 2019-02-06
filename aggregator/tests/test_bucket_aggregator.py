@@ -561,10 +561,10 @@ class TestUnitMetricsBucketAggregator():
 
         # Sample all numbers between 1-100 many times. This
         # means our percentiles should be relatively close to themselves.
-        percentiles = range(100)
+        percentiles = list(range(100))
         random.shuffle(percentiles)  # in place
         for i in percentiles:
-            for j in xrange(20):
+            for j in range(20):
                 for type_ in ['h', 'ms']:
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
@@ -615,20 +615,20 @@ class TestUnitMetricsBucketAggregator():
         # Sample all numbers between 1-100 many times. This
         # means our percentiles should be relatively close to themselves.
         self.wait_for_bucket_boundary(ag_interval)
-        percentiles = range(100)
+        percentiles = list(range(100))
         random.shuffle(percentiles)  # in place
         for i in percentiles:
-            for j in xrange(20):
+            for j in range(20):
                 for type_ in ['h', 'ms']:
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
 
         time.sleep(self.BUCKET_BOUNDARY_TOLERANCE)  # Make sure that we're waiting for the _next_ bucket boundary
         self.wait_for_bucket_boundary(ag_interval)
-        percentiles = range(50)
+        percentiles = list(range(50))
         random.shuffle(percentiles)  # in place
         for i in percentiles:
-            for j in xrange(20):
+            for j in range(20):
                 for type_ in ['h', 'ms']:
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
@@ -673,20 +673,20 @@ class TestUnitMetricsBucketAggregator():
         # Sample all numbers between 1-100 many times. This
         # means our percentiles should be relatively close to themselves.
         self.wait_for_bucket_boundary(ag_interval)
-        percentiles = range(100)
+        percentiles = list(range(100))
         random.shuffle(percentiles)  # in place
         for i in percentiles:
-            for j in xrange(20):
+            for j in range(20):
                 for type_ in ['h', 'ms']:
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
 
         time.sleep(self.BUCKET_BOUNDARY_TOLERANCE)  # Make sure that we'll wait for the _next_ bucket boundary
         self.wait_for_bucket_boundary(ag_interval)
-        percentiles = range(50)
+        percentiles = list(range(50))
         random.shuffle(percentiles)  # in place
         for i in percentiles:
-            for j in xrange(20):
+            for j in range(20):
                 for type_ in ['h', 'ms']:
                     m = 'my.p:%s|%s' % (i, type_)
                     stats.submit_packets(m)
@@ -842,7 +842,7 @@ class TestUnitMetricsBucketAggregator():
 
     def test_diagnostic_stats(self):
         stats = MetricsBucketAggregator('myhost', interval=self.interval)
-        for i in xrange(10):
+        for i in range(10):
             stats.submit_packets('metric:10|c')
         stats.send_packet_count('datadog.dogstatsd.packet.count')
 
@@ -861,7 +861,7 @@ class TestUnitMetricsBucketAggregator():
         cnt = 100000
         for run in [1, 2]:
             stats = MetricsBucketAggregator('myhost', interval=ag_interval)
-            for i in xrange(cnt):
+            for i in range(cnt):
                 if run == 2:
                     stats.submit_packets('test.counter:1|c|@0.5')
                     stats.submit_packets('test.hist:1|ms|@0.5')
@@ -935,7 +935,7 @@ class TestUnitMetricsBucketAggregator():
     def test_event_title(self):
         stats = MetricsBucketAggregator('myhost', interval=self.interval)
         stats.submit_packets('_e{0,4}:|text')
-        stats.submit_packets(u'_e{9,4}:2intitulé|text')
+        stats.submit_packets('_e{9,4}:2intitulé|text')
         stats.submit_packets('_e{14,4}:3title content|text')
         stats.submit_packets('_e{14,4}:4title|content|text')
         stats.submit_packets('_e{13,4}:5title\\ntitle|text')  # \n stays escaped
@@ -946,7 +946,7 @@ class TestUnitMetricsBucketAggregator():
         first, second, third, fourth, fifth = events
 
         assert first['msg_title'] == ''
-        assert second['msg_title'] == u'2intitulé'
+        assert second['msg_title'] == '2intitulé'
         assert third['msg_title'] == '3title content'
         assert fourth['msg_title'] == '4title|content'
         assert fifth['msg_title'] == '5title\\ntitle'
@@ -956,7 +956,7 @@ class TestUnitMetricsBucketAggregator():
         stats.submit_packets('_e{2,0}:t1|')
         stats.submit_packets('_e{2,12}:t2|text|content')
         stats.submit_packets('_e{2,23}:t3|First line\\nSecond line')  # \n is a newline
-        stats.submit_packets(u'_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪')  # utf-8 compliant
+        stats.submit_packets('_e{2,19}:t4|♬ †øU †øU ¥ºu T0µ ♪')  # utf-8 compliant
 
         events = self.sort_events(stats.flush_events())
 
@@ -966,7 +966,7 @@ class TestUnitMetricsBucketAggregator():
         assert first['msg_text'] == ''
         assert second['msg_text'] == 'text|content'
         assert third['msg_text'] == 'First line\nSecond line'
-        assert fourth['msg_text'] == u'♬ †øU †øU ¥ºu T0µ ♪'
+        assert fourth['msg_text'] == '♬ †øU †øU ¥ºu T0µ ♪'
 
     def test_recent_point_threshold(self):
         ag_interval = 1

@@ -3,11 +3,11 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import Queue
+import queue
 import logging
 
-from worker import Worker, RetryWorker
-from transaction import Transaction
+from .worker import Worker, RetryWorker
+from .transaction import Transaction
 
 log = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ class Forwarder(object):
     def __init__(self, api_key, domain, nb_worker=4, proxies={}):
         self.api_key = api_key
         self.domain = domain
-        self.input_queue = Queue.Queue(self.QUEUES_SIZE)
-        self.retry_queue = Queue.Queue(self.QUEUES_SIZE)
+        self.input_queue = queue.Queue(self.QUEUES_SIZE)
+        self.retry_queue = queue.Queue(self.QUEUES_SIZE)
         self.workers = []
         self.nb_worker = nb_worker
         self.retry_worker = None
@@ -71,7 +71,7 @@ class Forwarder(object):
         t = Transaction(payload, self.domain, endpoint, extra_header, proxies=self.proxies)
         try:
             self.input_queue.put_nowait(t)
-        except Queue.Full as e:
+        except queue.Full as e:
             log.errorf("Could not submit transaction to '%s', queue is full (dropping it): %s", endpoint, e)
 
     def submit_v1_series(self, payload, extra_header):

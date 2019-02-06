@@ -113,7 +113,7 @@ class Agent(Daemon):
 
     @classmethod
     def flare(cls, case_id):
-        email = raw_input('Please enter your contact email address: ').lower()
+        email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
         myflare = Flare(case_id=case_id, email=email)
         myflare.add_path(os.path.dirname(config.get('conf_path')))
@@ -123,10 +123,10 @@ class Agent(Daemon):
 
         flarepath = myflare.create_archive()
 
-        print 'The flare is going to be uploaded to Datadog'
-        choice = raw_input('Do you want to continue [Y/n]? ')
+        print('The flare is going to be uploaded to Datadog')
+        choice = input('Do you want to continue [Y/n]? ')
         if choice.strip().lower() not in ['yes', 'y', '']:
-            print 'Aborting (you can still use {0})'.format(flarepath)
+            print('Aborting (you can still use {0})'.format(flarepath))
             sys.exit(0)
 
         if myflare.submit():
@@ -192,7 +192,7 @@ class Agent(Daemon):
         api = APIServer(8888, aggregator.stats)
 
         def signal_handler(signal, frame):
-            log.info("SIGINT received: stopping the agent")
+            log.info("Signal {} received: stopping the agent".format(signal))
             log.info("Stopping the forwarder")
             runner.stop()
             forwarder.stop()
@@ -200,6 +200,7 @@ class Agent(Daemon):
             log.info("See you !")
             sys.exit(0)
 
+        signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
 
         runner.start()
@@ -253,14 +254,14 @@ def main():
         agent.status()
 
     elif 'flare' == command:
-        case_id = raw_input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()
+        case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()
         agent.flare(case_id)
 
 
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except StandardError:
+    except Exception:
         try:
             logging.exception("Uncaught error running the Agent")
         except Exception:

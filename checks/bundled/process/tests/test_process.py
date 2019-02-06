@@ -296,7 +296,7 @@ def generate_expected_tags(instance, service_check=False):
     if service_check:
         expected_tags += ["process:{}".format(proc_name)]
 
-    return sorted(expected_tags)
+    return [tag.encode('utf-8 ') for tag in sorted(expected_tags)]
 
 
 @patch('psutil.Process', return_value=MockProcess())
@@ -397,6 +397,7 @@ def test_check_real_process(aggregator):
         'ignored_denied_access': True,
         'thresholds': {'warning': [1, 10], 'critical': [1, 100]},
     }
+
     myprocess = Process(CHECK_NAME, {}, {}, aggregator)
     expected_tags = generate_expected_tags(instance)
     myprocess.check(instance)

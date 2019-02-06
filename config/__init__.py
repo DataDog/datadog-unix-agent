@@ -3,8 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from config import Config
-import default
+from .config import Config
+from config import default
 
 
 config = Config()

@@ -82,12 +82,18 @@ def is_my_process(pid):
     return len(command) > 1 and exec_name in command[1].lower()
 
 
-def get_subprocess_output(command, log, raise_on_empty_output=True, env=None):
+def get_subprocess_output(command, log, raise_on_empty_output=True,
+                          env=None, output_as_string=True):
     """
     Run the given subprocess command and return its output. Raise an Exception
     if an error occurs.
     """
-    return subprocess_output(command, raise_on_empty_output, env)
+    stdout, stderr, ret_code = subprocess_output(command, raise_on_empty_output, env)
+    if output_as_string:
+        stdout = stdout.decode('utf-8')
+        stderr = stderr.decode('utf-8')
+
+    return stdout, stderr, ret_code
 
 
 def subprocess_output(command, raise_on_empty_output, env):

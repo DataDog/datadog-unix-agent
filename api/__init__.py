@@ -3,6 +3,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from server import APIServer
+from .server import APIServer
 
 __all__ = ["APIServer"]

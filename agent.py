@@ -205,7 +205,7 @@ class Agent(Daemon):
         handler.start()
 
         runner.start()
-        api.start()  # blocking tornado in main thread
+        api.start()
 
         runner.join()
         logging.info("Agent done...")

@@ -11,7 +11,7 @@ HERE = path.dirname(path.abspath(__file__))
 
 # Get version info
 ABOUT = {}
-with open(path.join(HERE, 'datadog_checks', 'process', '__about__.py')) as f:
+with open(path.join(HERE, 'datadog_checks', 'lparstats', '__about__.py')) as f:
     exec(f.read(), ABOUT)
 
 # Get the long description from the README file
@@ -28,11 +28,11 @@ def get_requirements(fpath):
 CHECKS_BASE_REQ = 'datadog_checks_base'
 
 setup(
-    name='datadog-process',
+    name='datadog-lparstats',
     version=ABOUT['__version__'],
-    description='The Process check',
+    description='The LPARStats check',
     long_description=long_description,
-    keywords='datadog agent aix process check',
+    keywords='datadog agent aix lparstats check',
 
     # The project's main homepage.
     url='https://github.com/DataDog/datadog-unix-agent',
@@ -56,7 +56,7 @@ setup(
     ],
 
     # The package we're going to ship
-    packages=['datadog_checks.process'],
+    packages=['datadog_checks.lparstats'],
 
     # Run-time dependencies
     install_requires=[CHECKS_BASE_REQ],

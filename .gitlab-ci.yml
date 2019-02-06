@@ -1,4 +1,4 @@
-image: python:2.7-stretch
+image: python:3-stretch
 
 test:
   tags: [ "runner:main", "size:large" ]

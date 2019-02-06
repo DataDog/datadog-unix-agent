@@ -3,7 +3,7 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import Queue
+import queue
 
 from forwarder import Forwarder
 
@@ -38,7 +38,7 @@ def test_forwarder_start_stop():
 def get_transaction(f):
     try:
         return f.input_queue.get(True, 1)
-    except Queue.Empty:
+    except queue.Empty:
         raise Exception("input_queue should not be empty")
 
 def test_submit_payload_():

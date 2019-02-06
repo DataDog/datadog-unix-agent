@@ -206,7 +206,7 @@ class Process(AgentCheck):
             mem_percent = self.psutil_wrapper(p, 'memory_percent', None)
             st['mem_pct'].append(mem_percent)
 
-            shared_mem = self.psutil_wrapper(p, 'memory_info_ex', ['shared']).get('shared')
+            shared_mem = self.psutil_wrapper(p, 'memory_info', ['shared']).get('shared')
             if shared_mem is not None and meminfo.get('rss') is not None:
                 st['real'].append(meminfo['rss'] - shared_mem)
             else:
@@ -324,7 +324,7 @@ class Process(AgentCheck):
         if len(pids) == 0:
             self.warning("No matching process '{}' was found".format(name))
 
-        for attr, mname in ATTR_TO_METRIC.iteritems():
+        for attr, mname in ATTR_TO_METRIC.items():
             vals = [x for x in proc_state[attr] if x is not None]
             # skip []
             if vals:

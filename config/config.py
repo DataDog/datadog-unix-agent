@@ -104,7 +104,7 @@ class Config(object):
             if not isinstance(path, list):
                 path = [path]
 
-            for k, v in value.iteritems():
+            for k, v in value.items():
                 self.bind_env_and_set_default("{}_{}".format(key, k), path + [k], v)
         else:
             self.bind_env(key)
@@ -196,7 +196,7 @@ class Config(object):
         result = []
         for val in percentiles_config:
             try:
-                if isinstance(val, basestring):
+                if isinstance(val, str):
                     val = val.strip()
                 floatval = float(val)
                 if floatval <= 0 or floatval >= 1:
@@ -227,9 +227,9 @@ class Config(object):
 
     def collect_check_configs(self):
         """ Iterates providers collecting configurations """
-        for source, provider in self._providers.iteritems():
+        for source, provider in self._providers.items():
             checksconfigs = provider.collect()
-            for check, configs in checksconfigs.iteritems():
+            for check, configs in checksconfigs.items():
                 current_configs = self._check_configs[source].get(check, [])
                 for config in configs:
                     if config in current_configs:

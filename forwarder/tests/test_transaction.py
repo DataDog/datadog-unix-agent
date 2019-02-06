@@ -4,7 +4,6 @@
 # Copyright 2018 Datadog, Inc.
 
 import time
-import requests_mock
 
 from forwarder.transaction import Transaction
 
@@ -67,14 +66,12 @@ def test_reschedule():
     assert t.next_flush >= before + Transaction.MAX_RETRY_INTERVAL
     assert t.next_flush <= after + Transaction.MAX_RETRY_INTERVAL
 
-@requests_mock.mock()
 def test_process_success(m):
     m.post("https://datadog.com/v1/series", additional_matcher=lambda r: r.text == "data")
     t = Transaction("data", "https://datadog.com", "/v1/series", None)
     assert t.process()
     assert t.nb_try == 1
 
-@requests_mock.mock()
 def test_process_error(m):
     t = Transaction("data", "https://datadog.com", "/v1/series", {"test": "21"})
     headers = {"test": "21"}

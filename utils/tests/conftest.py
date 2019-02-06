@@ -22,10 +22,10 @@ def unicode_payload():
     )
     payload['series'].append(metric)
     metric = api_formatter(
-        'weird.metric.\xe1M1-2-\xe19/16-10K-BB',
+        b'weird.metric.\xe1M1-2-\xe19/16-10K-BB',
         3.14159,
         time.time(),
-        ['key:value', 'env:test']
+        [b'key:value', b'env:test']
     )
     payload['series'].append(metric)
 

@@ -176,10 +176,10 @@ class HMC(AgentCheck):
         params = []
         for option, required, default, expected_type in self.OPTIONS:
             value = instance.get(option)
-            if required and (not value or type(value) != expected_type):
+            if required and (not value or not isinstance(value, expected_type)):
                 raise Exception("Please specify a valid {0}".format(option))
 
-            if value is None or type(value) != expected_type:
+            if value is None or not isinstance(value, expected_type):
                 self.log.debug("Bad or missing value for {0} parameter. Using default".format(option))
                 value = default
 
@@ -254,7 +254,7 @@ class HMC(AgentCheck):
 
                 self._last_refresh[conf] = time.time()
 
-            for _, server in self._managed_servers.iteritems():
+            for _, server in self._managed_servers.items():
                 if not server.sample_rate:
                     try:
                         sample_rate = self.hmc_get_sample_rate(client, server, environment=self.HMC_LSLPARUTIL_ENV)

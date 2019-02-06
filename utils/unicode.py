@@ -3,16 +3,20 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-def unicode_metrics(metrics):
-    for i, metric in enumerate(metrics):
-        for key, value in metric.items():
-            if isinstance(value, basestring):
-                metric[key] = unicode(value, errors='replace')
+ENCODING = 'utf-8'
+
+def ensure_unicode(data):
+    for i, datum in enumerate(data):
+        for key, value in list(datum.items()):
+            if isinstance(value, bytes):
+                datum[key] = value.decode(ENCODING, errors='replace')
             elif isinstance(value, tuple) or isinstance(value, list):
                 value_list = list(value)
                 for j, value_element in enumerate(value_list):
-                    if isinstance(value_element, basestring):
-                        value_list[j] = unicode(value_element, errors='replace')
-                metric[key] = tuple(value_list)
-        metrics[i] = metric
-    return metrics
+                    if isinstance(value_element, bytes):
+                        value_list[j] = value_element.decode(ENCODING, errors='replace')
+                datum[key] = tuple(value_list)
+            elif isinstance(value, dict):
+                datum[key] = ensure_unicode(value)
+        data[i] = datum
+    return data

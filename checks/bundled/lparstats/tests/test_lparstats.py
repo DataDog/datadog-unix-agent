@@ -17,7 +17,7 @@ GAUGE = 'gauge'
 def collect_column(input, row_idx):
     collected = []
     for row in input:
-        name = filter(None, row.split(' '))[row_idx]
+        name = list(filter(None, row.split(' ')))[row_idx]
         collected.append(name)
 
     return collected
@@ -123,13 +123,14 @@ def test_memory_entitlements(subprocess_patch):
     ]
 
     # compile entitlements from mock output
-    output = filter(None, AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines())
+    output = list(filter(None, AIX_LPARSTATS_MEMORY_ENTITLEMENTS.splitlines()))
     output = output[c.MEMORY_ENTITLEMENTS_START_IDX + 1:]
     entitlements = collect_column(output, 0)
 
     assert len(metrics) == (len(expected_metrics) * len(entitlements))
     for metric in metrics:
         for tag in metric['tags']:
+            tag = tag.decode('utf-8')
             if 'iompn' in tag:
                 assert tag.split(':')[1] in entitlements
 
@@ -152,7 +153,7 @@ def test_hypervisor(subprocess_patch):
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     # compile hypervisor calls from mock output
-    output = filter(None, AIX_LPARSTATS_HYPERVISOR.splitlines())
+    output = list(filter(None, AIX_LPARSTATS_HYPERVISOR.splitlines()))
     output = output[c.HYPERVISOR_METRICS_START_IDX:-1]
     calls = collect_column(output, 0)
 
@@ -160,6 +161,7 @@ def test_hypervisor(subprocess_patch):
     for metric in metrics:
         assert metric['metric'] in c.HYPERVISOR_IDX_METRIC_MAP.values()
         for tag in metric['tags']:
+            tag = tag.decode('utf-8')
             if 'call' in tag:
                 assert tag.split(':')[1] in calls
 

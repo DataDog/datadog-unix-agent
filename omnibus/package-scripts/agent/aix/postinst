@@ -31,7 +31,7 @@ create_datadog_user_aix()
     fi
 
     # create the system user
-    mkuser pgrp="${DATADOG_GROUP}" shell="/usr/bin/false" home="/opt/datadog-agent" ${DATADOG_USER} 
+    mkuser pgrp="${DATADOG_GROUP}" shell="/usr/bin/false" home="${INSTALL_DIR}" ${DATADOG_USER}
 }
 
 create_datadog_user_group()
@@ -60,7 +60,7 @@ create_system_services()
     set +e
     rmssys -s ${SERVICE_NAME} 2>&1 > /dev/null
     set -e
-    mkssys -s ${SERVICE_NAME} -p "/opt/datadog-agent/agent/agent.py" -a "-b start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
+    mkssys -s ${SERVICE_NAME} -p "${INSTALL_DIR}/agent/agent.py" -a "start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
 
     # adding inittab entry
     set +e
@@ -71,15 +71,5 @@ create_system_services()
 
 create_datadog_user_group
 create_system_services
-
-## TODO: Enable and restart the agent service here on Debian platforms
-## On RHEL, this is done in the posttrans script
-# if [ ! -f "$CONFIG_DIR/datadog.yaml" ]; then
-#   # No datadog.yaml file is present. This is probably a clean install made with the
-#   # step-by-step instructions/an automation tool, and the config file will be added next.
-#   echo "No datadog.yaml file detected, not starting the agent"
-# else
-#   echo "TODO: restart the agent service"
-# fi
 
 exit 0

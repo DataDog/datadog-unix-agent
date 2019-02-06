@@ -7,6 +7,7 @@ import re
 import logging
 import subprocess
 import socket
+from sys import platform
 
 from config import config
 
@@ -37,6 +38,16 @@ def is_valid_hostname(hostname):
         return False
     return True
 
+def _get_hostname(cmd=[]):
+    fqdn = subprocess.check_output(cmd).strip()
+    if fqdn and is_valid_hostname(fqdn):
+        return fqdn
+
+def get_hostname_std():
+    return _get_hostname(['/bin/hostname', '-s'])
+
+def get_hostname_solaris():
+    return _get_hostname(['/bin/hostname'])
 
 def get_hostname():
     """
@@ -56,11 +67,15 @@ def get_hostname():
 
     try:
         # try fqdn
-        fqdn = subprocess.check_output(['/bin/hostname', '-s']).strip()
-        if fqdn and is_valid_hostname(fqdn):
-            return fqdn
+        if platform.startswith('sunos'):
+            hostname = get_hostname_solaris()
+        else:
+            hostname = get_hostname_std()
+
+        if hostname:
+            return hostname
     except Exception:
-        return None
+        log.warning("unable to collect hostname via hostname OS-specific command")
 
     # fall back on socket.gethostname(), socket.getfqdn() is too unreliable
     try:
@@ -68,6 +83,6 @@ def get_hostname():
         if socket_hostname and is_valid_hostname(socket_hostname):
             return socket_hostname
     except socket.error:
-        socket_hostname = None
+        log.warning("unable to collect hostname via hostname command")
 
     raise HostnameException('Unable to reliably determine hostname or hostname not RFC1123 compliant.')

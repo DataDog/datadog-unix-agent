@@ -2,12 +2,12 @@
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
-from __future__ import division
 
 # stdlib
 import logging
 from time import time
-from collections import defaultdict, Hashable
+from collections import defaultdict
+from collections.abc import Hashable
 
 # project
 from .types import (

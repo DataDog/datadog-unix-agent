@@ -23,7 +23,7 @@ from dogstatsd import (
     Server,
     Reporter,
 )
-from dogstatsd.constants import (
+from dogstatsd.constants import (  # pylint: disable=no-name-in-module
     DOGSTATSD_FLUSH_INTERVAL,
     DOGSTATSD_AGGREGATOR_BUCKET_SIZE,
 )

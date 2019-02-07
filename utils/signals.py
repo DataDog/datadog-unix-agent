@@ -48,7 +48,7 @@ class SignalHandler(Thread):
         self._components.pop(identifier)
 
     def handle(self, signum):
-        if signum not in range(1, signal.NSIG):
+        if signum not in list(range(1, signal.NSIG)):
             raise ValueError('Invalid signal specified')
 
         self._registered_signals.add(signum)
@@ -61,7 +61,7 @@ class SignalHandler(Thread):
     def unhandle(self, signum):
         if not self._stop_flag.is_set():
             raise Exception('cannot unregister handler if manager is running')
-        if signum not in range(1, signal.NSIG):
+        if signum not in list(range(1, signal.NSIG)):
             raise ValueError('Invalid signal specified')
 
         original_handler = self._original_handlers.pop(signum)

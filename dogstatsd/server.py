@@ -105,7 +105,7 @@ class Server(object):
                         forward_udp_sock.send(message)
             except select_error as se:
                 # Ignore interrupted system calls from sigterm.
-                errno = se[0]
+                errno = se.args[0]
                 if errno != 4:
                     raise
             except (KeyboardInterrupt, SystemExit):

@@ -27,3 +27,15 @@ check-py3-status:
   - pip install -r requirements-dev.txt
   script:
   - for py in $(find . -type f -name '*.py' ! -path "./venv/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(a7_validate $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}python3 compatible${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED
+
+# checking that every python file as a license header (at least the first line)
+lint:
+  tags: [ "runner:main", "size:large" ]
+  allow_failure: true
+  variables:
+    TERM: xterm
+  before_script:
+  - apt update && apt-get install -y jq
+  - pip install -r requirements-dev.txt
+  script:
+  - for py in $(find . -type f -name '*.py' ! -path "./venv/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(pylint --output-format=json $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}all good!${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED

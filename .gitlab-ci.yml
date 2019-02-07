@@ -18,7 +18,7 @@ check-license-py:
 check-py3-status:
   allow_failure: true
   variables:
-    TERM: xterm
+    TERM: rxvt 
   before_script:
   - apt update && apt-get install -y jq
   - pip install -r requirements-dev.txt
@@ -28,7 +28,7 @@ check-py3-status:
 lint:
   allow_failure: true
   variables:
-    TERM: xterm
+    TERM: rxvt 
   before_script:
   - apt update && apt-get install -y jq
   - pip install -r requirements-dev.txt

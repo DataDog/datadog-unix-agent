@@ -34,4 +34,4 @@ lint:
   - pip install -r requirements-dev.txt
   - pip install -r requirements.txt
   script:
-  - for py in $(find . -type f -name '*.py' ! -path "./venv*/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(pylint --output-format=json $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}all good${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED
+  - for py in $(find . -type f -name '*.py' ! -path "./venv*/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(pylint --rcfile=./.pylintrc --output-format=json $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}all good${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED

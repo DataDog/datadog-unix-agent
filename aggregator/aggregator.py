@@ -6,7 +6,8 @@
 # stdlib
 import logging
 from time import time
-from collections import defaultdict, Hashable
+from collections import defaultdict
+from collections.abc import Hashable
 
 # project
 from .types import (

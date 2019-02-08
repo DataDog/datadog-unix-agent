@@ -18,12 +18,13 @@ from forwarder import Forwarder
 from utils.hostname import get_hostname
 from utils.logs import initialize_logging
 from utils.network import get_proxy
+from utils.signals import SignalHandler
 
 from dogstatsd import (
     Server,
     Reporter,
 )
-from dogstatsd.constants import (
+from dogstatsd.constants import (  # pylint: disable=no-name-in-module
     DOGSTATSD_FLUSH_INTERVAL,
     DOGSTATSD_AGGREGATOR_BUCKET_SIZE,
 )
@@ -121,38 +122,40 @@ def main(config_path=None):
     if not args or args[0] in COMMANDS_START_DOGSTATSD:
         reporter, server, forwarder = init_dogstatsd(config)
 
-    # setup sighandler
-    def signal_handler(signal, frame):
-        logging.info("SIGINT received: stopping the agent")
-        logging.info("Stopping the forwarder...")
-        forwarder.stop()
-        logging.info("Stopping dogstatsd server...")
-        server.stop()
-        logging.info("Stopping dogstatsd reporter...")
-        reporter.stop()
-        reporter.join()
-        logging.info("See you !")
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_handler)
-
     # If no args were passed in, run the server in the foreground.
     command = 'start' if not args else args[0]
 
     if command == 'start'or command == 'restart':
-        try:
-            reporter.start()
-            server.start()
-        except Exception:
-            logging.exception('Error running dogstatsd')
-            forwarder.stop()
-            reporter.stop()
-            reporter.join()
+
+        handler = SignalHandler()
+        # components
+        handler.register('forwarder', forwarder)
+        handler.register('server', server)
+        handler.register('reporter', reporter)
+        # signals
+        handler.handle(signal.SIGTERM)
+        handler.handle(signal.SIGINT)
+
+        # start signal handler
+        handler.start()
+
+        # start components
+        reporter.start()
+        server.start()
+
+        reporter.join()
+        logging.info("Dogstatsd reporter done...")
+
+        handler.stop()
+        handler.join()
+
+        logging.info("Thank you for shopping at DataDog! Come back soon!")
     else:
         sys.stderr.write("Unknown command: %s\n\n" % command)
         parser.print_help()
-        return 1
-    return 0
+        sys.exit(1)
+
+    sys.exit(0)
 
 
 if __name__ == '__main__':

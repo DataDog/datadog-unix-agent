@@ -1,4 +1,4 @@
 pytest==3.6.2
 tox==3.3.0
-datadog-a7==0.0.5
+datadog-a7==0.0.6
 

@@ -34,7 +34,18 @@ The omnibus build has been tested on the target platforms:
 - AIX 7.1
 - AIX 7.2
 
-#### Baseline Requirements
+#### Omnibus Bootstrap
+
+To help with the setup of the omnibus builder we have a (still a bit flaky ;) script that should
+help you get up and building in a jiffy or two. It's a basic shell script located in the `omnibus/`
+folder that will help you install, amongst others:
+- YUM (rpm package manager) 
+- Required build toolchain (gcc, libffi, ...)
+- Ruby
+- Required tools (sudo, GNU tar, bundler)  
+- Patch required `libyajl-gem`
+
+#### Build Baseline Requirements
 
 The omnibus build now ships all these dependencies, most notably openssl and python, all properly
 linked and only requiring AIX baseline system level dependencies expected to be available:
@@ -43,7 +54,7 @@ linked and only requiring AIX baseline system level dependencies expected to be 
 - libcrypt
 - libdl
 
-#### Runtime requirements
+#### Build Runtime Requirements
 
 As mentioned above all requirements are bundled with the omnibus installer. For more details take
 a look at the `omnibus/` directory to take a look at the implementation.
@@ -219,7 +230,7 @@ To setup omnibus on the target machine you will need:
 
 Now let's install the omnibus dependencies, navigate to `omnibus/`:
 
-- `bundle install`: when the bundle gets to `libyajl` it will fail on AIX, don't worry we 
+- `bundle install`: when the bundle get to `libyajl` it will fail on AIX, don't worry we 
 have a workaround. Please read on.
 
 On AIX You will need to install a modified version of libyajl before proceeding (you can

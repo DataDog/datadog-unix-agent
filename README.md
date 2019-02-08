@@ -29,12 +29,23 @@ images. These issues are not expected but may occur due to the early maturity of
 
 #### Target Platforms
 
-The omnibus build has been tested on the target platformts:
+The omnibus build has been tested on the target platforms:
 - AIX 6.1
 - AIX 7.1
 - AIX 7.2
 
-#### Baseline Requirements
+#### Omnibus Bootstrap
+
+To help with the setup of the omnibus builder we have a (still a bit flaky ;) script that should
+help you get up and building in a jiffy or two. It's a basic shell script located in the `omnibus/`
+folder that will help you install, amongst others:
+- YUM (rpm package manager) 
+- Required build toolchain (gcc, libffi, ...)
+- Ruby
+- Required tools (sudo, GNU tar, bundler)  
+- Patch required `libyajl-gem`
+
+#### Build Baseline Requirements
 
 The omnibus build now ships all these dependencies, most notably openssl and python, all properly
 linked and only requiring AIX baseline system level dependencies expected to be available:
@@ -43,7 +54,7 @@ linked and only requiring AIX baseline system level dependencies expected to be 
 - libcrypt
 - libdl
 
-#### Runtime requirements
+#### Build Runtime Requirements
 
 As mentioned above all requirements are bundled with the omnibus installer. For more details take
 a look at the `omnibus/` directory to take a look at the implementation.
@@ -75,7 +86,7 @@ taken):
 - `./etc/datadog-agent/datadog.yaml`
 - `./datadog.yaml`
 
-A sample configuration file may be found in `/opt/datadog/datadog-unix-agent`.
+A sample configuration file may be found in `/opt/datadog-agent/etc/datadog-agent`.
 
 A basic configuration will typically require a destination `dd_url` and  your 
 datadog API key. Occassionally a proxy configuration must be specified depending

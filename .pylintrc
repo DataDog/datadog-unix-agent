@@ -9,7 +9,7 @@ init-hook='import sys; sys.path.append(".")'
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=CVS,.git,embedded,venv
+ignore=CVS,.git,embedded,venv*
 
 # Pickle collected data for later comparisons.
 persistent=yes
@@ -48,7 +48,7 @@ enable=
 # Set the output format. Available formats are text, parseable, colorized, msvs
 # (visual studio) and html. You can also give a reporter class, eg
 # mypackage.mymodule.MyReporterClass.
-output-format=text
+output-format=json
 
 # Put messages in a separate file for each module / package specified on the
 # command line instead of printing them on stdout. Reports (if any) will be
@@ -71,9 +71,6 @@ msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}
 
 
 [BASIC]
-
-# List of builtins function names that should not be used, separated by a comma
-bad-functions=map,filter,apply,input
 
 # Regular expression which should only match correct module names
 module-rgx=(([a-z_][a-z0-9_]*)|([A-Z][a-zA-Z0-9]+))$

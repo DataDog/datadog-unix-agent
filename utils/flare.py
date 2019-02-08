@@ -105,7 +105,7 @@ class Flare(object):
             elif resp.status_code == 403:
                 log.error("API Key invalid, cannot submit flare")
             elif resp.status_code >= 400:
-                log.error("error %q while sending flare to %q, try again later", resp.status_code, url)
+                log.error("error %d while sending flare to %s, try again later", resp.status_code, url)
             else:
                 log.debug("Successfully posted payload to %s: %s", url, resp.text)
                 success = True

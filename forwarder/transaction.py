@@ -54,7 +54,7 @@ class Transaction(object):
         elif resp.status_code == 403:
             log.error("API Key invalid, dropping transaction for %s", log_url)
         elif resp.status_code >= 400:
-            log.error("error %q while sending transaction to %q, rescheduling it", resp.status_code, log_url)
+            log.error("error %d while sending transaction to %s, rescheduling it", resp.status_code, log_url)
             return False
         else:
             log.debug("Successfully posted payload to %s: %s", log_url, resp.text)

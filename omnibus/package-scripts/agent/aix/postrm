@@ -28,9 +28,9 @@ purge_datadog_files()
   rm -f "/usr/bin/datadog-agent"
 
   echo "Force-deleting ${INSTALL_DIR}"
-  rm -rf ${INSTALL_DIR}
+  # rm -rf ${INSTALL_DIR}
   rm -rf ${LOG_DIR}
-  rm -rf ${CONFIG_DIR}
+  # rm -rf ${CONFIG_DIR}
 }
 
 remove_datadog_user_aix()

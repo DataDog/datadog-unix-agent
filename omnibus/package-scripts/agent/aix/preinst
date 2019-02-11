@@ -21,7 +21,7 @@ tentative_stop_datadog_services()
   set -e
 }
 
-tentative_stop_detadog_services
+tentative_stop_datadog_services
 
 # Delete all the .pyc/.pyo files in the embedded dir that are part of the old agent's package
 if [ -f "$INSTALL_DIR/embedded/.py_compiled_files.txt" ]; then

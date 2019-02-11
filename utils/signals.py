@@ -82,17 +82,17 @@ class SignalHandler(Thread):
 
     def listen(self):
         while not self._stop_flag.is_set():
-            readable, _, _ = select.select([self._wakeup_r], [], [], 1)
-            for fp in readable:
-                try:
+            try:
+                readable, _, _ = select.select([self._wakeup_r], [], [], 1)
+                for fp in readable:
                     signum = int.from_bytes(os.read(fp, 1), byteorder='big')
                     if signum not in self._registered_signals:
                         continue
 
                     self._signal_handler(signum, None)
-                except OSError:
-                    # file descriptor closed we're about to end loop
-                    pass
+            except OSError:
+                # file descriptor closed we're about to end loop
+                pass
 
     def _dummy_handler(self, signal, frame):
         pass

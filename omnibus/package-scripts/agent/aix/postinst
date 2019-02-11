@@ -58,15 +58,21 @@ create_datadog_user_group()
 create_system_services()
 {
     set +e
-    rmssys -s ${SERVICE_NAME} 2>&1 > /dev/null
+    lssrc -s ${SERVICE_NAME} > /dev/null
+    RC=$?
     set -e
-    mkssys -s ${SERVICE_NAME} -p "${INSTALL_DIR}/agent/agent.py" -a "start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
+    if [ "${RC}" != "0" ]; then
+        mkssys -s ${SERVICE_NAME} -p "${INSTALL_DIR}/agent/agent.py" -a "start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
+    fi
 
-    # adding inittab entry
+    # adding inittab entry if non-existant
     set +e
-    rmitab ${SERVICE_NAME}
+    lsitab ${SERVICE_NAME} > /dev/null
+    RC=$?
     set -e
-    mkitab "${SERVICE_NAME}:2:respawn:/usr/bin/startsrc -s ${SERVICE_NAME}"
+    if [ "${RC}" != "0" ]; then
+        mkitab "${SERVICE_NAME}:2:respawn:/usr/bin/startsrc -s ${SERVICE_NAME}"
+    fi
 }
 
 create_datadog_user_group

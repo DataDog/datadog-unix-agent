@@ -12,11 +12,16 @@ SERVICE_NAME=datadog-agent
 
 set -e
 
-# TODO: When scripts are available, stop the service here
+tentative_stop_datadog_services()
+{
+  # Stop an already running agent if it exists
+  set +e
+  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
+  sleep 6
+  set -e
+}
 
-# TODO: Setup user here
-# Set up `dd-agent` user and group
-# See linux scripts...
+tentative_stop_detadog_services
 
 # Delete all the .pyc/.pyo files in the embedded dir that are part of the old agent's package
 if [ -f "$INSTALL_DIR/embedded/.py_compiled_files.txt" ]; then

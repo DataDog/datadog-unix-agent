@@ -17,15 +17,9 @@ stop_datadog_services()
   stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
-# TODO: fix this because there's no systemd or upstart on AIX
-#       just keeping the functions around for reference.
-#
-#       MUST figure out if this makes sense to call here on AIX
-deregister_agent()
-{
-  echo "[ WARNING ]\tCannot detect a supported init system. The datadog-agent package only provides service files for systemd and upstart."
-}
-
+# TODO: make sure this all makes sense on AIX. 
+#      
+#       Enable once we pre-compile the bytecode.
 remove_py_compiled_files()
 {
     # Delete all the .pyc files in the embedded dir that are part of the agent's package
@@ -35,30 +29,9 @@ remove_py_compiled_files()
     fi
 }
 
-# TODO: make sure this all makes sense on AIX. 
-#       Already removed the debian relevant portion keeping
-#       the RPM bits (just because RPMs are supported on AIX).
-#      
-#       FIGURE OUT WHAT MAKES SENSE ON AIX HERE.
-
-## stop_agent
-## deregister_agent
-## 
-## case "$*" in
-##     0)
-##         # We're uninstalling.
-##         remove_py_compiled_files
-##     ;;
-##     1)
-##         # We're upgrading.
-##         # The preinst script has taken care of removing the .pyc/.pyo files
-##     ;;
-##     *)
-##     ;;
-## esac
 
 # Delete all .pyc files in the `agent/` and the `bin/agent/dist` dirs
-# find $INSTALL_DIR/agent -name '*.py[co]' -type f -delete || echo "Unable to delete .pyc files in $INSTALL_DIR/agent"
+# remove_py_compiled_files
 
 stop_datadog_services
 

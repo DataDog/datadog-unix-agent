@@ -13,6 +13,14 @@ SERVICE_NAME=datadog-agent
 DATADOG_USER=dd-agent
 DATADOG_GROUP=dd-agent
 
+stop_datadog_services()
+{
+  # Stop an already running agent
+  set +e
+  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
+  set -e
+}
+
 purge_datadog_services()
 {
   set -e
@@ -61,6 +69,9 @@ remove_datadog_user_group()
 
 # TODO: possibly remove the user and group (debian purge in postinst (?))  
 # NOTE: it's not clear we want to do this, so let's figure it out ^^  
+
+stop_datadog_services
+sleep 6
 
 purge_datadog_services
 purge_datadog_files

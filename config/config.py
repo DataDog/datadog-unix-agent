@@ -8,7 +8,10 @@ import copy
 import yaml
 import logging
 import decimal
-from collections import defaultdict
+from collections import (
+    defaultdict,
+    OrderedDict,
+)
 
 from .providers import ConfigProvider
 
@@ -22,7 +25,7 @@ class Config(object):
     DEFAULT_ENV_PREFIX = "DD_"
 
     def __init__(self, conf_name=DEFAULT_CONF_NAME, env_prefix=DEFAULT_ENV_PREFIX):
-        self.search_paths = set()
+        self.search_paths = OrderedDict()
         self.conf_name = conf_name
         self.env_prefix = env_prefix
         self.env_bindings = set()
@@ -68,11 +71,13 @@ class Config(object):
         return self.data.get(key, self.defaults.get(key, default))
 
     def add_search_path(self, search_path):
-        self.search_paths.add(search_path)
+        # we're just using the ordered dict as a set:
+        # the order in which paths are added matters.
+        self.search_paths[search_path] = None
 
     def load(self):
         if self.search_paths:
-            for path in self.search_paths:
+            for path in self.search_paths.keys():
                 conf_path = os.path.join(path, self.conf_name)
                 if os.path.isfile(conf_path):
                     with open(conf_path, "r") as f:

@@ -10,19 +10,33 @@
 
 INSTALL_DIR=/opt/datadog-agent
 CONFIG_DIR=/etc/datadog-agent
+LOG_DIR=/var/log/datadog
 SERVICE_NAME=datadog-agent
+DATADOG_USER=dd-agent
+DATADOG_GROUP=dd-agent
 
 # TODO: Not sure if this should run on AIX (possibly if using RPMs)
 #       but probably not with BFFs. Steps detailed below...
 
-# TODO: enable the service with the init system
+# Set proper rights for the dd-agent user
+chown_datadog_dirs()
+{
+  chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${CONFIG_DIR}
+  chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${LOG_DIR}
+  chown -R ${DATADOG_USER}:${DATADOG_GROUP} ${INSTALL_DIR}
+}
 
-if [ ! -f "$CONFIG_DIR/datadog.yaml" ]; then
+chown_datadog_dirs
+
+# Create a symlink to the agent's binary
+ln -sf $INSTALL_DIR/agent/agent.py /usr/bin/datadog-agent
+
+if [ -f "$CONFIG_DIR/datadog.yaml" ]; then
+    startsrc -s ${SERVICE_NAME}
+else
     # No datadog.yaml file is present. This is probably a clean install made with the
     # step-by-step instructions/an automation tool, and the config file will be added next.
     echo "No datadog.yaml file detected, not starting the agent"
-else
-    echo "TODO: restart the agent service"
 fi
 
 exit 0

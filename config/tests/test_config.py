@@ -59,7 +59,7 @@ class DummyConfigProvider(ConfigProvider):
 
 class TestConfig():
     def test_init(self, conf):
-        assert conf.search_paths == set()
+        assert conf.search_paths == {}
         assert conf.conf_name == "datadog.yaml"
         assert conf.env_prefix == "DD_"
         assert conf.env_bindings == set()

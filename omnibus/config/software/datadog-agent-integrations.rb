@@ -38,6 +38,9 @@ build do
     env = with_standard_compiler_flags(with_embedded_path)
   end
 
+  conf_dir = "#{install_dir}/etc/datadog-agent/conf.d"
+  mkdir conf_dir
+
   block 'pip install integrations wheels' do
     # install base wheel first
     pip "install -r #{project_dir}/#{requirements_file} .",
@@ -50,6 +53,32 @@ build do
       check = check_dir.split('/').last
 
       next if !File.directory?("#{check_dir}") || blacklist.include?(check)
+
+      check_conf_dir = "#{conf_dir}/#{check}.d"
+
+      # For each conf file, if it already exists, that means the `datadog-agent` software def
+      # wrote it first. In that case, since the agent's confs take precedence, skip the conf
+
+      # Copy the check config to the conf directories
+      conf_file_example = "#{check_dir}/datadog_checks/#{check}/data/conf.yaml.example"
+      if File.exist? conf_file_example
+        mkdir check_conf_dir
+        copy conf_file_example, "#{check_conf_dir}/" unless File.exist? "#{check_conf_dir}/conf.yaml.example"
+      end
+
+      # Copy the default config, if it exists
+      conf_file_default = "#{check_dir}/datadog_checks/#{check}/data/conf.yaml.default"
+      if File.exist? conf_file_default
+        mkdir check_conf_dir
+        copy conf_file_default, "#{check_conf_dir}/" unless File.exist? "#{check_conf_dir}/conf.yaml.default"
+      end
+
+      # Copy the metric file, if it exists
+      metrics_yaml = "#{check_dir}/datadog_checks/#{check}/data/metrics.yaml"
+      if File.exist? metrics_yaml
+        mkdir check_conf_dir
+        copy metrics_yaml, "#{check_conf_dir}/" unless File.exist? "#{check_conf_dir}/metrics.yaml"
+      end
 
       pip "install -r #{project_dir}/#{requirements_file} .",
           :env => env,

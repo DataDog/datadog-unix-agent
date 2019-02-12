@@ -14,6 +14,9 @@ from .provider import ConfigProvider
 log = logging.getLogger(__name__)
 
 
+class AmbiguousFileConfigSource(Exception):
+    pass
+
 class FileConfigProvider(ConfigProvider):
     VALID_EXTENSIONS = [
         '.yaml',
@@ -104,7 +107,11 @@ class FileConfigProvider(ConfigProvider):
         if not subdir:
             return os.path.splitext(os.path.basename(path))[0]
 
-        return subdir
+        if not subdir.endswith('.d'):
+            raise AmbiguousFileConfigSource(
+                "Config doesn't appear to be in correct dir structure: {}".format(path))
+
+        return subdir.split('.')[0]
 
     def _flatten_config(self, config):
         if not isinstance(config, dict):

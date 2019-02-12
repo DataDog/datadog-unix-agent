@@ -46,7 +46,7 @@ class Transaction(object):
         except requests.exceptions.ProxyError:
             log.error("unable to connect through proxy: %s", log_url)
             return False
-        except requests.exceptions.MaxRetryError:
+        except requests.exceptions.ConnectionError:
             log.error("unable to submit payload, possible network issue: %s", log_url)
             return False
 

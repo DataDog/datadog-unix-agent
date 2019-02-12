@@ -50,14 +50,14 @@ class Forwarder(object):
 
         self.retry_worker.join(self.WORKER_JOIN_TIME)
         if self.retry_worker.is_alive():
-            log.errorf("Could not stop thread '%s'", self.retry_worker.name)
+            log.error("Could not stop thread '%s'", self.retry_worker.name)
         self.retry_worker = None
 
         for w in self.workers:
             # wait 2 seconds for the worker to stop
             w.join(self.WORKER_JOIN_TIME)
             if w.is_alive():
-                log.errorf("Could not stop thread '%s'", w.name)
+                log.error("Could not stop thread '%s'", w.name)
         self.workers = []
 
     def _submit_payload(self, endpoint, payload, extra_header=None):
@@ -72,7 +72,7 @@ class Forwarder(object):
         try:
             self.input_queue.put_nowait(t)
         except queue.Full as e:
-            log.errorf("Could not submit transaction to '%s', queue is full (dropping it): %s", endpoint, e)
+            log.error("Could not submit transaction to '%s', queue is full (dropping it): %s", endpoint, e)
 
     def submit_v1_series(self, payload, extra_header):
         self._submit_payload(self.V1_SERIES_ENDPOINT, payload, extra_header)

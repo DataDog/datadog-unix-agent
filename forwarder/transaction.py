@@ -46,6 +46,9 @@ class Transaction(object):
         except requests.exceptions.ProxyError:
             log.error("unable to connect through proxy: %s", log_url)
             return False
+        except requests.exceptions.ConnectionError:
+            log.error("unable to submit payload, possible network issue: %s", log_url)
+            return False
 
         if resp.status_code in (400, 404, 413):
             log.error("Error code %d received while sending transaction to %s: %s, dropping it",

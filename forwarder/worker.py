@@ -30,13 +30,16 @@ class Worker(Thread):
         except queue.Empty:
             return
 
-        success = t.process()
-        if not success:
-            t.reschedule()
-            try:
-                self.retry_queue.put_nowait(t)
-            except queue.Full as e:
-                log.errorf("Could not retry transaction to '%s', queue is full (dropping it): %s", t.get_endpoint(), e)
+        try:
+            success = t.process()
+            if not success:
+                t.reschedule()
+                try:
+                    self.retry_queue.put_nowait(t)
+                except queue.Full as e:
+                    log.error("Could not retry transaction to '%s', queue is full (dropping it): %s", t.get_endpoint(), e)
+        except Exception as e:
+            log.exception("unknown error processing transaction", e)
 
     def run(self):
         while not self.exit.is_set():

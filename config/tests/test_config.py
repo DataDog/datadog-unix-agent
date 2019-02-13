@@ -8,7 +8,15 @@ import os
 import tempfile
 import pytest
 
-from config import Config
+from config import (
+    default,
+    Config,
+)
+from config.default import (
+    DEFAULT_API_PORT,
+    DEFAULT_BIND_HOST,
+    DEFAULT_DOGSTATSD_PORT,
+)
 from config.providers import ConfigProvider, FileConfigProvider
 
 
@@ -74,6 +82,20 @@ class TestConfig():
         conf.set_default("test", 21)
         conf.load()
         assert conf.get("test") == 21
+
+    def test_init_default(self, conf):
+        default.init(conf)
+
+        # assert other defaults
+        dsd_conf = conf.get('dogstatsd')
+        assert dsd_conf is not None
+        assert dsd_conf.get('bind_host') == DEFAULT_BIND_HOST
+        assert dsd_conf.get('port') == DEFAULT_DOGSTATSD_PORT
+        assert dsd_conf.get('non_local_traffic') is False
+        api_conf = conf.get('api')
+        assert api_conf is not None
+        assert api_conf.get('bind_host') == DEFAULT_BIND_HOST
+        assert api_conf.get('port') == DEFAULT_API_PORT
 
     def test_set_and_reset(self, conf):
         assert conf.get("test") is None

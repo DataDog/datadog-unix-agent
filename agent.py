@@ -190,7 +190,9 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate API
-        api = APIServer(8888, aggregator.stats)
+        api_addr = config['api']['bind_host']
+        api_port = config['api']['port']
+        api = APIServer(api_addr, api_port, aggregator.stats)
 
         handler = SignalHandler()
         # components

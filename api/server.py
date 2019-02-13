@@ -21,13 +21,14 @@ log = logging.getLogger(__name__)
 
 class APIServer(Thread):
 
-    def __init__(self, port, aggregator_stats):
+    def __init__(self, addr, port, aggregator_stats):
         # start API
         super(APIServer, self).__init__()
 
         # we'll need an event loop in the APIServer thread
         asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 
+        self._addr = addr
         self._port = port
         self._app = tornado.web.Application([
             (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
@@ -41,6 +42,6 @@ class APIServer(Thread):
 
     def run(self):
         log.info("Starting API Server...")
-        self._server.listen(self._port)
+        self._server.listen(self._port, address=self._addr)
         self._ioloop = tornado.ioloop.IOLoop.instance()
         self._ioloop.start()

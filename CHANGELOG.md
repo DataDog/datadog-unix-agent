@@ -4,7 +4,7 @@ Release Notes
 0.7.0 (dev release)
 --------------------
 
-Released on: UNRELEASED 
+Released on: 2019-02-13 
 
 Supported Platforms:
 * AIX 6.1 / 7.1 / 7.2

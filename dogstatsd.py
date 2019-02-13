@@ -8,6 +8,7 @@
 import logging
 import optparse
 import signal
+import os
 import sys
 
 from aggregator import MetricsBucketAggregator

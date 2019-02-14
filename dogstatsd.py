@@ -8,11 +8,13 @@
 import logging
 import optparse
 import signal
+import os
 import sys
 
 from aggregator import MetricsBucketAggregator
 from aggregator.formatters import get_formatter
 from config import config
+from config.default import DEFAULT_PATH
 from serialize import Serializer
 from forwarder import Forwarder
 from utils.hostname import get_hostname
@@ -33,9 +35,15 @@ log = logging.getLogger('dogstatsd')
 
 
 def init_config():
-    config.add_search_path("/etc/datadog-unix-agent")
+    config.add_search_path("/etc/datadog-agent")
+    config.add_search_path(os.path.join(DEFAULT_PATH, "etc/datadog-agent"))
+    config.add_search_path("./etc/datadog-agent")
     config.add_search_path(".")
     try:
+        config.load()
+        config.add_search_path(config.get('conf_path'))
+
+        #  load again
         config.load()
     finally:
         initialize_logging('dogstatsd')
@@ -44,7 +52,7 @@ def init_config():
 def init_dogstatsd(config):
     api_key = config['api_key']
     recent_point_threshold = config.get('recent_point_threshold', None)
-    server_host = config['bind_host']
+    server_host = config['dogstatsd']['bind_host']
     dd_url = config['dd_url']
     port = config['dogstatsd']['port']
     forward_to_host = config['dogstatsd'].get('forward_host')

@@ -47,7 +47,6 @@ def init_config():
         config.load()
     finally:
         initialize_logging('dogstatsd')
-        raise
 
 
 def init_dogstatsd(config):

@@ -1,6 +1,19 @@
 Release Notes
 =============
 
+0.7.1 (dev release)
+--------------------
+
+Released on: 2019-02-14 
+
+Supported Platforms:
+* AIX 6.1 / 7.1 / 7.2
+
+### Details 
+
+* Improved configurability of API server listening address/port.
+
+
 0.7.0 (dev release)
 --------------------
 

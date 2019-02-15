@@ -21,6 +21,7 @@ DEFAULT_FORWARDER_RETRY_Q_MAX_SIZE = 30
 DEFAULT_HOST_METADATA_INTERVAL = 4 * 60 * 60
 DEFAULT_EXT_HOST_TAGS_INTERVAL = 5 * 60
 DEFAULT_LOG_LEVEL = 'info'
+DEFAULT_API_PORT = 8050
 DEFAULT_DOGSTATSD_PORT = 8125
 DEFAULT_BIND_HOST = 'localhost'
 DEFAULT_LOGGING_CONFIG = {
@@ -60,12 +61,12 @@ def init(config):
         'aggregator_interval': DEFAULT_AGGREGATOR_INTERVAL,
         'aggregator_expiry_seconds': DEFAULT_AGGREGATOR_EXPIRY_SECS,
         'recent_point_threshold': DEFAULT_RECENT_POINT_THRESHOLD,
-        'bind_host': DEFAULT_BIND_HOST,
         'proxy': {
             'http': None,
             'https': None,
         },
         'dogstatsd': {
+            'bind_host': DEFAULT_BIND_HOST,
             'port': DEFAULT_DOGSTATSD_PORT,
             'non_local_traffic': False,
             'forward_host': None,
@@ -73,6 +74,10 @@ def init(config):
             'so_rcvbuf': None,
             'metric_namespace': None,
             'utf8_decoding': False,
+        },
+        'api': {
+            'bind_host': DEFAULT_BIND_HOST,
+            'port': DEFAULT_API_PORT,
         },
     }
 

@@ -50,7 +50,7 @@ class AgentRunner(Thread):
     def collection(self):
 
         # straight-up send metadata
-        metadata = get_metadata(get_hostname())
+        metadata = get_metadata(get_hostname(), start_event=True)
         self._serializer.submit_metadata(metadata)
 
         while not self._event.is_set():
@@ -58,7 +58,7 @@ class AgentRunner(Thread):
             self._collector.run_checks()
             self._serializer.serialize_and_push()
 
-            if (current_ts - self._meta_ts) > self._config.get('host_metadata_interval'):
+            if (current_ts - self._meta_ts) >= self._config.get('host_metadata_interval'):
                 metadata = get_metadata(get_hostname())
                 self._serializer.submit_metadata(metadata)
                 self._meta_ts = current_ts

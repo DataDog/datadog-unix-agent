@@ -76,7 +76,7 @@ def get_metadata(hostname, start_event=False):
         # Also post an event in the newsfeed
         metadata['events'].update({
             'System': [{
-                'api_key': self.config.get('api_key'),
+                'api_key': config.get('api_key'),
                 'host': hostname,
                 'timestamp': time.time(),
                 'event_type':'Agent Startup',

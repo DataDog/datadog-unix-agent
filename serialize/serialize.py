@@ -113,4 +113,7 @@ class Serializer(object):
 
     def submit_metadata(self, metadata):
         extra_headers = self.JSON_HEADERS
-        self._forwarder.submit_v1_intake(metadata, extra_headers)
+        try:
+            self._forwarder.submit_v1_intake(json.dumps(metadata), extra_headers)
+        except (UnicodeDecodeError, TypeError):
+            self._forwarder.submit_v1_intake(json.dumps(ensure_unicode(metadata)), extra_headers)

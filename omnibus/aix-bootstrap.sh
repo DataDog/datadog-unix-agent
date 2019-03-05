@@ -1,5 +1,6 @@
 #!/bin/bash
 
+PROJECT_TARGET_DIR=$(pwd)
 GCC_VERSION=${GCC_VERSION:-6.3.0-2}
 PROJECT_BRANCH=${PROJECT_BRANCH:-master}
 PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
@@ -118,20 +119,22 @@ bundle exec rake package
 gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
 echo "pulling AIX agent project..."
-$CURL_CMD $(pwd)/$PROJECT_TARBALL $PROJECT_URL
+cd $PROJECT_TARGET_DIR
+mkdir -p $PROJECT_DIR
+$CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
 $GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
 
 echo "installing omnibus dependencies..."
-cd $(pwd)/${PROJECT_TARBALL}/omnibus
+cd ./${PROJECT_DIR}/omnibus
 bundle install
 
 echo "setting git attributes (if available)..."
-if [ ! -z "$GIT_NAME"]; then
-    git config --global user.name $GIT_NAME
+if [ ! -z "$GIT_NAME" ]; then
+    git config --global user.name "$GIT_NAME"
 fi
 
-if [ ! -z "$GIT_EMAIL"]; then
-    git config --global user.email $GIT_EMAIL
+if [ ! -z "$GIT_EMAIL" ]; then
+    git config --global user.email "$GIT_EMAIL"
 fi
 
 echo "you should be ready to go..."

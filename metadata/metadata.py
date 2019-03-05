@@ -16,7 +16,6 @@ from config import config
 
 def get_common(hostname):
     return {
-        "agentVersion": "0.99.99", # fake one for now
         "apiKey": config.get("api_key"),
         "uuid": uuid.uuid5(uuid.NAMESPACE_DNS, platform.node() + str(uuid.getnode())).hex,
         "internalHostname": hostname,
@@ -68,8 +67,11 @@ def get_resources(hostname):
         "processes": {"snaps": []},
     }
 
-def get_metadata(hostname, start_event=False):
-    metadata = get_common(hostname)
+def get_metadata(hostname, agent_version, start_event=False):
+    metadata = {
+        "agentVersion": agent_version
+    }
+    metadata.update(get_common(hostname))
     metadata.update(get_host_metadata(hostname))
     metadata["resources"] = get_resources(hostname)
     metadata["events"] = {}

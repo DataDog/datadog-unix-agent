@@ -42,7 +42,7 @@ create_datadog_user_group()
     RC=$?
     set -e
     if [ "${RC}" != "0" ]; then
-	  mkgroup ${DATADOG_GROUP} 
+	  mkgroup ${DATADOG_GROUP}
     fi
 
     # create datadog user

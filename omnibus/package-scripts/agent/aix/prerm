@@ -17,8 +17,8 @@ stop_datadog_services()
   stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
-# TODO: make sure this all makes sense on AIX. 
-#      
+# TODO: make sure this all makes sense on AIX.
+#
 #       Enable once we pre-compile the bytecode.
 remove_py_compiled_files()
 {

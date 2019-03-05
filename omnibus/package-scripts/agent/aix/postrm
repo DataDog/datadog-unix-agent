@@ -43,7 +43,7 @@ purge_datadog_files()
 
 remove_datadog_user_aix()
 {
-  set -e 
+  set -e
   rmuser -p ${DATADOG_USER}
 }
 
@@ -67,8 +67,8 @@ remove_datadog_user_group()
 }
 
 
-# TODO: possibly remove the user and group (debian purge in postinst (?))  
-# NOTE: it's not clear we want to do this, so let's figure it out ^^  
+# TODO: possibly remove the user and group (debian purge in postinst (?))
+# NOTE: it's not clear we want to do this, so let's figure it out ^^
 
 stop_datadog_services
 sleep 6

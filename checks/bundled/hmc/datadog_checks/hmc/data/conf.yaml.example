@@ -1,0 +1,14 @@
+init_config:
+  # this check has no init_config 
+
+instances:
+  # connection parameters to HMC instance
+  - host: localhost                         # required: hostname to connect to
+    port: 22                                # optional: defaults to 22
+    username: foo                           # required: username to hmc appliance
+    password: bar                           # optional: password for username @ hmc appliance
+    private_key_file: /etc/ssh/somekey.pem  # optional: key authentication - path to private key
+    private_key_type: rsa                   # optional: key type (rsa, ecdsa)
+    add_missing_keys: false                 # optional: boolean indicating if missing keys should 
+                                            #           be added to the SSH agent
+

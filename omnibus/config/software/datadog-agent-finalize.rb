@@ -16,23 +16,23 @@ skip_transitive_dependency_licensing true
 build do
   # TODO too many things done here, should be split
   block do
+    etc_dir = "/etc/datadog-agent"
+    var_dir = "/var/log/datadog"
+
     # Conf files
-
     if aix?
-      # Move system service files
-      mkdir "/etc/init"
-      move "#{install_dir}/scripts/datadog-agent.conf", "/etc/init"
-
       # Move checks and configuration files
-      mkdir "/etc/datadog-agent"
-      move "#{install_dir}/etc/datadog-agent/datadog.yaml.example", "/etc/datadog-agent"
-      move "#{install_dir}/etc/datadog-agent/conf.d", "/etc/datadog-agent", :force=>true
+      mkdir "#{etc_dir}"
+      move "#{install_dir}#{etc_dir}/datadog.yaml.example", "#{etc_dir}"
+      move "#{install_dir}#{etc_dir}/conf.d", "#{etc_dir}", :force=>true
 
       # Create empty directories so that they're owned by the package
       # (also requires `extra_package_file` directive in project def)
-      mkdir "/etc/datadog-agent/checks.d"
-      mkdir "/var/log/datadog"
+      mkdir "#{etc_dir}/checks.d"
+      mkdir "#{var_dir}"
 
+      project.extra_package_file("#{etc_dir}")
+      project.extra_package_file("#{var_dir}")
       # cleanup clutter
       delete "#{install_dir}/etc"
     end

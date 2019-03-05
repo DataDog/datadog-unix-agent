@@ -6,7 +6,10 @@
 import os
 import pytest
 
-from config.providers import FileConfigProvider
+from config.providers import (
+    FileConfigProvider,
+    AmbiguousFileConfigSource,
+)
 
 
 class TestFileProvider():
@@ -51,9 +54,13 @@ class TestFileProvider():
         check = provider._get_check_name_from_path(place, file_one)
         assert check == "foo"
 
-        file_two = '/etc/datadog-agent/conf.d/foo/conf.yaml'
+        file_two = '/etc/datadog-agent/conf.d/foo.d/conf.yaml'
         check = provider._get_check_name_from_path(place, file_two)
         assert check == "foo"
+
+        with pytest.raises(AmbiguousFileConfigSource):
+            file_two = '/etc/datadog-agent/conf.d/foo/conf.yaml'
+            check = provider._get_check_name_from_path(place, file_two)
 
     def test_provider(self):
         provider = FileConfigProvider()

@@ -15,9 +15,6 @@ SERVICE_NAME=datadog-agent
 DATADOG_USER=dd-agent
 DATADOG_GROUP=dd-agent
 
-# TODO: Not sure if this should run on AIX (possibly if using RPMs)
-#       but probably not with BFFs. Steps detailed below...
-
 # Set proper rights for the dd-agent user
 chown_datadog_dirs()
 {

@@ -72,14 +72,20 @@ then
    exit 1
 fi
 
-# removing unneeded stuff...
-echo "removing unnecessary dependencies..."
-yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+set +e
+GCC_VERSION_INSTALLED=$(yum list gcc | tail -n 1 | awk '{print $2}')
+set -e
 
-# installing compiler dependencies
-echo "installing compiler build dependencies..."
-yum install -y -q gcc-$GCC_VERSION
-yum install -y -q gcc-c++-$GCC_VERSION
+if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
+    # removing unneeded stuff...
+    echo "removing unnecessary dependencies..."
+    yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+
+    # installing compiler dependencies
+    echo "installing compiler build dependencies..."
+    yum install -y -q gcc-$GCC_VERSION
+    yum install -y -q gcc-c++-$GCC_VERSION
+fi
 
 # installing build dependencies
 echo "installing additional build dependencies..."

@@ -1,0 +1,46 @@
+#! /bin/sh
+#
+# This script is RPM-specific
+# It is run at the very end of an install/upgrade of the package
+# It is NOT run on removal of the package
+#
+# .deb: n/a
+# .rpm: STEP 6 of 6
+# .bff: STEP ? of ? (TODO)
+
+INSTALL_DIR=/opt/datadog-agent
+CONFIG_DIR=/etc/datadog-agent
+LOG_DIR=/var/log/datadog
+SERVICE_NAME=datadog-agent
+DATADOG_USER=dd-agent
+DATADOG_GROUP=dd-agent
+
+set -e
+
+stop_datadog_services()
+{
+  # Stop an already running agent
+  set +e
+  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
+  set -e
+}
+
+remove_system_services()
+{
+    # best effort
+    set +e
+    rmitab ${SERVICE_NAME} > /dev/null
+    rmssys -s ${SERVICE_NAME} > /dev/null
+    set -e
+}
+
+stop_datadog_services
+remove_system_services
+
+# remove symbolc link to the agent
+if [ -L /usr/bin/datadog-agent]; then
+    rm -f /usr/bin/datadog-agent
+fi
+
+
+exit 0

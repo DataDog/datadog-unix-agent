@@ -1,0 +1,6 @@
+init_config:
+  # this check has no init_config 
+
+instances:
+  # just an instance name to enable the check
+  - name: my_lparstats

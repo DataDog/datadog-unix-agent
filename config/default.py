@@ -8,8 +8,8 @@ import os
 # Defaults
 
 DEFAULT_PATH = '/opt/datadog-agent'
-DEFAULT_LOG_PATH = os.path.join(DEFAULT_PATH, 'var', 'log', 'datadog')
-DEFAULT_CONF_PATH = os.path.join(DEFAULT_PATH, 'etc', 'datadog-agent')
+DEFAULT_LOG_PATH = '/var/log/datadog'
+DEFAULT_CONF_PATH = '/etc/datadog-agent'
 DEFAULT_RUN_PATH = os.path.join(DEFAULT_PATH, 'run')
 DEFAULT_ADDITIONAL_CHECKSD = os.path.join(DEFAULT_CONF_PATH, 'checks.d')
 DEFAULT_DD_URL = 'https://app.datadoghq.com'

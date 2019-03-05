@@ -79,19 +79,15 @@ dependency 'jmxfetch'
 # version manifest file
 dependency 'version-manifest'
 
-# this dependency puts few files out of the omnibus install dir and move them
-# in the final destination. This way such files will be listed in the packages
-# manifest and owned by the package manager. This is the only point in the build
-# process where we operate outside the omnibus install dir, thus the need of
-# the `extra_package_file` directive.
+# the `datadog-agent-finalize`  dependency puts few files out of the omnibus
+# install dir and move them in the final destination. This way such files will
+# be listed in the packages manifest and owned by the package manager.
+#
 # This must be the last dependency in the project.
+dependency 'datadog-agent-finalize'
 
-
-if linux?
-  extra_package_file '/etc/init/datadog-agent.conf'
-  extra_package_file "/etc/init.d/datadog-agent"
-  extra_package_file '/etc/datadog-agent/'
-  extra_package_file '/var/log/datadog/'
+if aix?
+  package_scripts_path "#{Omnibus::Config.project_root}/package-scripts/#{name}/aix"
 end
 
 exclude '\.git*'

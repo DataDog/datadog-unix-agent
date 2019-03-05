@@ -45,23 +45,22 @@ class AgentRunner(Thread):
         self._serializer = serializer
         self._config = config
         self._event = Event()
-        self._meta_ts = time.monotonic()
+        self._meta_ts = None
 
     def collection(self):
-
-        # straight-up send metadata
-        metadata = get_metadata(get_hostname(), start_event=True)
-        self._serializer.submit_metadata(metadata)
-
         while not self._event.is_set():
-            current_ts = time.monotonic()
-            self._collector.run_checks()
-            self._serializer.serialize_and_push()
+            try:
+                current_ts = time.monotonic()
 
-            if (current_ts - self._meta_ts) >= self._config.get('host_metadata_interval'):
-                metadata = get_metadata(get_hostname())
-                self._serializer.submit_metadata(metadata)
-                self._meta_ts = current_ts
+                if self._meta_ts is None or (current_ts - self._meta_ts) >= self._config.get('host_metadata_interval'):
+                    metadata = get_metadata(get_hostname(), start_event=(self._meta_ts is None))
+                    self._serializer.submit_metadata(metadata)
+                    self._meta_ts = current_ts
+
+                self._collector.run_checks()
+                self._serializer.serialize_and_push()
+            except Exception as e:
+                log.exception("Unexpected error in last collection run", e)
 
             time.sleep(self._config.get('min_collection_interval'))
 

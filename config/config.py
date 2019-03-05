@@ -76,6 +76,7 @@ class Config(object):
         self.search_paths[search_path] = None
 
     def load(self):
+        loaded = False
         if self.search_paths:
             for path in self.search_paths.keys():
                 conf_path = os.path.join(path, self.conf_name)
@@ -83,6 +84,7 @@ class Config(object):
                     with open(conf_path, "r") as f:
                         self.data = yaml.safe_load(f)
                     log.info("loaded config from: %s", conf_path)
+                    loaded = True
                     break
             else:
                 log.error("Could not find %s in search_paths: %s", self.conf_name, self.search_paths)
@@ -95,6 +97,11 @@ class Config(object):
                 self.env_override(key.upper(), env_var)
 
         self.validate()
+
+        # load again if conf_path specified with env var
+        if not loaded and self.get('conf_path'):
+            self.add_search_path(self.get('conf_path'))
+            self.load()
 
     def bind_env(self, key):
         self.env_bindings.add(key)

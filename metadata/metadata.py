@@ -62,6 +62,7 @@ def get_host_metadata(hostname):
     }
 
 def get_resources(hostname):
+
     return {
         "meta": {"host": hostname},
         "processes": {"snaps": []},

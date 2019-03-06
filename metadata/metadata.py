@@ -24,7 +24,7 @@ def get_common(hostname):
 def get_system_stats():
     system_stats = {
         "machine": platform.machine(),
-        "platform": sys.platform,
+        "platform": 'aix7',
         "processor": platform.processor(),
         "pythonV": platform.python_version(),
         "cpuCores": psutil.cpu_count(),

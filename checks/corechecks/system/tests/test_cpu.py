@@ -10,11 +10,23 @@ from aggregator import MetricsAggregator
 
 
 GAUGE = 'gauge'
+AIX_MOCK_IOSTAT = '''
+
+System configuration: lcpu=8 drives=1 ent=0.40 paths=2 vdisks=2
+
+tty:      tin         tout    avg-cpu: % user % sys % idle % iowait physc % entc
+        0.0          0.8                0.0   0.0  100.0      0.5   0.0    0.1
+
+Disks:         % tm_act     Kbps      tps    Kb_read   Kb_wrtn
+hdisk11           0.0       0.8       0.1     919576  14296158
+'''
 
 
+@mock.patch("time.time")
 @mock.patch("psutil.cpu_times")
 @mock.patch("psutil.cpu_count", return_value=2)
-def test_cpu_first_run(cpu_count, cpu_times):
+@mock.patch("checks.corechecks.system.cpu.get_subprocess_output", return_value=(AIX_MOCK_IOSTAT, None, None))
+def test_cpu_first_run(get_subprocess_output, cpu_count, cpu_times, time):
     from checks.corechecks.system import cpu
 
     # fake cputimes from psutil
@@ -22,15 +34,17 @@ def test_cpu_first_run(cpu_count, cpu_times):
             ["user", "nice", "system", "idle", "irq",
              "softirq", "steal", "guest", "guest_nice"])
 
-    cpu_times.return_value = cputimes(user=16683.71,
-            nice=6.04,
-            system=1105424,
-            idle=72991318,
-            irq=0.0,
-            softirq=104.31,
-            steal=0.0,
-            guest=0.0,
-            guest_nice=0.0)
+    time.return_value = 0
+    cpu_times.return_value = cputimes(
+        user=16683.71,
+        nice=6.04,
+        system=1105424,
+        idle=72991318,
+        irq=0.0,
+        softirq=104.31,
+        steal=0.0,
+        guest=0.0,
+        guest_nice=0.0)
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -44,24 +58,29 @@ def test_cpu_first_run(cpu_count, cpu_times):
     c.check({})
     assert c.aggregator.flush()[:-1] == []  # we remove the datadog.agent.running metric
 
-    cpu_times.return_value = cputimes(user=16683.74,
-            nice=6.25,
-            system=1105434,
-            idle=72992164,
-            irq=0.1,
-            softirq=104.51,
-            steal=0.0,
-            guest=0.0,
-            guest_nice=0.0)
+    time.return_value = 10
+    cpu_times.return_value = cputimes(
+        user=16683.74,
+        nice=6.25,
+        system=1105434,
+        idle=72991321,
+        irq=0.1,
+        softirq=104.51,
+        steal=0.0,
+        guest=0.0,
+        guest_nice=0.0)
 
     c.check({})
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
     expected_metrics = {
-        'system.cpu.system': (GAUGE, 0.2),
-        'system.cpu.user': (GAUGE, 0.1052),
-        'system.cpu.idle': (GAUGE, 4.23),
+        'system.cpu.system': (GAUGE, 51.5),
+        'system.cpu.user': (GAUGE, 1.2),
+        'system.cpu.idle': (GAUGE, 15.0),
         'system.cpu.stolen': (GAUGE, 0.0),
         'system.cpu.guest': (GAUGE, 0.0),
+        'system.cpu.iowait': (GAUGE, 0.5),
+        'system.cpu.physc': (GAUGE, 0.0),
+        'system.cpu.entc': (GAUGE, 0.1),
     }
 
     assert len(metrics) == len(expected_metrics)

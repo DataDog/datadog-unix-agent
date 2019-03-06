@@ -10,6 +10,7 @@ import time
 import psutil
 
 from checks import AgentCheck
+from utils.process import get_subprocess_output
 
 
 class Cpu(AgentCheck):
@@ -72,7 +73,7 @@ class Cpu(AgentCheck):
                 guest = (res.guest - self._last.guest) / delta / self._nb_cpu * 100
                 self.gauge("system.cpu.guest", round(guest, 4))
 
-        self._collect_iostat(iowait=collect_iowait)
+            self._collect_iostat(iowait=collect_iowait)
 
         self._last = res
         self._last_ts = ts
@@ -92,7 +93,7 @@ class Cpu(AgentCheck):
         stats = [_f for _f in output.splitlines() if _f]
         fields = [field for field in stats[2].split(' ') if field]
 
-        for metric, idx in self._IOSTAT_MAP:
+        for metric, idx in self._IOSTAT_MAP.items():
             if metric == "iowait" and not iowait:
                 continue
 

@@ -91,6 +91,9 @@ class IOStat(AgentCheck):
                         section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
                         if colname in section_tag_cols:
                             tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
+                        elif mode.lower() == section:
+                            metrics["{mode}.{name}".format(mode=mode.lower(), name=colname)] = \
+                                self.extract_with_unit(fields[section_idx+idx])
                         else:
                             metrics["{mode}.{section}.{name}".format(mode=mode.lower(), section=section, name=colname)] = \
                                 self.extract_with_unit(fields[section_idx+idx])

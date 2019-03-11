@@ -5,6 +5,7 @@
 
 # stdlib
 import os
+from pathlib import PurePosixPath
 
 # 3p
 import psutil
@@ -46,7 +47,7 @@ class Disk(AgentCheck):
     def _collect_metrics(self, partition, usage):
         metric_tags = [] if self._custom_tags is None else self._custom_tags[:]
         tags = [
-            "device:{}".format(partition.device),
+            "device:{}".format(PurePosixPath(partition.device).name),
             "mount:{}".format(partition.mountpoint),
             "filesystem:{}".format(partition.fstype),
         ]
@@ -76,7 +77,7 @@ class Disk(AgentCheck):
                 try:
                     name = counter
                     metric_tags = [] if self._custom_tags is None else self._custom_tags[:]
-                    metric_tags.append('device:/dev/{}'.format(disk_name))
+                    metric_tags.append('device:{}'.format(disk_name))
                     if 'time' in counter:
                         name = "{}_pct".format(counter)
                         # / 1000 as psutil returns the value in ms

@@ -6,6 +6,7 @@
 import os
 import time
 from collections import namedtuple
+from pathlib import PurePosixPath
 
 import mock
 import psutil
@@ -61,6 +62,52 @@ def mock_disk_usage(path):
 def mock_disk_io_counters(perdisk=False, nowrap=True):
     return MOCK_IO_COUNTERS
 
+def generate_expected_gauges():
+    total_gauges = 0
+    expected_gauges = {}
+    for partition in MOCK_PARTITIONS:
+        tag_set = ["device:{}".format(PurePosixPath(partition.device).name),
+                   "mount:{}".format(partition.mountpoint),
+                   "filesystem:{}".format(partition.fstype)]
+        usage = MOCK_USAGE[partition.mountpoint]
+        for attr in ['total', 'used', 'free', 'percent']:
+            value = getattr(usage, attr)
+            if 'percent' in attr:
+                value /= 100
+            else:
+                value /= 1024
+            metric = attr if attr != 'percent' else 'pct'
+            metric_name = "system.disk.{}".format(metric)
+            if metric_name in expected_gauges:
+                expected_gauges[metric_name].append(
+                    result(name=metric_name, value=value, tags=tag_set))
+            else:
+                expected_gauges[metric_name] = [result(name=metric_name, value=value, tags=tag_set)]
+
+            total_gauges += 1
+
+    return total_gauges, expected_gauges
+
+def generate_expected_rates():
+    total_rates = 0
+    expected_rates = {}
+    for device, counter in MOCK_IO_COUNTERS.items():
+        tag_set = ["device:{}".format(device)]
+        for attr in ['read_count', 'write_count', 'read_bytes', 'write_bytes', 'read_time', 'write_time']:
+            metric = "system.disk.{}".format(attr)
+            if 'time' in attr:
+                metric = "{}_pct".format(metric)
+            value = getattr(counter, attr)
+            # NOTE: all rates have a value of zero (ie. the delta = 0)
+            if metric in expected_rates:
+                expected_rates[metric].append(result(name=metric, value=0, tags=tag_set))
+            else:
+                expected_rates[metric] = [result(name=metric, value=0, tags=tag_set)]
+
+            total_rates += 1
+
+    return total_rates, expected_rates
+
 def is_metric_expected(expectations, metric):
     name = metric['metric']
     tags = list(metric['tags'])
@@ -93,45 +140,8 @@ def test_disk_basic(disk_io_counters, disk_usage, disk_partitions):
         histogram_percentiles=None,
     )
 
-    total_gauges = 0
-    expected_gauges = {}
-    for partition in MOCK_PARTITIONS:
-        tag_set = ["device:{}".format(partition.device),
-                   "mount:{}".format(partition.mountpoint),
-                   "filesystem:{}".format(partition.fstype)]
-        usage = MOCK_USAGE[partition.mountpoint]
-        for attr in ['total', 'used', 'free', 'percent']:
-            value = getattr(usage, attr)
-            if 'percent' in attr:
-                value /= 100
-            else:
-                value /= 1024
-            metric = attr if attr != 'percent' else 'pct'
-            metric_name = "system.disk.{}".format(metric)
-            if metric_name in expected_gauges:
-                expected_gauges[metric_name].append(
-                    result(name=metric_name, value=value, tags=tag_set))
-            else:
-                expected_gauges[metric_name] = [result(name=metric_name, value=value, tags=tag_set)]
-
-            total_gauges += 1
-
-    total_rates = 0
-    expected_rates = {}
-    for device, counter in MOCK_IO_COUNTERS.items():
-        tag_set = ["device:/dev/{}".format(device)]
-        for attr in ['read_count', 'write_count', 'read_bytes', 'write_bytes', 'read_time', 'write_time']:
-            metric = "system.disk.{}".format(attr)
-            if 'time' in attr:
-                metric = "{}_pct".format(metric)
-            value = getattr(counter, attr)
-            # NOTE: all rates have a value of zero (ie. the delta = 0)
-            if metric in expected_rates:
-                expected_rates[metric].append(result(name=metric, value=0, tags=tag_set))
-            else:
-                expected_rates[metric] = [result(name=metric, value=0, tags=tag_set)]
-
-            total_rates += 1
+    total_gauges, expected_gauges = generate_expected_gauges()
+    total_rates, expected_rates = generate_expected_rates()
 
     c = Disk("disk", {}, {}, aggregator)
     c.check({})

@@ -43,8 +43,6 @@ class Network(AgentCheck):
 
             self._collect_metrics(device, counter)
 
-        self._collect_io_metrics()
-
     def _collect_metrics(self, device, counter):
         metric_tags = [] if self._custom_tags is None else self._custom_tags[:]
         metric_tags.append("device:{}".format(device))

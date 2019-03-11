@@ -16,7 +16,7 @@ from aggregator import MetricsAggregator
 import pytest
 
 HOSTNAME = 'foo'
-CHECK_NAME = 'disk'
+CHECK_NAME = 'network'
 
 GAUGE = 'gauge'
 
@@ -43,7 +43,7 @@ def generate_expected_rates(attr_map):
     for device, counter in MOCK_NET_COUNTERS.items():
         tag_set = ["device:{}".format(device)]
         for attr, metric in attr_map.items():
-            metric = "system.disk.{}".format(metric)
+            metric = "system.net.{}".format(metric)
             value = getattr(counter, attr)
             # NOTE: all rates have a value of zero (ie. the delta = 0)
             if metric in expected_rates:
@@ -72,7 +72,7 @@ def is_metric_expected(expectations, metric):
     return False
 
 @mock.patch('psutil.net_io_counters', side_effect=mock_net_io_counters)
-def test_disk_basic(net_io_counters):
+def test_network_basic(net_io_counters):
     from datadog_checks.network import Network  # delayed import for good patching
 
     aggregator = MetricsAggregator(
@@ -97,8 +97,8 @@ def test_disk_basic(net_io_counters):
 
     assert len(metrics) == total_rates
     for metric in metrics:
-        assert metric['metric'] in expected_gauges or metric['metric'] in expected_rates
+        assert metric['metric'] in expected_rates
         assert len(metric['points']) == 1
         assert metric['host'] == HOSTNAME
         assert metric['type'] == GAUGE
-        assert is_metric_expected(expected_gauges, metric) or is_metric_expected(expected_rates, metric)
+        assert is_metric_expected(expected_rates, metric)

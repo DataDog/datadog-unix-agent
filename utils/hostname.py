@@ -49,7 +49,7 @@ def get_hostname_std():
 def get_hostname_solaris():
     return _get_hostname(['/bin/hostname'])
 
-def get_hostname():
+def get_hostname(config_override=True):
     """
     Get the canonical host name this agent should identify as. This is
     the authoritative source of the host name for the agent.
@@ -62,7 +62,7 @@ def get_hostname():
     """
     # first, try the config
     config_hostname = config.get('hostname')
-    if config_hostname and is_valid_hostname(config_hostname):
+    if config_hostname and is_valid_hostname(config_hostname) and config_override:
         return config_hostname
 
     try:

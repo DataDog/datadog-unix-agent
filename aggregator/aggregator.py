@@ -575,6 +575,7 @@ class MetricsAggregator(Aggregator):
             self.num_discarded_old_points += 1
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
+            self.count += 1
 
     def gauge(self, name, value, tags=None, hostname=None, timestamp=None, source=None):
         self.submit_metric(name, value, 'g', tags, hostname, timestamp, source)
@@ -638,7 +639,7 @@ class MetricsAggregator(Aggregator):
         # Save some stats.
         self.stats.set_last_flush_metric_stats(stats_by_source)
         self.stats.set_last_flush_counts(mcount=self.count)
-        log.debug("received %s payloads since last flush" % self.count)
+        log.debug("received %s metric since last flush" % self.count)
 
         self.count = 0
         self.total_count += self.count

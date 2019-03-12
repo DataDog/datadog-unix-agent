@@ -9,6 +9,8 @@ import logging
 import logging.handlers
 import traceback
 
+import requests
+
 from config import config
 
 LOG_FORMAT = '%%(asctime)s | %%(levelname)s | dd.%s | %%(name)s(%%(filename)s:%%(lineno)s) | %%(message)s'
@@ -59,3 +61,7 @@ def initialize_logging(logger_name):
     # re-get the log after logging is initialized
     global log
     log = logging.getLogger(__name__)
+
+    # silence requests
+    logging.getLogger('requests').setLevel(logging.ERROR)
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)

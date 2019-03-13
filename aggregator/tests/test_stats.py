@@ -19,9 +19,12 @@ def test_stats():
 
     flush_stats = stats.get_aggregator_stats()
     assert flush_stats['stats'] == metric_stats
-    assert flush_stats['metric_pkt_count'] == 4
-    assert flush_stats['event_pkt_count'] == 2
-    assert flush_stats['service_check_pkt_count'] == 1
+    assert flush_stats['last_metric_pkt_count'] == 4
+    assert flush_stats['last_event_pkt_count'] == 2
+    assert flush_stats['last_service_check_pkt_count'] == 1
+    assert flush_stats['total_metric_pkt_count'] == 4
+    assert flush_stats['total_event_pkt_count'] == 2
+    assert flush_stats['total_service_check_pkt_count'] == 1
 
     # test we got a deepcopy
     metric_stats['foo'] += 10

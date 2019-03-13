@@ -39,7 +39,7 @@ class Worker(Thread):
                 except queue.Full as e:
                     log.error("Could not retry transaction to '%s', queue is full (dropping it): %s", t.get_endpoint(), e)
         except Exception as e:
-            log.exception("unknown error processing transaction", e)
+            log.exception("unknown error processing transaction")
 
     def run(self):
         while not self.exit.is_set():

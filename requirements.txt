@@ -13,7 +13,7 @@ funcsigs==1.0.2
 futures==3.2.0; python_version < '3.0'
 idna==2.7
 ipaddress==1.0.22
-Jinja2=2.10
+Jinja2==2.10
 mccabe==0.6.1
 meld3==1.0.2
 mock==2.0.0

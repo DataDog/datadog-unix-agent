@@ -3,10 +3,6 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-# stdlib
-import os
-from pathlib import PurePosixPath
-
 # 3p
 import psutil
 
@@ -57,6 +53,6 @@ class Network(AgentCheck):
 
     def _exclude_device(self, device):
         if device in self._device_blacklist:
-           return True
+            return True
         if self._device_whitelist and device not in self._device_whitelist:
             return True

@@ -108,7 +108,7 @@ class Agent(Daemon):
         'flare',
     ]
 
-    STATUS_TIMEOUT=5
+    STATUS_TIMEOUT = 5
 
     @classmethod
     def usage(cls):

@@ -9,7 +9,7 @@ import logging
 import logging.handlers
 import traceback
 
-import requests
+import requests  # noqa: F401
 
 from config import config
 

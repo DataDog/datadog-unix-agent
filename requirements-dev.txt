@@ -1,4 +1,5 @@
 pytest==3.6.2
+requests-mock[fixture]==1.5.2
 tox==3.3.0
 datadog-a7==0.0.6
 

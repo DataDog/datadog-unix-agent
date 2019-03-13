@@ -12,24 +12,28 @@ from utils.network import get_proxy
 
 log = logging.getLogger(__name__)
 
+VALID_API_KEY_MSG = "API Key is valid"
+INVALID_API_KEY_MSG = "[ERROR] API Key is invalid"
+REQUEST_ERROR_MSG = "[ERROR] Unable to validate API Key. Please try again later"
+OTHER_ERROR_MSG = "[ERROR] Unable to validate API Key (unexpected error). Please try again later"
 
 def validate_api_key(config):
     try:
         proxy = get_proxy()
 
-        r = requests.get("%s/api/v1/validate" % config.get('dd_url').rstrip('/'),
+        r = requests.get("{}/api/v1/validate".format(config.get('dd_url').rstrip('/')),
             params={'api_key': config.get('api_key')}, proxies=proxy,
             timeout=3, verify=(not config.get('skip_ssl_validation', False)))
 
         if r.status_code == 403:
-            return "[ERROR] API Key is invalid"
+            return INVALID_API_KEY_MSG
 
         r.raise_for_status()
 
     except requests.RequestException:
-        return "[ERROR] Unable to validate API Key. Please try again later"
+        return REQUEST_ERROR_MSG
     except Exception:
         log.exception("Unable to validate API Key")
-        return "[ERROR] Unable to validate API Key (unexpected error). Please try again later"
+        return OTHER_ERROR_MSG
 
-    return "API Key is valid"
+    return VALID_API_KEY_MSG

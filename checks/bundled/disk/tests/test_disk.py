@@ -3,17 +3,13 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-import os
 import time
 from collections import namedtuple
 from pathlib import PurePosixPath
 
 import mock
-import psutil
 
 from aggregator import MetricsAggregator
-
-import pytest
 
 HOSTNAME = 'foo'
 CHECK_NAME = 'disk'
@@ -97,7 +93,6 @@ def generate_expected_rates():
             metric = "system.disk.{}".format(attr)
             if 'time' in attr:
                 metric = "{}_pct".format(metric)
-            value = getattr(counter, attr)
             # NOTE: all rates have a value of zero (ie. the delta = 0)
             if metric in expected_rates:
                 expected_rates[metric].append(result(name=metric, value=0, tags=tag_set))
@@ -122,7 +117,6 @@ def is_metric_expected(expectations, metric):
             if metric['points'][0][1] == m.value:
                 return True
 
-    import pdb ; pdb.set_trace()
     return False
 
 @mock.patch('psutil.disk_partitions')

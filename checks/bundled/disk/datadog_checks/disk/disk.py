@@ -4,7 +4,6 @@
 # Copyright 2018 Datadog, Inc.
 
 # stdlib
-import os
 from pathlib import PurePosixPath
 
 # 3p
@@ -56,7 +55,7 @@ class Disk(AgentCheck):
         for name in self.USAGE_ATTRS:
             # For legacy reasons,  the standard unit it kB
             value = getattr(usage, name) / 1024
-            value = 0 if value<0 else value
+            value = 0 if value < 0 else value
             self.gauge(
                 self.METRIC_DISK.format(name),
                 value,
@@ -95,7 +94,7 @@ class Disk(AgentCheck):
 
     def _exclude_partition(self, partition):
         if partition.device in self._device_blacklist:
-           return True
+            return True
         if self._device_whitelist and partition.device not in self._device_whitelist:
             return True
         if partition.mountpoint in self._mount_point_blacklist:

@@ -3,10 +3,15 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import logging
+
 import requests
 
-from config import config
 from utils.network import get_proxy
+
+
+log = logging.getLogger(__name__)
+
 
 def validate_api_key(config):
     try:

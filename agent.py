@@ -77,10 +77,6 @@ def init_config():
     config.add_search_path(".")
     try:
         config.load()
-        config.add_search_path(config.get('conf_path'))
-
-        #  load again
-        config.load()
     except Exception:
         initialize_logging('agent')
         raise

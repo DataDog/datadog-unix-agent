@@ -98,15 +98,12 @@ class Config(object):
             if overridden and key.upper() == conf_path_override_key:
                 loaded = False  # we need to override the default conf_path discard config
 
-        if loaded:
-            self.validate()
-
         # load again if conf_path specified with env var
         if not loaded and self.get('conf_path') and reload:
             self.add_search_path(self.get('conf_path'))
             self.load(reload=False)
-
-        return
+        else:
+            self.validate()
 
     def bind_env(self, key):
         self.env_bindings.add(key)

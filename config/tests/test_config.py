@@ -68,11 +68,18 @@ class TestConfig():
 
     def test_empty_conf(self, conf):
         assert conf.get("test") is None
-        assert conf.load() is None
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading empty config')
 
     def test_default(self, conf):
         conf.set_default("test", 21)
-        conf.load()
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading empty config')
+
         assert conf.get("test") == 21
 
     def test_set_and_reset(self, conf):
@@ -93,7 +100,11 @@ class TestConfig():
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
-        conf.load()
+
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading file config')
 
         assert conf.get("test") == 123
         assert conf.get("list") == [1, 2, 3]
@@ -109,7 +120,10 @@ class TestConfig():
         conf.bind_env_and_set_default('conf_path', 'conf_path', '/foo/bar')
 
         conf.conf_name = os.path.basename(tmpfile)
-        conf.load()
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading file config')
 
         assert conf.get("test") == 123
         assert conf.get("list") == [1, 2, 3]
@@ -132,7 +146,10 @@ class TestConfig():
         conf.set_default("test2", "default")
         conf.bind_env("test2")
         conf.bind_env_and_set_default("test3", "test3", False)
-        conf.load()
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading file config with overrides')
 
         assert conf.get("test1") == "default"
         assert conf.get("test2") == "env_val"

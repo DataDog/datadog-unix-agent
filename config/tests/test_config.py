@@ -76,11 +76,18 @@ class TestConfig():
 
     def test_empty_conf(self, conf):
         assert conf.get("test") is None
-        assert conf.load() is None
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading empty config')
 
     def test_default(self, conf):
         conf.set_default("test", 21)
-        conf.load()
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading empty config')
+
         assert conf.get("test") == 21
 
     def test_init_default(self, conf):
@@ -115,13 +122,37 @@ class TestConfig():
 
         conf.add_search_path(os.path.dirname(tmpfile))
         conf.conf_name = os.path.basename(tmpfile)
-        conf.load()
+
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading file config')
 
         assert conf.get("test") == 123
         assert conf.get("list") == [1, 2, 3]
 
         os.close(fd)
         os.remove(tmpfile)
+
+    def test_env_load(self, conf):
+        fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
+        os.write(fd, b"---\ntest: 123\nlist: [1, 2, 3]")
+
+        os.environ['DD_CONF_PATH'] = os.path.dirname(tmpfile)
+        conf.bind_env_and_set_default('conf_path', 'conf_path', '/foo/bar')
+
+        conf.conf_name = os.path.basename(tmpfile)
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading file config')
+
+        assert conf.get("test") == 123
+        assert conf.get("list") == [1, 2, 3]
+
+        os.close(fd)
+        os.remove(tmpfile)
+        os.unsetenv('DD_CONF_PATH')
 
     def test_get(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
@@ -137,7 +168,10 @@ class TestConfig():
         conf.set_default("test2", "default")
         conf.bind_env("test2")
         conf.bind_env_and_set_default("test3", "test3", False)
-        conf.load()
+        try:
+            conf.load()
+        except Exception:
+            pytest.fail('unexpected error loading file config with overrides')
 
         assert conf.get("test1") == "default"
         assert conf.get("test2") == "env_val"
@@ -151,6 +185,8 @@ class TestConfig():
 
         os.close(fd)
         os.remove(tmpfile)
+        os.unsetenv('DD_test2')
+        os.unsetenv('DD_test3')
 
     def test_validate_aggregates_sane(self, conf):
         fd, tmpfile = tempfile.mkstemp(prefix="datadog-unix-agent_test_")
@@ -335,6 +371,11 @@ class TestConfig():
         assert config.data['logging']['dogstatsd_log_file'] == 'lulz'
         assert config.data['comics']['marvel']['hulk'] == 'bruce banner'
         assert config.data['comics']['dc']['flash'] == 'barry allen'
+
+        os.unsetenv('DD_LOGGING_AGENT_LOG_FILE')
+        os.unsetenv('DD_LOGGING_DOGSTATSD_LOG_FILE')
+        os.unsetenv('DD_COMICS_MARVEL_HULK')
+        os.unsetenv('DD_COMICS_DC_FLASH')
 
     def test_build_defaults(self):
         config = Config()

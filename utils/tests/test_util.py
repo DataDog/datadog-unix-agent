@@ -13,6 +13,7 @@ def test_is_affirmative():
     assert not _is_affirmative('False')
     assert not _is_affirmative('foo')
     assert not _is_affirmative(False)
+    assert not _is_affirmative(object())
     assert _is_affirmative(1)
     assert _is_affirmative('1')
     assert _is_affirmative('Yes')

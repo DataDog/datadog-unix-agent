@@ -1,14 +1,18 @@
 #!/bin/bash
 
-OMNIBUS_DIR=$(dirname "$0")
-GCC_VERSION=6.3.0-2
-YUM_URL=http://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh
-CURL_URL=http://www.aixtools.net/index.php/curl
-LIBYAJL_GEM_URL=https://github.com/truthbk/libyajl2-gem/tarball/jaime/aix
-LIBYAJL_GEM_TARBALL=libyajl2-gem.tar.gz
+PROJECT_TARGET_DIR=$(pwd)
+GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+PROJECT_BRANCH=${PROJECT_BRANCH:-master}
+PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
+PROJECT_TARBALL="datadog-unix-agent.tar.gz"
+PROJECT_DIR=$(echo $PROJECT_TARBALL | cut -f1 -d.)
+YUM_URL="http://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh"
+CURL_URL="http://www.aixtools.net/index.php/curl"
+LIBYAJL_GEM_URL="https://github.com/truthbk/libyajl2-gem/tarball/jaime/aix"
+LIBYAJL_GEM_TARBALL="libyajl2-gem.tar.gz"
 LIBYAJL_GEM_DIR=$(echo $LIBYAJL_GEM_TARBALL | cut -f1 -d.)
-YAJL_URL=https://github.com/lloyd/yajl/tarball/12ee82ae5138ac86252c41f3ae8f9fd9880e4284
-YAJL_TARBALL=yajl.tar.gz
+YAJL_URL="https://github.com/lloyd/yajl/tarball/12ee82ae5138ac86252c41f3ae8f9fd9880e4284"
+YAJL_TARBALL="yajl.tar.gz"
 YAJL_DIR=$(echo $YAJL_TARBALL | cut -f1 -d.)
 CURL_CMD="curl -s -L -o"
 GNU_TAR="/opt/freeware/bin/tar"
@@ -49,7 +53,7 @@ fi
 # yum is needed to pull in deps
 if ! which yum; then
     echo "downloading AIX linux toolbox..."
-    $CURL_CMD /tmp/yum.sh $YUM_URL 
+    $CURL_CMD /tmp/yum.sh $YUM_URL
     echo "installing AIX linux toolbox..."
     sh /tmp/yum.sh
 fi
@@ -69,14 +73,20 @@ then
    exit 1
 fi
 
-# removing unneeded stuff...
-echo "removing unnecessary dependencies..."
-yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+set +e
+GCC_VERSION_INSTALLED=$(yum list gcc | tail -n 1 | awk '{print $2}')
+set -e
 
-# installing compiler dependencies 
-echo "installing compiler build dependencies..."
-yum install -y -q gcc-$GCC_VERSION
-yum install -y -q gcc-c++-$GCC_VERSION
+if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
+    # removing unneeded stuff...
+    echo "removing unnecessary dependencies..."
+    yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+
+    # installing compiler dependencies
+    echo "installing compiler build dependencies..."
+    yum install -y -q gcc-$GCC_VERSION
+    yum install -y -q gcc-c++-$GCC_VERSION
+fi
 
 # installing build dependencies
 echo "installing additional build dependencies..."
@@ -84,22 +94,22 @@ yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl gi
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."
-ulimit -d 524288 
+ulimit -d 524288
 ulimit -s 524288
 ulimit -m 524288
 
 # installing ruby deps
-echo "installing ruby dependencies..." 
+echo "installing ruby dependencies..."
 gem install bundler
-$CURL_CMD /tmp/$LIBYAJL_GEM_TARBALL $LIBYAJL_GEM_URL 
+$CURL_CMD /tmp/$LIBYAJL_GEM_TARBALL $LIBYAJL_GEM_URL
 cd /tmp
 mkdir -p $LIBYAJL_GEM_DIR
 $GNU_TAR xvzf $LIBYAJL_GEM_TARBALL -C ./$LIBYAJL_GEM_DIR --strip=1
 
 cd /tmp/$LIBYAJL_GEM_DIR/ext/libyajl2/vendor/
-$CURL_CMD ./$YAJL_TARBALL $YAJL_URL 
+$CURL_CMD ./$YAJL_TARBALL $YAJL_URL
 mkdir -p ./$YAJL_DIR
-$GNU_TAR xvzf $YAJL_TARBALL -C ./$YAJL_DIR --strip=1 
+$GNU_TAR xvzf $YAJL_TARBALL -C ./$YAJL_DIR --strip=1
 
 cd /tmp/$LIBYAJL_GEM_DIR
 bundle install
@@ -108,17 +118,23 @@ bundle exec rake compile
 bundle exec rake package
 gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
-echo "installing omnibus dependencies..." 
-cd $OMNIBUS_DIR
+echo "pulling AIX agent project..."
+cd $PROJECT_TARGET_DIR
+mkdir -p $PROJECT_DIR
+$CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
+$GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
+
+echo "installing omnibus dependencies..."
+cd ./${PROJECT_DIR}/omnibus
 bundle install
 
-echo "setting git attributes (if available)..." 
-if [ ! -z "$GIT_NAME"]; then
-    git config --global user.name $GIT_NAME
+echo "setting git attributes (if available)..."
+if [ ! -z "$GIT_NAME" ]; then
+    git config --global user.name "$GIT_NAME"
 fi
 
-if [ ! -z "$GIT_EMAIL"]; then
-    git config --global user.email $GIT_EMAIL
+if [ ! -z "$GIT_EMAIL" ]; then
+    git config --global user.email "$GIT_EMAIL"
 fi
 
 echo "you should be ready to go..."

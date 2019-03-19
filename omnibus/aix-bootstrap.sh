@@ -2,8 +2,10 @@
 
 PROJECT_TARGET_DIR=$(pwd)
 GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+USE_GIT=${USE_GIT:-1}
 PROJECT_BRANCH=${PROJECT_BRANCH:-master}
 PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
+PROJECT_GIT_REPO="https://github.com/DataDog/datadog-unix-agent.git"
 PROJECT_TARBALL="datadog-unix-agent.tar.gz"
 PROJECT_DIR=$(echo $PROJECT_TARBALL | cut -f1 -d.)
 YUM_URL="http://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh"
@@ -118,16 +120,6 @@ bundle exec rake compile
 bundle exec rake package
 gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
-echo "pulling AIX agent project..."
-cd $PROJECT_TARGET_DIR
-mkdir -p $PROJECT_DIR
-$CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
-$GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
-
-echo "installing omnibus dependencies..."
-cd ./${PROJECT_DIR}/omnibus
-bundle install
-
 echo "setting git attributes (if available)..."
 if [ ! -z "$GIT_NAME" ]; then
     git config --global user.name "$GIT_NAME"
@@ -136,5 +128,19 @@ fi
 if [ ! -z "$GIT_EMAIL" ]; then
     git config --global user.email "$GIT_EMAIL"
 fi
+
+echo "pulling AIX agent project..."
+cd $PROJECT_TARGET_DIR
+if [ "$USE_GIT" -eq "0" ]; then
+  mkdir -p $PROJECT_DIR
+  $CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
+  $GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
+else
+  git clone -b $PROJECT_BRANCH $PROJECT_GIT_REPO $PROJECT_DIR
+fi
+
+echo "installing omnibus dependencies..."
+cd ./${PROJECT_DIR}/omnibus
+bundle install
 
 echo "you should be ready to go..."

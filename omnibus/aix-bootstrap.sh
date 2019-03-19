@@ -1,5 +1,6 @@
 #!/bin/bash
 
+VERBOSE=${VERBOSE:-0}
 PROJECT_TARGET_DIR=$(pwd)
 GCC_VERSION=${GCC_VERSION:-6.3.0-2}
 USE_GIT=${USE_GIT:-1}
@@ -26,6 +27,10 @@ function is_sudo {
         return 1
     fi
 }
+
+if [ "$VERBOSE" -ne "0" ]; then
+    set -x
+fi
 
 if ! is_sudo; then
     echo "Please run this script with super-user powers."
@@ -86,6 +91,8 @@ if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
 
     # installing compiler dependencies
     echo "installing compiler build dependencies..."
+    yum install -y -q libgcc-$GCC_VERSION
+    yum install -y -q libstdc++-$GCC_VERSION
     yum install -y -q gcc-$GCC_VERSION
     yum install -y -q gcc-c++-$GCC_VERSION
 fi

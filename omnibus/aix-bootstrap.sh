@@ -81,7 +81,7 @@ then
 fi
 
 set +e
-GCC_VERSION_INSTALLED=$(yum list gcc | tail -n 1 | awk '{print $2}')
+GCC_VERSION_INSTALLED=$(yum list installed gcc | tail -n 1 | awk '{print $2}')
 set -e
 
 if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then

@@ -12,9 +12,10 @@ from aggregator import MetricsAggregator
 GAUGE = 'gauge'
 
 
+@mock.patch("time.time")
 @mock.patch("psutil.cpu_times")
 @mock.patch("psutil.cpu_count", return_value=2)
-def test_cpu_first_run(cpu_count, cpu_times):
+def test_cpu_first_run(cpu_count, cpu_times, time):
     from checks.corechecks.system import cpu
 
     # fake cputimes from psutil
@@ -22,6 +23,7 @@ def test_cpu_first_run(cpu_count, cpu_times):
             ["user", "nice", "system", "idle", "irq",
              "softirq", "steal", "guest", "guest_nice"])
 
+    time.return_value = 1
     cpu_times.return_value = cputimes(user=16683.71,
             nice=6.04,
             system=1105424,
@@ -44,10 +46,11 @@ def test_cpu_first_run(cpu_count, cpu_times):
     c.check({})
     assert c.aggregator.flush()[:-1] == []  # we remove the datadog.agent.running metric
 
+    time.return_value = 2
     cpu_times.return_value = cputimes(user=16683.74,
             nice=6.25,
             system=1105434,
-            idle=72992164,
+            idle=72991494,
             irq=0.1,
             softirq=104.51,
             steal=0.0,
@@ -57,11 +60,11 @@ def test_cpu_first_run(cpu_count, cpu_times):
     c.check({})
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
     expected_metrics = {
-        'system.cpu.system': (GAUGE, 0.2),
-        'system.cpu.user': (GAUGE, 0.1052),
-        'system.cpu.idle': (GAUGE, 4.23),
-        'system.cpu.stolen': (GAUGE, 0.0),
-        'system.cpu.guest': (GAUGE, 0.0),
+        'system.cpu.system': (GAUGE, 5.15),
+        'system.cpu.user': (GAUGE, 0.12),
+        'system.cpu.idle': (GAUGE, 88.0),
+        'system.cpu.stolen': (GAUGE, 0),
+        'system.cpu.guest': (GAUGE, 0),
     }
 
     assert len(metrics) == len(expected_metrics)

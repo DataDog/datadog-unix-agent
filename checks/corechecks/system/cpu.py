@@ -43,17 +43,17 @@ class Cpu(AgentCheck):
             self.gauge("system.cpu.system", round(system / self._nb_cpu / delta * 100, 4))
             self.gauge("system.cpu.user", round(user / self._nb_cpu / delta * 100, 4))
             self.gauge("system.cpu.idle", round(
-                (res.idle   - self._last.idle) / self._ticks_per_sec / self._nb_cpu / delta * 100, 4))
+                (res.idle - self._last.idle) / self._ticks_per_sec / self._nb_cpu / delta * 100, 4))
 
             if hasattr(res, 'iowait'):
-                iowait = (res.iowait   - self._last.iowait) / self._ticks_per_sec
+                iowait = (res.iowait - self._last.iowait) / self._ticks_per_sec
                 self.gauge("system.cpu.iowait", round(iowait / self._nb_cpu / delta * 100, 4))
             if hasattr(res, 'steal'):
-                stolen = (res.steal  - self._last.steal) / self._ticks_per_sec
+                stolen = (res.steal - self._last.steal) / self._ticks_per_sec
                 self.gauge("system.cpu.stolen", round(stolen / self._nb_cpu / delta * 100, 4))
             if hasattr(res, 'guest'):
-                guest = (res.guest  - self._last.guest) / self._ticks_per_sec
-                self.gauge("system.cpu.guest", round(stolen / self._nb_cpu / delta * 100, 4))
+                guest = (res.guest - self._last.guest) / self._ticks_per_sec
+                self.gauge("system.cpu.guest", round(guest / self._nb_cpu / delta * 100, 4))
 
         self._last = res
         self._last_ts = now

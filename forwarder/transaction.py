@@ -4,10 +4,11 @@
 # Copyright 2018 Datadog, Inc.
 
 import time
-import requests
 import logging
 import re
+import traceback
 
+import requests
 
 from config import config
 
@@ -43,11 +44,16 @@ class Transaction(object):
         except requests.exceptions.Timeout:
             log.error("Connection timout to: %s", log_url)
             return False
-        except requests.exceptions.ProxyError:
-            log.error("unable to connect through proxy: %s", log_url)
+        except requests.exceptions.ProxyError as e:
+            log.error("unable to connect through proxy: %s: %s", log_url, e)
+
+            # log traceback as well, but only in debug mode
+            exc = traceback.format_exception(type(e), e, e.__traceback__, chain=False)
+            trace = ''.join(exc)
+            log.debug("stacktrace: %s", trace)
             return False
-        except requests.exceptions.ConnectionError:
-            log.error("unable to submit payload, possible network issue: %s", log_url)
+        except requests.exceptions.ConnectionError as e:
+            log.error("unable to submit payload, possible network issue: %s: %s", log_url, e)
             return False
 
         if resp.status_code in (400, 404, 413):

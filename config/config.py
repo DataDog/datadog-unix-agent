@@ -79,7 +79,8 @@ class Config(object):
         # the order in which paths are added matters.
         self.search_paths[search_path] = None
 
-    def load(self):
+    def load(self, reload=True):
+        loaded = False
         if self.search_paths:
             for path in self.search_paths.keys():
                 conf_path = os.path.join(path, self.conf_name)
@@ -89,18 +90,32 @@ class Config(object):
 
                     log.info("loaded config from: %s", conf_path)
                     self._loaded_config = conf_path
+                    loaded = True
+                    
                     break
             else:
                 log.error("Could not find %s in search_paths: %s", self.conf_name, self.search_paths)
 
+        conf_path_override_key = self.env_prefix + 'conf_path'.upper()
         for env_var in self.env_bindings:
             key = self.env_prefix + env_var
+            overridden = False
             if key in os.environ:
                 self.env_override(key, env_var)
+                overridden = True
             elif key.upper() in os.environ:
                 self.env_override(key.upper(), env_var)
+                overridden = True
 
-        self.validate()
+            if overridden and key.upper() == conf_path_override_key:
+                loaded = False  # we need to override the default conf_path discard config
+
+        # load again if conf_path specified with env var
+        if not loaded and self.get('conf_path') and reload:
+            self.add_search_path(self.get('conf_path'))
+            self.load(reload=False)
+        else:
+            self.validate()
 
     def bind_env(self, key):
         self.env_bindings.add(key)

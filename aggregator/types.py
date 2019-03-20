@@ -379,8 +379,8 @@ class TextualMetricTypes(object):
     GAUGE = 'g'
     HISTOGRAM = 'h'
     HISTOGRAM_TIMING = 'ms'
-    MONOTONIC_COUNT = 'ct-c',
-    RATE = '_dd-r',
+    MONOTONIC_COUNT = 'ct-c'
+    RATE = '_dd-r'
     SET = 's'
 
 

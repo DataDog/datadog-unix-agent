@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import os
+import time
 
 import psutil
 
@@ -11,42 +12,21 @@ from checks import AgentCheck
 
 
 class Cpu(AgentCheck):
+    PSUTIL_USAGE_ATTRS = ['idle', 'iowait', 'system', 'user']
 
     def __init__(self, *args, **kwargs):
         super(Cpu, self).__init__(*args, **kwargs)
-        self._last = None
-        self._nb_cpu = psutil.cpu_count()
-        self._ticks_per_sec = os.sysconf("SC_CLK_TCK")
 
     def check(self, instance):
-        res = psutil.cpu_times()
-
-        if self._last:
-            system = (res.system - self._last.system) / self._ticks_per_sec
-            try:
-                # TODO: figure out if res.irq and res.softirq need to be in
-                #       in ticks/s
-                system += (res.irq + res.softirq) - (self._last.irq + self._last.softirq)
-            except AttributeError:
-                pass
-
-            user = (res.user - self._last.user) / self._ticks_per_sec
-            try:
-                # TODO: figure out if res.nice needs to be in ticks/s
-                user += (res.nice - self._last.nice)
-            except AttributeError:
-                pass
-
-            self.gauge("system.cpu.system", round(system / self._nb_cpu, 4))
-            self.gauge("system.cpu.user", round(user / self._nb_cpu, 4))
-            self.gauge("system.cpu.idle", round(
-                (res.idle   - self._last.idle) / self._ticks_per_sec / self._nb_cpu, 4))
-
-            if hasattr(res, 'iowait'):
-                self.gauge("system.cpu.iowait", round((res.iowait   - self._last.iowait)   / self._nb_cpu, 4))
-            if hasattr(res, 'steal'):
-                self.gauge("system.cpu.stolen", round((res.steal  - self._last.steal)  / self._nb_cpu, 4))
-            if hasattr(res, 'guest'):
-                self.gauge("system.cpu.guest", round((res.guest  - self._last.guest)  / self._nb_cpu, 4))
-
-        self._last = res
+        usage = psutil.cpu_times_percent(percpu=True)
+        tags = instance.get('tags', [])
+        for core_idx in range(len(usage)):
+            metric_tags = tags+['core:{}'.format(core_idx)]
+            core_usage = usage[core_idx]
+            for attr in self.PSUTIL_USAGE_ATTRS:
+                try:
+                    value = getattr(core_usage, attr)
+                    self.gauge("system.cpu.{}".format(attr), value, tags=metric_tags)
+                except AttributeError:
+                    self.log.debug('CPU usage attribute %s not available on this platform', attr)
+                    pass

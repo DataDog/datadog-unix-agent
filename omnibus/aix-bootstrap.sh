@@ -3,6 +3,7 @@
 VERBOSE=${VERBOSE:-0}
 PROJECT_TARGET_DIR=$(pwd)
 GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+GIT_VERSION=${GIT_VERSION:-2.18.0-1}
 USE_GIT=${USE_GIT:-1}
 PROJECT_BRANCH=${PROJECT_BRANCH:-master}
 PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
@@ -99,7 +100,7 @@ fi
 
 # installing build dependencies
 echo "installing additional build dependencies..."
-yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl git
+yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl git-${GIT_VERSION}
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."

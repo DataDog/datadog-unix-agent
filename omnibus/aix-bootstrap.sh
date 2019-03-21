@@ -2,8 +2,6 @@
 
 VERBOSE=${VERBOSE:-0}
 PROJECT_TARGET_DIR=$(pwd)
-GCC_VERSION=${GCC_VERSION:-6.3.0-2}
-GIT_VERSION=${GIT_VERSION:-2.18.0-1}
 USE_GIT=${USE_GIT:-1}
 PROJECT_BRANCH=${PROJECT_BRANCH:-master}
 PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
@@ -20,6 +18,16 @@ YAJL_TARBALL="yajl.tar.gz"
 YAJL_DIR=$(echo $YAJL_TARBALL | cut -f1 -d.)
 CURL_CMD="curl -s -L -o"
 GNU_TAR="/opt/freeware/bin/tar"
+
+# version pins
+GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+COREUTILS_VERSION=${GIT_VERSION:-8.29-3}
+CURL_VERSION=${GIT_VERSION:-7.64.0-1}
+LIBFFI_VERSION=${GIT_VERSION:-3.2.1-3}
+RUBY_VERSION=${GIT_VERSION:-2.5.1-1}
+SUDO_VERSION=${GIT_VERSION:-1.8.21p2-1}
+TAR_VERSION=${GIT_VERSION:-1.30-1}
+GIT_VERSION=${GIT_VERSION:-2.18.0-1}
 
 function is_sudo {
     if [ $(id -u) -eq "0" ]; then
@@ -100,7 +108,8 @@ fi
 
 # installing build dependencies
 echo "installing additional build dependencies..."
-yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl git-${GIT_VERSION}
+yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${LIBFFI_VERSION} libffi-devel-${LIBFFI_VERSION} \
+    ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION}
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."

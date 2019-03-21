@@ -12,7 +12,7 @@ GAUGE = 'gauge'
 
 
 @mock.patch("psutil.cpu_times_percent")
-def test_cpu_first_run(cpu_times_percent):
+def test_cpu(cpu_times_percent):
     from checks.corechecks.system import cpu
 
     # fake cputimes from psutil
@@ -53,7 +53,7 @@ def test_cpu_first_run(cpu_times_percent):
         'system.cpu.iowait': {
             'type': GAUGE,
             'core:0': 1.0,
-            'core:0': 2.1,
+            'core:1': 2.1,
         },
     }
 
@@ -64,6 +64,6 @@ def test_cpu_first_run(cpu_times_percent):
         assert metric['host'] == hostname
         assert metric['type'] == expected_metrics[metric['metric']]['type']
         for tag in metric['tags']:
-            stag = str(tag)
+            stag = tag.decode(encoding='utf-8')
             if stag.startswith('core'):
                 assert metric['points'][0][1] == expected_metrics[metric['metric']][stag]

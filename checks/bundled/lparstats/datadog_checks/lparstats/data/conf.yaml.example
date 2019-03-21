@@ -6,3 +6,7 @@ instances:
   - name: lparstats
 
     # sudo: false  # run command with sudo, will require adding `dd-agent` to the sudoers file
+                   # you may do that as follows:
+                   #
+                   # dd-agent ALL=(ALL) NOPASSWD: /usr/bin/lparstat
+                   #

@@ -110,12 +110,16 @@ def subprocess_output(command, raise_on_empty_output, env, timeout=None):
     # docs warn that the data read is buffered in memory. They suggest not to
     # use subprocess.PIPE if the data size is large or unlimited.
     with tempfile.TemporaryFile() as stdout_f, tempfile.TemporaryFile() as stderr_f:
-        proc = subprocess.Popen(command, env=env, stdout=stdout_f, stderr=stderr_f)
-        proc.wait(timeout)
-        stderr_f.seek(0)
-        err = stderr_f.read()
-        stdout_f.seek(0)
-        output = stdout_f.read()
+        try:
+            proc = subprocess.Popen(command, env=env, stdout=stdout_f, stderr=stderr_f)
+            proc.wait(timeout)
+            stderr_f.seek(0)
+            err = stderr_f.read()
+            stdout_f.seek(0)
+            output = stdout_f.read()
+        except subprocess.TimeoutExpired as e:
+            proc.terminate()
+            raise e
 
     if not output and raise_on_empty_output:
         raise SubprocessOutputEmptyError("get_subprocess_output expected output but had none.")

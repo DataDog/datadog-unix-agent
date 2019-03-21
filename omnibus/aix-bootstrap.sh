@@ -1,17 +1,33 @@
 #!/bin/bash
 
-OMNIBUS_DIR=$(dirname "$0")
-GCC_VERSION=6.3.0-2
-YUM_URL=http://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh
-CURL_URL=http://www.aixtools.net/index.php/curl
-LIBYAJL_GEM_URL=https://github.com/truthbk/libyajl2-gem/tarball/jaime/aix
-LIBYAJL_GEM_TARBALL=libyajl2-gem.tar.gz
+VERBOSE=${VERBOSE:-0}
+PROJECT_TARGET_DIR=$(pwd)
+USE_GIT=${USE_GIT:-1}
+PROJECT_BRANCH=${PROJECT_BRANCH:-master}
+PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
+PROJECT_GIT_REPO="https://github.com/DataDog/datadog-unix-agent.git"
+PROJECT_TARBALL="datadog-unix-agent.tar.gz"
+PROJECT_DIR=$(echo $PROJECT_TARBALL | cut -f1 -d.)
+YUM_URL="http://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh"
+CURL_URL="http://www.aixtools.net/index.php/curl"
+LIBYAJL_GEM_URL="https://github.com/truthbk/libyajl2-gem/tarball/jaime/aix"
+LIBYAJL_GEM_TARBALL="libyajl2-gem.tar.gz"
 LIBYAJL_GEM_DIR=$(echo $LIBYAJL_GEM_TARBALL | cut -f1 -d.)
-YAJL_URL=https://github.com/lloyd/yajl/tarball/12ee82ae5138ac86252c41f3ae8f9fd9880e4284
-YAJL_TARBALL=yajl.tar.gz
+YAJL_URL="https://github.com/lloyd/yajl/tarball/12ee82ae5138ac86252c41f3ae8f9fd9880e4284"
+YAJL_TARBALL="yajl.tar.gz"
 YAJL_DIR=$(echo $YAJL_TARBALL | cut -f1 -d.)
 CURL_CMD="curl -s -L -o"
 GNU_TAR="/opt/freeware/bin/tar"
+
+# version pins
+GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+COREUTILS_VERSION=${GIT_VERSION:-8.29-3}
+CURL_VERSION=${GIT_VERSION:-7.64.0-1}
+LIBFFI_VERSION=${GIT_VERSION:-3.2.1-3}
+RUBY_VERSION=${GIT_VERSION:-2.5.1-1}
+SUDO_VERSION=${GIT_VERSION:-1.8.21p2-1}
+TAR_VERSION=${GIT_VERSION:-1.30-1}
+GIT_VERSION=${GIT_VERSION:-2.18.0-1}
 
 function is_sudo {
     if [ $(id -u) -eq "0" ]; then
@@ -20,6 +36,10 @@ function is_sudo {
         return 1
     fi
 }
+
+if [ "$VERBOSE" -ne "0" ]; then
+    set -x
+fi
 
 if ! is_sudo; then
     echo "Please run this script with super-user powers."
@@ -49,7 +69,7 @@ fi
 # yum is needed to pull in deps
 if ! which yum; then
     echo "downloading AIX linux toolbox..."
-    $CURL_CMD /tmp/yum.sh $YUM_URL 
+    $CURL_CMD /tmp/yum.sh $YUM_URL
     echo "installing AIX linux toolbox..."
     sh /tmp/yum.sh
 fi
@@ -69,37 +89,46 @@ then
    exit 1
 fi
 
-# removing unneeded stuff...
-echo "removing unnecessary dependencies..."
-yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+set +e
+GCC_VERSION_INSTALLED=$(yum list installed gcc | tail -n 1 | awk '{print $2}')
+set -e
 
-# installing compiler dependencies 
-echo "installing compiler build dependencies..."
-yum install -y -q gcc-$GCC_VERSION
-yum install -y -q gcc-c++-$GCC_VERSION
+if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
+    # removing unneeded stuff...
+    echo "removing unnecessary dependencies..."
+    yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+
+    # installing compiler dependencies
+    echo "installing compiler build dependencies..."
+    yum install -y -q libgcc-$GCC_VERSION
+    yum install -y -q libstdc++-$GCC_VERSION
+    yum install -y -q gcc-$GCC_VERSION
+    yum install -y -q gcc-c++-$GCC_VERSION
+fi
 
 # installing build dependencies
 echo "installing additional build dependencies..."
-yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl git
+yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${LIBFFI_VERSION} libffi-devel-${LIBFFI_VERSION} \
+    ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION}
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."
-ulimit -d 524288 
+ulimit -d 524288
 ulimit -s 524288
 ulimit -m 524288
 
 # installing ruby deps
-echo "installing ruby dependencies..." 
+echo "installing ruby dependencies..."
 gem install bundler
-$CURL_CMD /tmp/$LIBYAJL_GEM_TARBALL $LIBYAJL_GEM_URL 
+$CURL_CMD /tmp/$LIBYAJL_GEM_TARBALL $LIBYAJL_GEM_URL
 cd /tmp
 mkdir -p $LIBYAJL_GEM_DIR
 $GNU_TAR xvzf $LIBYAJL_GEM_TARBALL -C ./$LIBYAJL_GEM_DIR --strip=1
 
 cd /tmp/$LIBYAJL_GEM_DIR/ext/libyajl2/vendor/
-$CURL_CMD ./$YAJL_TARBALL $YAJL_URL 
+$CURL_CMD ./$YAJL_TARBALL $YAJL_URL
 mkdir -p ./$YAJL_DIR
-$GNU_TAR xvzf $YAJL_TARBALL -C ./$YAJL_DIR --strip=1 
+$GNU_TAR xvzf $YAJL_TARBALL -C ./$YAJL_DIR --strip=1
 
 cd /tmp/$LIBYAJL_GEM_DIR
 bundle install
@@ -108,17 +137,27 @@ bundle exec rake compile
 bundle exec rake package
 gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
-echo "installing omnibus dependencies..." 
-cd $OMNIBUS_DIR
+echo "setting git attributes (if available)..."
+if [ ! -z "$GIT_NAME" ]; then
+    git config --global user.name "$GIT_NAME"
+fi
+
+if [ ! -z "$GIT_EMAIL" ]; then
+    git config --global user.email "$GIT_EMAIL"
+fi
+
+echo "pulling AIX agent project..."
+cd $PROJECT_TARGET_DIR
+if [ "$USE_GIT" -eq "0" ]; then
+  mkdir -p $PROJECT_DIR
+  $CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
+  $GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
+else
+  git clone -b $PROJECT_BRANCH $PROJECT_GIT_REPO $PROJECT_DIR
+fi
+
+echo "installing omnibus dependencies..."
+cd ./${PROJECT_DIR}/omnibus
 bundle install
-
-echo "setting git attributes (if available)..." 
-if [ ! -z "$GIT_NAME"]; then
-    git config --global user.name $GIT_NAME
-fi
-
-if [ ! -z "$GIT_EMAIL"]; then
-    git config --global user.email $GIT_EMAIL
-fi
 
 echo "you should be ready to go..."

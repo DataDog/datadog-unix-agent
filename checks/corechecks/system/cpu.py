@@ -12,7 +12,8 @@ from checks import AgentCheck
 
 
 class Cpu(AgentCheck):
-    PSUTIL_USAGE_ATTRS = ['idle', 'iowait', 'system', 'user']
+    PSUTIL_USAGE_ATTRS = ['idle', 'iowait', 'system', 'user', 'nice', 'irq',
+                          'softirq', 'steal', 'guest', 'guest_nice']
 
     def __init__(self, *args, **kwargs):
         super(Cpu, self).__init__(*args, **kwargs)

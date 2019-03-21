@@ -37,7 +37,7 @@ from forwarder import Forwarder
 from api import APIServer
 
 # Globals
-AGENT_VERSION = '0.99.99'
+AGENT_VERSION = '0.8.0'
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')
@@ -134,7 +134,7 @@ class Agent(Daemon):
             r.raise_for_status()
 
             status = r.json()
-            out = template.render(version='0.99.99', status=status)
+            out = template.render(version=AGENT_VERSION, status=status)
             print(out)
         except requests.exceptions.HTTPError as e:
             log.error("HTTP error collecting agent status: {}".format(e))

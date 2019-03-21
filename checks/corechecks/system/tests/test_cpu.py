@@ -8,31 +8,20 @@ from collections import namedtuple
 
 from aggregator import MetricsAggregator
 
-
 GAUGE = 'gauge'
 
 
-@mock.patch("time.time")
-@mock.patch("psutil.cpu_times")
-@mock.patch("psutil.cpu_count", return_value=2)
-def test_cpu_first_run(cpu_count, cpu_times, time):
+@mock.patch("psutil.cpu_times_percent")
+def test_cpu_first_run(cpu_times_percent):
     from checks.corechecks.system import cpu
 
     # fake cputimes from psutil
-    cputimes = namedtuple("cputimes",
-            ["user", "nice", "system", "idle", "irq",
-             "softirq", "steal", "guest", "guest_nice"])
+    scputimes = namedtuple('scputimes', ['user','system', 'idle', 'iowait'])
 
-    time.return_value = 1
-    cpu_times.return_value = cputimes(user=16683.71,
-            nice=6.04,
-            system=1105424,
-            idle=72991318,
-            irq=0.0,
-            softirq=104.31,
-            steal=0.0,
-            guest=0.0,
-            guest_nice=0.0)
+    cpu_times_percent.return_value = [
+        scputimes(user=2.8, system=1.5, idle=94.7, iowait=1.0),
+        scputimes(user=78.2, system=9.4, idle=10.3, iowait=2.1),
+    ]
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -44,33 +33,37 @@ def test_cpu_first_run(cpu_count, cpu_times, time):
 
     c = cpu.Cpu("cpu", {}, {}, aggregator)
     c.check({})
-    assert c.aggregator.flush()[:-1] == []  # we remove the datadog.agent.running metric
-
-    time.return_value = 2
-    cpu_times.return_value = cputimes(user=16683.74,
-            nice=6.25,
-            system=1105434,
-            idle=72991494,
-            irq=0.1,
-            softirq=104.51,
-            steal=0.0,
-            guest=0.0,
-            guest_nice=0.0)
-
-    c.check({})
     metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
     expected_metrics = {
-        'system.cpu.system': (GAUGE, 5.15),
-        'system.cpu.user': (GAUGE, 0.12),
-        'system.cpu.idle': (GAUGE, 88.0),
-        'system.cpu.stolen': (GAUGE, 0),
-        'system.cpu.guest': (GAUGE, 0),
+        'system.cpu.user': {
+            'type': GAUGE,
+            'core:0': 2.8,
+            'core:1': 78.2,
+        },
+        'system.cpu.system': {
+            'type': GAUGE,
+            'core:0': 1.5,
+            'core:1': 9.4,
+        },
+        'system.cpu.idle': {
+            'type': GAUGE,
+            'core:0': 94.7,
+            'core:1': 10.3,
+        },
+        'system.cpu.iowait': {
+            'type': GAUGE,
+            'core:0': 1.0,
+            'core:0': 2.1,
+        },
     }
 
-    assert len(metrics) == len(expected_metrics)
+    assert len(metrics) == len(expected_metrics)*2  # 2 values per metric
     for metric in metrics:
         assert metric['metric'] in expected_metrics
         assert len(metric['points']) == 1
         assert metric['host'] == hostname
-        assert metric['type'] == expected_metrics[metric['metric']][0]
-        assert metric['points'][0][1] == expected_metrics[metric['metric']][1]
+        assert metric['type'] == expected_metrics[metric['metric']]['type']
+        for tag in metric['tags']:
+            stag = str(tag)
+            if stag.startswith('core'):
+                assert metric['points'][0][1] == expected_metrics[metric['metric']][stag]

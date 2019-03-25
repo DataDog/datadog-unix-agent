@@ -149,7 +149,8 @@ OUTPUT_MAP = {
 }
 
 
-def my_get_subprocess_output(command, log, raise_on_empty_output=True, env=None):
+def my_get_subprocess_output(command, log, raise_on_empty_output=True, env=None,
+                             output_as_string=True, sudo=False, timeout=None):
     cmd_str = ' '.join(command)
     if cmd_str in OUTPUT_MAP:
         return OUTPUT_MAP[cmd_str], None, None

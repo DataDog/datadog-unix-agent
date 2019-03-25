@@ -82,13 +82,17 @@ def is_my_process(pid):
     return len(command) > 1 and exec_name in command[1].lower()
 
 
-def get_subprocess_output(command, log, raise_on_empty_output=True,
-                          env=None, output_as_string=True):
+def get_subprocess_output(command, log, raise_on_empty_output=True, env=None,
+                          output_as_string=True, sudo=False, timeout=None):
     """
     Run the given subprocess command and return its output. Raise an Exception
     if an error occurs.
     """
-    stdout, stderr, ret_code = subprocess_output(command, raise_on_empty_output, env)
+    args = command if type(command) == list else [command]
+    if sudo:
+        args.insert(0, 'sudo')
+
+    stdout, stderr, ret_code = subprocess_output(args, raise_on_empty_output, env, timeout)
     if output_as_string:
         stdout = stdout.decode('utf-8')
         stderr = stderr.decode('utf-8')
@@ -96,7 +100,7 @@ def get_subprocess_output(command, log, raise_on_empty_output=True,
     return stdout, stderr, ret_code
 
 
-def subprocess_output(command, raise_on_empty_output, env):
+def subprocess_output(command, raise_on_empty_output, env, timeout=None):
     """
     Run the given subprocess command and return its output. This is a private method
     and should not be called directly, use `get_subprocess_output` instead.
@@ -106,12 +110,16 @@ def subprocess_output(command, raise_on_empty_output, env):
     # docs warn that the data read is buffered in memory. They suggest not to
     # use subprocess.PIPE if the data size is large or unlimited.
     with tempfile.TemporaryFile() as stdout_f, tempfile.TemporaryFile() as stderr_f:
-        proc = subprocess.Popen(command, env=env, stdout=stdout_f, stderr=stderr_f)
-        proc.wait()
-        stderr_f.seek(0)
-        err = stderr_f.read()
-        stdout_f.seek(0)
-        output = stdout_f.read()
+        try:
+            proc = subprocess.Popen(command, env=env, stdout=stdout_f, stderr=stderr_f)
+            proc.wait(timeout)
+            stderr_f.seek(0)
+            err = stderr_f.read()
+            stdout_f.seek(0)
+            output = stdout_f.read()
+        except subprocess.TimeoutExpired as e:
+            proc.terminate()
+            raise e
 
     if not output and raise_on_empty_output:
         raise SubprocessOutputEmptyError("get_subprocess_output expected output but had none.")

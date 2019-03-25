@@ -20,28 +20,34 @@ class LPARStats(AgentCheck):
     }
     MEMORY_ENTITLEMENTS_START_IDX = 4
     SPURR_PROCESSOR_UTILIZATION_START_IDX = 3
+    DEFAULT_TIMEOUT = 5
 
     def check(self, instance):
+        sudo = instance.get('sudo', False)
         root = running_root()
-        if not root:
-            self.log.info('Not running as root - entitlement and hypervisor metrics will be unavailable')
+        if not root and not sudo:
+            self.log.info('Not running as root or sudo - entitlement and hypervisor metrics might be unavailable')
+
+        timeout = None
+        if sudo:
+            timeout = self.DEFAULT_TIMEOUT  # protect against bad sudo settings
 
         if instance.get('memory_stats', True):
-            self.collect_memory(instance.get('page_stats', True))
+            self.collect_memory(instance.get('page_stats', True), sudo, timeout)
         if instance.get('memory_entitlements', True) and root:
-            self.collect_memory_entitlements()
+            self.collect_memory_entitlements(sudo, timeout)
         if instance.get('hypervisor', True) and root:
-            self.collect_hypervisor()
+            self.collect_hypervisor(sudo, timeout)
         if instance.get('spurr_utilization', True):
-            self.collect_spurr()
+            self.collect_spurr(sudo, timeout)
 
-    def collect_memory(self, page_stats=True):
+    def collect_memory(self, page_stats=True, sudo=False, timeout=None):
         cmd = ['lparstat', '-m']
         if page_stats:
             cmd.append('-pw')
         cmd.extend(['1', '1'])
 
-        output, _, _ = get_subprocess_output(cmd, self.log)
+        output, _, _ = get_subprocess_output(cmd, self.log, sudo=sudo, timeout=timeout)
         '''
 
         System configuration: lcpu=4 mem=7936MB mpsz=0.00GB iome=7936.00MB iomp=16 ent=0.20
@@ -71,9 +77,9 @@ class LPARStats(AgentCheck):
                 self.log.info("unable to convert %s to float - skipping", field)
                 continue
 
-    def collect_hypervisor(self):
+    def collect_hypervisor(self, sudo=False, timeout=None):
         cmd = ['lparstat', '-H', '1', '1']
-        output, _, _ = get_subprocess_output(cmd, self.log)
+        output, _, _ = get_subprocess_output(cmd, self.log, sudo=sudo, timeout=timeout)
         '''
 
         System configuration: type=Shared mode=Uncapped smt=On lcpu=4 mem=7936MB psize=16 ent=0.20
@@ -106,9 +112,9 @@ class LPARStats(AgentCheck):
                     self.log.info("unable to convert %s to float for %s - skipping", m, call_tag)
                     continue
 
-    def collect_memory_entitlements(self):
+    def collect_memory_entitlements(self, sudo=False, timeout=None):
         cmd = ['lparstat', '-m', '-eR', '1', '1']
-        output, _, _ = get_subprocess_output(cmd, self.log)
+        output, _, _ = get_subprocess_output(cmd, self.log, sudo=sudo, timeout=timeout)
         '''
 
         System configuration: lcpu=4 mem=7936MB mpsz=0.00GB iome=7936.00MB iomp=16 ent=0.20
@@ -149,9 +155,9 @@ class LPARStats(AgentCheck):
                     self.log.info("unable to convert %s to float for %s - skipping", m, tag)
                     continue
 
-    def collect_spurr(self):
+    def collect_spurr(self, sudo=False, timeout=None):
         cmd = ['lparstat', '-E', '1', '1']
-        output, _, _ = get_subprocess_output(cmd, self.log)
+        output, _, _ = get_subprocess_output(cmd, self.log, sudo=sudo, timeout=timeout)
         '''
 
         System configuration: type=Shared mode=Uncapped smt=On lcpu=4 mem=7936MB ent=0.20 Power=Disabled

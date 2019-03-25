@@ -78,7 +78,7 @@ class AgentRunner(Thread):
         self.collection()
 
 
-def init_config():
+def init_config(do_log=True):
     # init default search path
     config.add_search_path("/etc/datadog-agent")
     config.add_search_path(os.path.join(DEFAULT_PATH, "etc/datadog-agent"))
@@ -87,11 +87,13 @@ def init_config():
     try:
         config.load()
     except Exception:
-        initialize_logging('agent')
+        if do_log:
+            initialize_logging('agent')
         raise
 
     # init log
-    initialize_logging('agent')
+    if do_log:
+        initialize_logging('agent')
 
     # add file provider
     file_provider = FileConfigProvider()
@@ -105,19 +107,20 @@ def init_config():
 
 
 class Agent(Daemon):
-    COMMANDS = [
-        'start',
-        'stop',
-        'restart',
-        'status',
-        'flare',
-    ]
+    # dictionary k:v - command:log
+    COMMANDS = {
+        'start': True,
+        'stop': True,
+        'restart': False,
+        'status': False,
+        'flare': False,
+    }
 
     STATUS_TIMEOUT = 5
 
     @classmethod
     def usage(cls):
-        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
+        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS.keys()))
 
     @classmethod
     def status(cls):
@@ -255,6 +258,8 @@ def main():
     parser = OptionParser()
     parser.add_option('-b', '--background', action='store_true', default=False,
                       dest='background', help='Run agent on the foreground')
+    parser.add_option('-l', '--force-logging', action='store_true', default=False,
+                      dest='logging', help='force logging')
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -267,7 +272,8 @@ def main():
         return 3
 
     try:
-        init_config()
+        do_log = options.logging or Agent.COMMANDS[command]
+        init_config(do_log=do_log)
     except Exception as e:
         logging.error("Problem initializing configuration: %s", e)
         return 1

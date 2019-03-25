@@ -13,6 +13,10 @@ import logging
 from optparse import OptionParser
 from threading import Thread, Event
 
+import requests
+import requests.exceptions
+from jinja2 import Environment, FileSystemLoader
+
 from config import config
 from config.providers import FileConfigProvider
 from config.default import DEFAULT_PATH
@@ -33,7 +37,7 @@ from forwarder import Forwarder
 from api import APIServer
 
 # Globals
-AGENT_VERSION = '0.99.99'
+AGENT_VERSION = '0.8.0'
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')
@@ -61,7 +65,7 @@ class AgentRunner(Thread):
                 self._collector.run_checks()
                 self._serializer.serialize_and_push()
             except Exception as e:
-                log.exception("Unexpected error in last collection run", e)
+                log.exception("Unexpected error in last collection run")
 
             time.sleep(self._config.get('min_collection_interval'))
 
@@ -109,13 +113,33 @@ class Agent(Daemon):
         'flare',
     ]
 
+    STATUS_TIMEOUT = 5
+
     @classmethod
     def usage(cls):
         return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
 
     @classmethod
-    def info(cls):
-        return True
+    def status(cls):
+        api_addr = config['api']['bind_host']
+        api_port = config['api']['port']
+        target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
+        try:
+            here = os.path.dirname(os.path.realpath(__file__))
+            templates = os.path.join(here, 'templates')
+            template_env = Environment(loader=FileSystemLoader(templates))
+            template = template_env.get_template('status.jinja')
+
+            r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
+            r.raise_for_status()
+
+            status = r.json()
+            out = template.render(version=AGENT_VERSION, status=status)
+            print(out)
+        except requests.exceptions.HTTPError as e:
+            log.error("HTTP error collecting agent status: {}".format(e))
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
 
     @classmethod
     def flare(cls, case_id):
@@ -195,9 +219,7 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate API
-        api_addr = config['api']['bind_host']
-        api_port = config['api']['port']
-        api = APIServer(api_addr, api_port, aggregator.stats)
+        api = APIServer(config, aggregator.stats)
 
         handler = SignalHandler()
         # components

@@ -27,14 +27,14 @@ license_file "./LICENSE"
 build do
   block 'setup agent' do
     if aix?
-      env = aix_env 
+      env = aix_env
       env["M4"] = "/opt/freeware/bin/m4"
     else
       env = with_standard_compiler_flags(with_embedded_path)
     end
-  
+
     mkdir  "#{install_dir}/agent/"
-  
+
     # Agent code
     copy 'aggregator', "#{install_dir}/agent/"
     copy 'api', "#{install_dir}/agent/"
@@ -46,27 +46,28 @@ build do
     copy 'forwarder', "#{install_dir}/agent/"
     copy 'metadata', "#{install_dir}/agent/"
     copy 'serialize', "#{install_dir}/agent/"
+    copy 'templates', "#{install_dir}/agent/"
     copy 'utils', "#{install_dir}/agent/"
-  
+
     copy '*.py', "#{install_dir}/agent/"
     copy 'requirements.txt', "#{install_dir}/agent/"
-  
+
     # removing some stuff we don't really need to ship like this
     delete "#{install_dir}/agent/checks/bundled/"
-  
+
     # Collect all the test dirs
     tests = Dir.glob("#{install_dir}/agent/*/tests")
     tests.each do |test|
       delete "#{test}"
     end
-  
+
     conf_dir = "#{install_dir}/etc/datadog-agent/"
-  
+
     mkdir conf_dir
     mkdir "#{install_dir}/run/"
     mkdir "#{install_dir}/var/log/datadog/"
     mkdir "#{install_dir}/scripts/"
-  
+
     ## move around config files
     copy 'datadog.yaml.example', "#{conf_dir}"
   end

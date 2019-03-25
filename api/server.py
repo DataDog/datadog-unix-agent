@@ -5,6 +5,7 @@
 
 import asyncio
 import logging
+from datetime import datetime
 
 import tornado.httpserver
 import tornado.ioloop
@@ -21,17 +22,19 @@ log = logging.getLogger(__name__)
 
 class APIServer(Thread):
 
-    def __init__(self, addr, port, aggregator_stats):
+    def __init__(self, config, aggregator_stats):
         # start API
         super(APIServer, self).__init__()
 
         # we'll need an event loop in the APIServer thread
         asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 
-        self._addr = addr
-        self._port = port
+        self._config = config
+        self._addr = config['api']['bind_host']
+        self._port = config['api']['port']
+        self._start_time = datetime.utcnow()
         self._app = tornado.web.Application([
-            (r"/status", APIStatusHandler, dict(aggregator_stats=aggregator_stats)),
+            (r"/status", APIStatusHandler, dict(config=self._config, started=self._start_time, aggregator_stats=aggregator_stats)),
         ])
         self._server = tornado.httpserver.HTTPServer(self._app)
 

@@ -49,11 +49,14 @@ class Aggregator(object):
         self.service_checks = []
 
         self.stats = AggregatorStats()
+
         # TODO(jaime): we can probably kill total counts
-        self.total_count = 0
-        self.count = 0
+        self.packet_count = 0
+        self.metric_count = 0
         self.event_count = 0
         self.service_check_count = 0
+        self.total_count = 0
+
         self.hostname = hostname
         self.expiry_seconds = expiry_seconds
         self.formatter = formatter or api_formatter
@@ -79,7 +82,7 @@ class Aggregator(object):
     def packets_per_second(self, interval):
         if interval == 0:
             return 0
-        return round(float(self.count)/interval, 2)
+        return round(float(self.packet_count)/interval, 2)
 
     def parse_metric_packet(self, packet):
         """
@@ -255,6 +258,7 @@ class Aggregator(object):
             if not packet.strip():
                 continue
 
+            self.packet_count += 1
             if packet.startswith(self.EVENT_PREFIX):
                 event = self.parse_event_packet(packet)
                 self.event(**event)
@@ -265,7 +269,6 @@ class Aggregator(object):
                 self.service_check_count += 1
             else:
                 parsed_packets = self.parse_metric_packet(packet)
-                self.count += 1
                 for name, value, mtype, tags, sample_rate in parsed_packets:
                     hostname, tags = self._extract_magic_tags(tags)
                     self.submit_metric(name, value, mtype, tags=tags,
@@ -369,7 +372,7 @@ class Aggregator(object):
         return service_checks
 
     def send_packet_count(self, metric_name):
-        self.submit_metric(metric_name, self.count, 'g')
+        self.submit_metric(metric_name, self.packet_count, 'g')
 
 
 class MetricsBucketAggregator(Aggregator):
@@ -505,10 +508,11 @@ class MetricsBucketAggregator(Aggregator):
             self.num_discarded_old_points = 0
 
         # Save some stats.
-        log.debug("received %s payloads since last flush" % self.count)
-        self.stats.set_last_flush_counts(mcount=self.count)
-        self.total_count += self.count
-        self.count = 0
+        log.debug("received %s payloads since last flush" % self.metric_count)
+        self.stats.set_last_flush_counts(mcount=self.metric_count)
+        self.total_count += self.metric_count
+        self.metric_count = 0
+        self.packet_count = 0
         self.current_bucket = None
         self.current_mbc = {}
         self.last_flush_cutoff_time = flush_cutoff_time
@@ -575,6 +579,7 @@ class MetricsAggregator(Aggregator):
             self.num_discarded_old_points += 1
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
+            self.metric_count += 1
 
     def gauge(self, name, value, tags=None, hostname=None, timestamp=None, source=None):
         self.submit_metric(name, value, 'g', tags, hostname, timestamp, source)
@@ -637,10 +642,10 @@ class MetricsAggregator(Aggregator):
 
         # Save some stats.
         self.stats.set_last_flush_metric_stats(stats_by_source)
-        self.stats.set_last_flush_counts(mcount=self.count)
-        log.debug("received %s payloads since last flush" % self.count)
+        self.stats.set_last_flush_counts(mcount=self.metric_count)
+        log.debug("received %s metric since last flush" % self.metric_count)
 
-        self.count = 0
-        self.total_count += self.count
+        self.total_count += self.metric_count
+        self.metric_count = 0
 
         return metrics

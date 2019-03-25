@@ -85,12 +85,18 @@ class AggregatorStats(object):
             mcount = int(self._last_flush_metric_count)
             ecount = int(self._last_flush_event_count)
             sccount = int(self._last_flush_service_check_count)
+            total_mcount = int(self._total_metric_count)
+            total_ecount = int(self._total_event_count)
+            total_sccount = int(self._total_service_check_count)
         finally:
             self._stats_mutex.release()
 
         return {
             'stats': stats,
-            'metric_pkt_count': mcount,
-            'event_pkt_count': ecount,
-            'service_check_pkt_count': sccount,
+            'last_metric_pkt_count': mcount,
+            'last_event_pkt_count': ecount,
+            'last_service_check_pkt_count': sccount,
+            'total_metric_pkt_count': total_mcount,
+            'total_event_pkt_count': total_ecount,
+            'total_service_check_pkt_count': total_sccount,
         }

@@ -1,0 +1,43 @@
+{{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
+DataDog Unix Agent (v{{ version }})
+{{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
+
+  Pid: {{ status.get('pid') }}
+  Python Version: {{ status.get('python_version')  }}
+  Log Level: {{ status.get('log_level') }}
+
+Host Info
+=========
+  Hostname: {{ status.get('hostname') }}
+  Hostname (collected): {{ status.get('hostname_native') }}
+
+Clock
+=====
+  Agent uptime: {{ status.get('uptime') }}s
+  System UTC time: {{ status.get('utc_time') }}
+
+Configuration
+=============
+  Agent Config: {{ status.get('agent_config_path')  }}
+  Agent Logs: {{ status.get('agent_log_path') }}
+
+Running Checks
+==============
+{% for check, stats in status.get('checks', {}).items() %}
+  - {{ check }}
+    {{ '-'*check|length }}
+    metrics: {{ stats.get('metrics', 0) }}
+    events: {{ stats.get('events', 0) }}
+    service checks: {{ stats.get('service_checks', 0) }}
+{% endfor %}
+
+  Last Flush Metric Count: {{ status.get('last_metric_pkt_count') }}
+  Last Flush Event Count: {{ status.get('last_event_pkt_count')}}
+  Last Flush Service Check Count: {{ status.get('last_service_check_pkt_count')}}
+  Total Metric Count: {{ status.get('total_metric_pkt_count') }}
+  Total Event Count: {{ status.get('total_event_pkt_count')}}
+  Total Service Check Count: {{ status.get('total_service_check_pkt_count')}}
+
+API Key Status
+==============
+  API Key ending in {{ status.get('redacted_api') }}: {{ status.get('api_status') }}

@@ -31,6 +31,7 @@ class Config(object):
         self.env_bindings = set()
         self.data = {}
         self.defaults = {}
+        self._loaded_config = None
 
         self._providers = {}
         self._check_configs = defaultdict(dict)
@@ -70,6 +71,9 @@ class Config(object):
     def get(self, key, default=None):
         return self.data.get(key, self.defaults.get(key, default))
 
+    def get_loaded_config(self):
+        return self._loaded_config
+
     def add_search_path(self, search_path):
         # we're just using the ordered dict as a set:
         # the order in which paths are added matters.
@@ -83,8 +87,11 @@ class Config(object):
                 if os.path.isfile(conf_path):
                     with open(conf_path, "r") as f:
                         self.data = yaml.safe_load(f)
+
                     log.info("loaded config from: %s", conf_path)
+                    self._loaded_config = conf_path
                     loaded = True
+
                     break
             else:
                 log.error("Could not find %s in search_paths: %s", self.conf_name, self.search_paths)

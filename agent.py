@@ -65,7 +65,7 @@ class AgentRunner(Thread):
                 self._collector.run_checks()
                 self._serializer.serialize_and_push()
             except Exception as e:
-                log.exception("Unexpected error in last collection run", e)
+                log.exception("Unexpected error in last collection run")
 
             time.sleep(self._config.get('min_collection_interval'))
 

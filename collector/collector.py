@@ -32,10 +32,10 @@ class Collector(object):
         self.set_loaders()
 
     def set_loaders(self):
-        self._loaders = [WheelLoader(namespace=DD_WHEEL_NAMESPACE)]
         check_loader = CheckLoader()
         check_loader.add_place(self._config['additional_checksd'])
-        self._loaders.append(check_loader)
+        self._loaders = [check_loader]
+        self._loaders.append(WheelLoader(namespace=DD_WHEEL_NAMESPACE))
 
     def set_aggregator(self, aggregator):
         if not isinstance(aggregator, Aggregator):
@@ -67,6 +67,8 @@ class Collector(object):
         self.load_core_checks()
         for _, check_configs in self._config.get_check_configs().items():
             for check_name in check_configs:
+                log.debug("Found config for check %s...", check_name)
+
                 if check_name in self._check_classes:
                     continue
 

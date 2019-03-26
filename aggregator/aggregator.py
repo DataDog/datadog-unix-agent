@@ -20,7 +20,7 @@ from .types import (
 from config.default import DEFAULT_RECENT_POINT_THRESHOLD
 from .formatters import api_formatter
 from .types import MetricTypes
-from. stats import AggregatorStats
+from .stats import AggregatorStats
 
 
 log = logging.getLogger(__name__)

@@ -4,6 +4,8 @@
 # Copyright 2018 Datadog, Inc.
 
 from collections import defaultdict
+from threading import Lock
+from copy import deepcopy
 import logging
 
 from . import CheckLoader, WheelLoader
@@ -20,10 +22,11 @@ class Collector(object):
     CORE_CHECKS = ['cpu', 'load', 'iostat', 'memory', 'filesystem', 'uptime']
 
     def __init__(self, config, aggregator=None):
+        self._errors_mutex = Lock()
         self._config = config
         self._loaders = []
         self._check_classes = {}
-        self._check_classes_errors = {}
+        self._check_classes_errors = defaultdict(dict)
         self._check_instances = defaultdict(list)
         self._check_instance_signatures = {}
         self._hostname = get_hostname()
@@ -44,7 +47,13 @@ class Collector(object):
         self._aggregator = aggregator
 
     def collector_status(self):
-        pass
+        self._errors_mutex.acquire()
+        try:
+            errors = deepcopy(self._check_classes_errors)
+        finally:
+            self._errors_mutex.release()
+
+        return errors
 
     def load_core_checks(self):
         from checks.corechecks.system import (
@@ -65,26 +74,31 @@ class Collector(object):
 
     def load_check_classes(self):
         self.load_core_checks()
-        for _, check_configs in self._config.get_check_configs().items():
-            for check_name in check_configs:
-                log.debug("Found config for check %s...", check_name)
 
-                if check_name in self._check_classes:
-                    continue
+        self._errors_mutex.acquire()
+        try:
+            for _, check_configs in self._config.get_check_configs().items():
+                for check_name in check_configs:
+                    log.debug("Found config for check %s...", check_name)
 
-                for loader in self._loaders:
-                    try:
-                        check_class, errors = loader.load(check_name)
-                        if check_class:
-                            self._check_classes[check_name] = check_class
-                        if errors:
-                            self._check_classes_errors[check_name] = errors
+                    if check_name in self._check_classes:
+                        continue
 
-                        if check_class:
-                            log.debug("Class found for %s...", check_name)
-                            break
-                    except Exception:
-                        log.exception("unexpected error loading check %s", check_name)
+                    for loader in self._loaders:
+                        try:
+                            check_class, errors = loader.load(check_name)
+                            if check_class:
+                                self._check_classes[check_name] = check_class
+                            if errors:
+                                self._check_classes_errors[check_name][type(loader).__name__] = errors
+
+                            if check_class:
+                                log.debug("Class found for %s...", check_name)
+                                break
+                        except Exception:
+                            log.exception("unexpected error loading check %s", check_name)
+        finally:
+            self._errors_mutex.release()
 
     def instantiate_checks(self):
         for source, check_configs in self._config.get_check_configs().items():

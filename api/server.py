@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 class APIServer(Thread):
 
-    def __init__(self, config, aggregator_stats):
+    def __init__(self, config, collector, aggregator_stats):
         # start API
         super(APIServer, self).__init__()
 
@@ -34,7 +34,12 @@ class APIServer(Thread):
         self._port = config['api']['port']
         self._start_time = datetime.utcnow()
         self._app = tornado.web.Application([
-            (r"/status", APIStatusHandler, dict(config=self._config, started=self._start_time, aggregator_stats=aggregator_stats)),
+            (r"/status", APIStatusHandler, dict(
+                config=self._config,
+                collector=collector,
+                started=self._start_time,
+                aggregator_stats=aggregator_stats)
+            ),
         ])
         self._server = tornado.httpserver.HTTPServer(self._app)
 

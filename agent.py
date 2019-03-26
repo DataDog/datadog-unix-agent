@@ -103,12 +103,12 @@ def init_config(do_log=True):
 
     # add file provider
     file_provider = FileConfigProvider()
+    file_provider.add_place(os.path.join(os.path.dirname(config.get_loaded_config()), 'conf.d'))
     file_provider.add_place(os.path.join(config.get('conf_path'), 'conf.d'))
     file_provider.add_place(config.get('additional_checksd'))
     config.add_provider('file', file_provider)
 
-    # FIXME: do this elsewhere
-    # collect config
+    # FIXME: perhaps do this elsewhere
     config.collect_check_configs()
 
 

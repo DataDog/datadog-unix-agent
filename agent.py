@@ -142,7 +142,7 @@ class Agent(Daemon):
         except requests.exceptions.HTTPError as e:
             log.error("HTTP error collecting agent status: {}".format(e))
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
+            log.error("Problem connecting or connection timed out, is the agent up?\n\nError: {}".format(e))
 
     @classmethod
     def flare(cls, case_id):
@@ -223,7 +223,7 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate API
-        api = APIServer(config, aggregator.stats)
+        api = APIServer(config, collector, aggregator.stats)
 
         handler = SignalHandler()
         # components

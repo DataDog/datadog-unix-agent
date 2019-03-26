@@ -13,13 +13,17 @@ import tornado
 
 from utils.hostname import get_hostname, HostnameException
 from utils.api import validate_api_key
+from collector import CheckLoader, WheelLoader
 
 log = logging.getLogger(__name__)
 
 
 class APIStatusHandler(tornado.web.RequestHandler):
-    def initialize(self, config, started, aggregator_stats):
+    LOADERS = [CheckLoader, WheelLoader]
+
+    def initialize(self, config, collector, started, aggregator_stats):
         self._config = config
+        self._collector = collector
         self._aggregator_stats = aggregator_stats
         self._started = started
 
@@ -34,6 +38,19 @@ class APIStatusHandler(tornado.web.RequestHandler):
                 stats['checks'][check]['merics'] += values
             else:
                 stats['checks'][check] = {'metrics': values}
+
+        stats['errors'] = {}
+        for check, errors in self._collector.collector_status().items():
+            stats['errors'][check] = {}
+
+            for loader, error in errors.items():
+                if loader == CheckLoader.__name__:
+                    for place, err in error.items():
+                        stats['errors'][check][loader] = '{path}: {err}'.format(path=place, err=err['error'])
+                    pass
+                elif loader == WheelLoader.__name__:
+                    stats['errors'][check][loader] = str(error['error'])
+
 
         now = datetime.utcnow()
         stats['uptime'] = (now - self._started).total_seconds()

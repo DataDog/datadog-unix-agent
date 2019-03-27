@@ -51,7 +51,6 @@ class APIStatusHandler(tornado.web.RequestHandler):
                 elif loader == WheelLoader.__name__:
                     stats['errors'][check][loader] = str(error['error'])
 
-
         now = datetime.utcnow()
         stats['uptime'] = (now - self._started).total_seconds()
         stats['utc_time'] = now.strftime("%a, %d %b %Y %H:%M:%S.%f %Z")

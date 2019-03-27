@@ -1,9 +1,11 @@
 #!/bin/bash
 
+VERBOSE=${VERBOSE:-0}
 PROJECT_TARGET_DIR=$(pwd)
-GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+USE_GIT=${USE_GIT:-1}
 PROJECT_BRANCH=${PROJECT_BRANCH:-master}
 PROJECT_URL="https://github.com/DataDog/datadog-unix-agent/tarball/${PROJECT_BRANCH}"
+PROJECT_GIT_REPO="https://github.com/DataDog/datadog-unix-agent.git"
 PROJECT_TARBALL="datadog-unix-agent.tar.gz"
 PROJECT_DIR=$(echo $PROJECT_TARBALL | cut -f1 -d.)
 YUM_URL="http://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh"
@@ -17,6 +19,16 @@ YAJL_DIR=$(echo $YAJL_TARBALL | cut -f1 -d.)
 CURL_CMD="curl -s -L -o"
 GNU_TAR="/opt/freeware/bin/tar"
 
+# version pins
+GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+COREUTILS_VERSION=${GIT_VERSION:-8.29-3}
+CURL_VERSION=${GIT_VERSION:-7.64.0-1}
+LIBFFI_VERSION=${GIT_VERSION:-3.2.1-3}
+RUBY_VERSION=${GIT_VERSION:-2.5.1-1}
+SUDO_VERSION=${GIT_VERSION:-1.8.21p2-1}
+TAR_VERSION=${GIT_VERSION:-1.30-1}
+GIT_VERSION=${GIT_VERSION:-2.18.0-1}
+
 function is_sudo {
     if [ $(id -u) -eq "0" ]; then
         return 0
@@ -24,6 +36,10 @@ function is_sudo {
         return 1
     fi
 }
+
+if [ "$VERBOSE" -ne "0" ]; then
+    set -x
+fi
 
 if ! is_sudo; then
     echo "Please run this script with super-user powers."
@@ -74,7 +90,7 @@ then
 fi
 
 set +e
-GCC_VERSION_INSTALLED=$(yum list gcc | tail -n 1 | awk '{print $2}')
+GCC_VERSION_INSTALLED=$(yum list installed gcc | tail -n 1 | awk '{print $2}')
 set -e
 
 if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
@@ -84,13 +100,16 @@ if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
 
     # installing compiler dependencies
     echo "installing compiler build dependencies..."
+    yum install -y -q libgcc-$GCC_VERSION
+    yum install -y -q libstdc++-$GCC_VERSION
     yum install -y -q gcc-$GCC_VERSION
     yum install -y -q gcc-c++-$GCC_VERSION
 fi
 
 # installing build dependencies
 echo "installing additional build dependencies..."
-yum install -y -q coreutils sudo libffi libffi-devel ruby ruby-devel tar curl git
+yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${LIBFFI_VERSION} libffi-devel-${LIBFFI_VERSION} \
+    ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION}
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."
@@ -118,16 +137,6 @@ bundle exec rake compile
 bundle exec rake package
 gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
-echo "pulling AIX agent project..."
-cd $PROJECT_TARGET_DIR
-mkdir -p $PROJECT_DIR
-$CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
-$GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
-
-echo "installing omnibus dependencies..."
-cd ./${PROJECT_DIR}/omnibus
-bundle install
-
 echo "setting git attributes (if available)..."
 if [ ! -z "$GIT_NAME" ]; then
     git config --global user.name "$GIT_NAME"
@@ -136,5 +145,19 @@ fi
 if [ ! -z "$GIT_EMAIL" ]; then
     git config --global user.email "$GIT_EMAIL"
 fi
+
+echo "pulling AIX agent project..."
+cd $PROJECT_TARGET_DIR
+if [ "$USE_GIT" -eq "0" ]; then
+  mkdir -p $PROJECT_DIR
+  $CURL_CMD ./$PROJECT_TARBALL $PROJECT_URL
+  $GNU_TAR xvzf $PROJECT_TARBALL -C ./$PROJECT_DIR --strip=1
+else
+  git clone -b $PROJECT_BRANCH $PROJECT_GIT_REPO $PROJECT_DIR
+fi
+
+echo "installing omnibus dependencies..."
+cd ./${PROJECT_DIR}/omnibus
+bundle install
 
 echo "you should be ready to go..."

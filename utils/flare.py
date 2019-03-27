@@ -15,6 +15,7 @@ import requests
 
 from .network import get_proxy
 from .hostname import get_hostname
+from .strip import Replacer
 from config import config
 
 log = logging.getLogger(__name__)
@@ -24,6 +25,13 @@ class Flare(object):
     TIMEOUT = 60
     MAX_UPLOAD_SIZE = 10485000
     DATADOG_SUPPORT_URL = '/support/flare'
+    DEFAULT_REPLACERS = [
+        Replacer(r'[a-fA-F0-9]{27}([a-fA-F0-9]{5})', r'***************************\1', None),  # api key
+        Replacer(r'[a-fA-F0-9]{35}([a-fA-F0-9]{5})', r'***************************\1', None),  # application key
+        Replacer(r'([A-Za-z]+\:\/\/|\b)([A-Za-z0-9_]+)\:([^\s-]+)\@', r'\1\2:********@', None),  # uris
+        Replacer(Replacer.yaml_key_match_pattern(r'pass(word)?'), r'\1 ********', ['pass']),  # passwords
+        Replacer(Replacer.yaml_key_match_pattern(r'token'), r'\1 ********', ['token']),  # tokens
+    ]
 
     def __init__(self, paths=[], compression=zipfile.ZIP_DEFLATED, case_id=None, email=None):
         self._filename = "datadog-agent-{}.zip".format(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
@@ -31,14 +39,39 @@ class Flare(object):
         self._compression = zipfile.ZIP_DEFLATED
         self._mode = 'w'
         self._paths = set(paths)
+        self._replacers = list(self.DEFAULT_REPLACERS)
 
         # flare case
         self._hostname = get_hostname()
         self._case_id = int(case_id) if case_id else None
         self._email = email
 
+    def redact(self, path):
+        try:
+            redacted = []
+            with open(path, 'r') as fp:
+                for line in fp.readlines():
+                    for replacer in self._replacers:
+                        line = replacer.replace(line)
+
+                    redacted.append(line)
+        except FileNotFoundError:
+            log.error("unable to load file %s for redacting", path)
+            raise
+
+        return redacted
+
+    def add_replacer(self, replacer):
+        if replacer:
+            self._replacers.append(replacer)
+
     def add_path(self, path):
-        self._paths.add(path)
+        if not path or not os.path.exists(path):
+            return
+        if os.path.isdir(path):
+            self._paths.add(path)
+        else:
+            self._paths.add(os.path.dirname(path))
 
     def get_archive_path(self):
         return os.path.join(self._tempdir, self._filename)
@@ -50,7 +83,11 @@ class Flare(object):
                 try:
                     for root, dirs, files in os.walk(path):
                         for fp in files:
-                            flare_zip.write(os.path.join(root, fp))
+                            try:
+                                redacted = self.redact(os.path.join(root, fp))
+                                flare_zip.writestr(os.path.join(root, fp), ''.join(redacted))
+                            except Exception:
+                                log.error("unable to add file %s in path %s to flare", os.path.join(root, fp), path)
                 except Exception as e:
                     log.error("unable to add path %s to zip archive: %s", path, e)
 

@@ -91,6 +91,7 @@ class Config(object):
                     log.info("loaded config from: %s", conf_path)
                     self._loaded_config = conf_path
                     loaded = True
+
                     break
             else:
                 log.error("Could not find %s in search_paths: %s", self.conf_name, self.search_paths)

@@ -65,7 +65,7 @@ class AgentRunner(Thread):
                 self._collector.run_checks()
                 self._serializer.serialize_and_push()
             except Exception as e:
-                log.exception("Unexpected error in last collection run", e)
+                log.exception("Unexpected error in last collection run")
 
             time.sleep(self._config.get('min_collection_interval'))
 
@@ -146,9 +146,10 @@ class Agent(Daemon):
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
         myflare = Flare(case_id=case_id, email=email)
-        myflare.add_path(os.path.dirname(config.get('conf_path')))
-        myflare.add_path(os.path.dirname(config.get('logging').get('agent_log_file')))
-        myflare.add_path(os.path.dirname(config.get('logging').get('dogstatsd_log_file')))
+        myflare.add_path(config.get('conf_path'))
+        myflare.add_path(config.get_loaded_config())
+        myflare.add_path(config.get('logging').get('agent_log_file'))
+        myflare.add_path(config.get('logging').get('dogstatsd_log_file'))
         myflare.add_path(config.get('additional_checksd'))
 
         flarepath = myflare.create_archive()

@@ -38,8 +38,7 @@ class APIServer(Thread):
                 config=self._config,
                 collector=collector,
                 started=self._start_time,
-                aggregator_stats=aggregator_stats)
-            ),
+                aggregator_stats=aggregator_stats)),
         ])
         self._server = tornado.httpserver.HTTPServer(self._app)
 

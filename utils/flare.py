@@ -4,7 +4,6 @@
 # Copyright 2018 Datadog, Inc.
 
 import os
-import re
 import zipfile
 import logging
 import datetime

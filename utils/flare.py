@@ -38,7 +38,12 @@ class Flare(object):
         self._email = email
 
     def add_path(self, path):
-        self._paths.add(path)
+        if not path or not os.path.exists(path):
+            return
+        if os.path.isdir(path):
+            self._paths.add(path)
+        else:
+            self._paths.add(os.path.dirname(path))
 
     def get_archive_path(self):
         return os.path.join(self._tempdir, self._filename)

@@ -123,7 +123,8 @@ class Agent(Daemon):
         return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS.keys()))
 
     @classmethod
-    def status(cls):
+    def status(cls, to_screen=True):
+        rendered = None
         api_addr = config['api']['bind_host']
         api_port = config['api']['port']
         target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
@@ -137,12 +138,15 @@ class Agent(Daemon):
             r.raise_for_status()
 
             status = r.json()
-            out = template.render(version=AGENT_VERSION, status=status)
-            print(out)
+            rendered = template.render(version=AGENT_VERSION, status=status)
+            if to_screen:
+                print(rendered)
         except requests.exceptions.HTTPError as e:
             log.error("HTTP error collecting agent status: {}".format(e))
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
             log.error("Problem connecting or connection timed out, is the agent up?\n\nError: {}".format(e))
+
+        return rendered
 
     @classmethod
     def flare(cls, case_id):
@@ -155,7 +159,7 @@ class Agent(Daemon):
         myflare.add_path(config.get('logging').get('dogstatsd_log_file'))
         myflare.add_path(config.get('additional_checksd'))
 
-        flarepath = myflare.create_archive()
+        flarepath = myflare.create_archive(status=cls.status(to_screen=False))
 
         print('The flare is going to be uploaded to Datadog')
         choice = input('Do you want to continue [Y/n]? ')

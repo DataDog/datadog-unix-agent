@@ -23,6 +23,7 @@ log = logging.getLogger(__name__)
 class Flare(object):
     TIMEOUT = 60
     MAX_UPLOAD_SIZE = 10485000
+    STATUS_FILE = 'status.log'
     DATADOG_SUPPORT_URL = '/support/flare'
 
     def __init__(self, paths=[], compression=zipfile.ZIP_DEFLATED, case_id=None, email=None):
@@ -43,7 +44,7 @@ class Flare(object):
     def get_archive_path(self):
         return os.path.join(self._tempdir, self._filename)
 
-    def create_archive(self):
+    def create_archive(self, status=None):
         flarepath = self.get_archive_path()
         with zipfile.ZipFile(flarepath, self._mode, self._compression) as flare_zip:
             for path in self._paths:
@@ -53,6 +54,9 @@ class Flare(object):
                             flare_zip.write(os.path.join(root, fp))
                 except Exception as e:
                     log.error("unable to add path %s to zip archive: %s", path, e)
+
+            if status:
+                flare_zip.writestr(self.STATUS_FILE, status)
 
         return flarepath
 

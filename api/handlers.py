@@ -41,7 +41,7 @@ class APIStatusHandler(tornado.web.RequestHandler):
 
         stats['errors'] = {}
         for check, errors in self._collector.collector_status().items():
-            if check in stats['checks']:  # check eventually loaded
+            if check in self._collector._check_classes:  # check eventually loaded
                 continue
 
             stats['errors'][check] = {}

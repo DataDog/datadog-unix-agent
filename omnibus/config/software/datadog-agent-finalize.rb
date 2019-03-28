@@ -13,11 +13,24 @@ description "steps required to finalize the build"
 default_version "1.0.0"
 skip_transitive_dependency_licensing true
 
+python_version = ENV['PYTHON_VERSION']
+if python_version.nil? || python_version.empty? || python_version == "3"
+  dependency "python3"
+elsif python_version == "2"
+  dependency "python"
+  dependency 'pip'
+end
+
 build do
-  # TODO too many things done here, should be split
+  python_path = "#{install_dir}/embedded/bin/python"
+
   block do
     etc_dir = "/etc/datadog-agent"
     var_dir = "/var/log/datadog"
+
+    # compile pyc files
+    command "#{python_path} -m compileall #{install_dir}"
+    command "find . -type f -name '*.pyc' >> #{install_dir}/.pyc_compiled_files", :cwd => install_dir
 
     # Conf files
     if aix?

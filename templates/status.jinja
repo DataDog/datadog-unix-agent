@@ -23,6 +23,7 @@ Configuration
 
 Running Checks
 ==============
+{% if status.get('checks', {})|length > 0 -%}
 {% for check, stats in status.get('checks', {}).items() %}
   - {{ check }}
     {{ '-'*check|length }}
@@ -30,24 +31,26 @@ Running Checks
     events: {{ stats.get('events', 0) }}
     service checks: {{ stats.get('service_checks', 0) }}
 {% endfor %}
-
+{% else %}
+  There are currently no running checks.
+{% endif %}
   Last Flush Metric Count: {{ status.get('last_metric_pkt_count') }}
   Last Flush Event Count: {{ status.get('last_event_pkt_count')}}
   Last Flush Service Check Count: {{ status.get('last_service_check_pkt_count')}}
   Total Metric Count: {{ status.get('total_metric_pkt_count') }}
   Total Event Count: {{ status.get('total_event_pkt_count')}}
   Total Service Check Count: {{ status.get('total_service_check_pkt_count')}}
-{% if status.get('errors', {})|length > 0 %}
 
+{% if status.get('errors', {})|length > 0 -%}
 Errors
 ======
 {% for check, error in status.get('errors', {}).items() %}
   - {{ check }}
     {{ '-'*check|length }}
-    {% for loader, error in error.items() %}
+    {% for loader, error in error.items() -%}
       {{ loader }}: {{ error }}
-    {% endfor %}
-{% endfor %}
+    {% endfor -%}
+{% endfor -%}
 {% endif %}
 
 API Key Status

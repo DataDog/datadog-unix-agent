@@ -40,18 +40,6 @@ Running Checks
   Total Metric Count: {{ status.get('total_metric_pkt_count') }}
   Total Event Count: {{ status.get('total_event_pkt_count')}}
   Total Service Check Count: {{ status.get('total_service_check_pkt_count')}}
-{% if status.get('errors', {})|length > 0 %}
-
-Errors
-======
-{% for check, error in status.get('errors', {}).items() %}
-  - {{ check }}
-    {{ '-'*check|length }}
-    {% for loader, error in error.items() %}
-      {{ loader }}: {{ error }}
-    {% endfor %}
-{% endfor %}
-{% endif %}
 
 {% if status.get('errors', {})|length > 0 -%}
 Errors

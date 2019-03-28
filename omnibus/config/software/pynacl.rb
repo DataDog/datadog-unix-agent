@@ -23,7 +23,7 @@ build do
   ship_license "https://raw.githubusercontent.com/pyca/pynacl/master/LICENSE"
 
   if aix?
-    env = aix_env 
+    env = aix_env
   else
     env = with_standard_compiler_flags(with_embedded_path)
   end

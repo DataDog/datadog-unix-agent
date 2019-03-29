@@ -27,6 +27,7 @@ class Collector(object):
         self._loaders = []
         self._check_classes = {}
         self._check_classes_errors = defaultdict(dict)
+        self._check_instance_errors = defaultdict(dict)
         self._check_instances = defaultdict(list)
         self._check_instance_signatures = {}
         self._hostname = get_hostname()
@@ -49,11 +50,12 @@ class Collector(object):
     def collector_status(self):
         self._errors_mutex.acquire()
         try:
-            errors = deepcopy(self._check_classes_errors)
+            loader_errors = deepcopy(self._check_classes_errors)
+            runtime_errors = deepcopy(self._check_instance_errors)
         finally:
             self._errors_mutex.release()
 
-        return errors
+        return loader_errors, runtime_errors
 
     def load_core_checks(self):
         from checks.corechecks.system import (
@@ -152,5 +154,6 @@ class Collector(object):
                     log.exception("error for instance: %s", str(check.instance))
 
                 if result:
+                    self._check_instance_errors[name][check.signature] = result
                     log.error('There was an error running your %s: %s', name, result.get('message'))
                     log.error('Traceback %s: %s', name, result.get('traceback'))

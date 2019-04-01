@@ -17,9 +17,11 @@ from config import config
 from config.default import DEFAULT_PATH
 from serialize import Serializer
 from forwarder import Forwarder
+from utils.daemon import Daemon
 from utils.hostname import get_hostname
 from utils.logs import initialize_logging
 from utils.network import get_proxy
+from utils.pidfile import PidFile
 from utils.signals import SignalHandler
 
 from dogstatsd import (
@@ -30,6 +32,9 @@ from dogstatsd.constants import (  # pylint: disable=no-name-in-module
     DOGSTATSD_FLUSH_INTERVAL,
     DOGSTATSD_AGGREGATOR_BUCKET_SIZE,
 )
+
+# Globals
+PID_NAME = 'datadog-unix-agent.dogstatsd'
 
 log = logging.getLogger('dogstatsd')
 
@@ -108,32 +113,18 @@ def init_dogstatsd(config):
 
     return reporter, server, forwarder
 
-
-def main(config_path=None):
-    """ The main entry point for the unix version of dogstatsd. """
-    COMMANDS_START_DOGSTATSD = [
+class Dogstatsd(Daemon):
+    COMMANDS = [
         'start',
-        'restart',
+        'stop',
     ]
 
-    parser = optparse.OptionParser("%prog [start|stop|restart|status]")
-    parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                      dest="use_forwarder", default=False)
-    opts, args = parser.parse_args()
+    @classmethod
+    def usage(cls):
+        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
 
-    try:
-        init_config()
-    except Exception as e:
-        logging.error("Problem initializing configuration: %s", e)
-        return 1
-
-    if not args or args[0] in COMMANDS_START_DOGSTATSD:
+    def run(self):
         reporter, server, forwarder = init_dogstatsd(config)
-
-    # If no args were passed in, run the server in the foreground.
-    command = 'start' if not args else args[0]
-
-    if command == 'start'or command == 'restart':
 
         handler = SignalHandler()
         # components
@@ -149,7 +140,12 @@ def main(config_path=None):
 
         # start components
         reporter.start()
-        server.start()
+        try:
+            server.start()
+        except OSError as e:
+            log.error("There was a problem starting the dogstatsd server %s", e)
+            forwarder.stop()
+            reporter.stop()
 
         reporter.join()
         logging.info("Dogstatsd reporter done...")
@@ -158,6 +154,43 @@ def main(config_path=None):
         handler.join()
 
         logging.info("Thank you for shopping at DataDog! Come back soon!")
+
+
+def main(config_path=None):
+    """ The main entry point for the unix version of dogstatsd. """
+    COMMANDS_START_DOGSTATSD = [
+        'start',
+    ]
+
+    parser = optparse.OptionParser("%prog [{commands}]".format(commands='|'.join(Dogstatsd.COMMANDS)))
+    parser.add_option('-u', '--use-local-forwarder', action='store_true',
+                      dest="use_forwarder", default=False)
+    parser.add_option('-b', '--background', action='store_true', default=False,
+                      dest='background', help='Run agent on the foreground')
+    options, args = parser.parse_args()
+
+    try:
+        init_config()
+    except Exception as e:
+        logging.error("Problem initializing configuration: %s", e)
+        return 1
+
+    if (os.path.dirname(os.path.realpath(__file__)) != os.path.join(DEFAULT_PATH, 'agent')):
+        log.info("""You don't seem to be running a package installed agent (expected
+                 at %s). You may need to specify sane locations for your configs,
+                 logs, run path, etc. And remember to drop the configuration
+                 file in one of the supported locations.""" % DEFAULT_PATH)
+
+    # If no args were passed in, run the server in the foreground.
+    pid_dir = config.get('run_path')
+    dogstatsd = Dogstatsd(PidFile(PID_NAME, pid_dir).get_path())
+
+    foreground = not options.background
+    command = 'start' if not args else args[0]
+    if command in COMMANDS_START_DOGSTATSD:
+        dogstatsd.start(foreground=foreground)
+    elif command == 'stop':
+        dogstatsd.stop()
     else:
         sys.stderr.write("Unknown command: %s\n\n" % command)
         parser.print_help()

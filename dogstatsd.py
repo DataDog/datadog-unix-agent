@@ -19,7 +19,7 @@ from serialize import Serializer
 from forwarder import Forwarder
 from utils.hostname import get_hostname
 from utils.logs import initialize_logging
-from utils.network import get_proxy
+from utils.network import get_proxy, get_site_url
 from utils.signals import SignalHandler
 
 from dogstatsd import (
@@ -71,7 +71,7 @@ def init_dogstatsd(config):
 
     forwarder = Forwarder(
         api_key,
-        dd_url,
+        get_site_url(dd_url, site=config.get('site')),
         proxies=proxies,
     )
     forwarder.start()

@@ -4,11 +4,13 @@
 # Copyright 2018 Datadog, Inc.
 
 import os
+from urllib.parse import urlparse
 
 from utils.network import (
     mapto_v6,
     get_socket_address,
     get_proxy,
+    get_site_url,
     LOCAL_PROXY_SKIP,
 )
 
@@ -115,3 +117,20 @@ def test_get_proxy_from_env():
     no_proxy = proxy_settings['no_proxy'].split(',')
     for host in LOCAL_PROXY_SKIP + [proxy_skip_address]:
         assert host in no_proxy
+
+def test_get_site():
+    from config import config
+
+    dd_url = config.get('dd_url')
+    dd_site = get_site_url(dd_url, site=config.get('site'))
+    assert dd_site == config.get('dd_url')
+
+    dd_site = get_site_url(dd_url, site='datadoghq.eu')
+    assert dd_site != config.get('dd_url')
+
+    parsed_dd_url = urlparse(dd_url)
+    parsed_dd_site = urlparse(dd_site)
+    assert parsed_dd_site.netloc.split('.')[0:-2] == parsed_dd_url.netloc.split('.')[0:-2]
+    assert parsed_dd_site.netloc.endswith('datadoghq.eu')
+    assert parsed_dd_site.scheme == 'https'
+

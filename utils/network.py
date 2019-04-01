@@ -8,7 +8,7 @@ import socket
 import logging
 
 from urllib.request import getproxies
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from socket import inet_pton
 
 from config import config
@@ -141,3 +141,32 @@ def config_proxy_skip(proxies, uri, skip_proxy=False):
                 proxies['https'] = None
 
     return proxies
+
+
+def get_site_url(uri, site=''):
+    if not site:
+        return uri
+
+    parsed_uri = urlparse(uri)
+    domain = parsed_uri.netloc or parsed_uri.path
+    if not domain:
+        raise TypeError()
+
+    # TODO: add support for three part domain names (currently only 2-part roots are supported)
+    domain_parts = domain.split('.')
+    if len(domain_parts) > 2:
+        site_domain = "{service}.{site}".format(
+            service='.'.join(domain_parts[0:-2]),
+            site=site
+        )
+    else:
+        site_domain=site
+
+    if parsed_uri.netloc:
+        parsed_uri = parsed_uri._replace(netloc=site_domain)
+    else:
+        parsed_uri = parsed_uri._replace(path=site_domain)
+
+    return urlunparse(parsed_uri)
+
+

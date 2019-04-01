@@ -150,7 +150,7 @@ def get_site_url(uri, site=''):
     parsed_uri = urlparse(uri)
     domain = parsed_uri.netloc or parsed_uri.path
     if not domain:
-        raise TypeError()
+        raise TypeError("unexpected or invalid uri format")
 
     # TODO: add support for three part domain names (currently only 2-part roots are supported)
     domain_parts = domain.split('.')
@@ -160,7 +160,7 @@ def get_site_url(uri, site=''):
             site=site
         )
     else:
-        site_domain=site
+        site_domain = site
 
     if parsed_uri.netloc:
         parsed_uri = parsed_uri._replace(netloc=site_domain)
@@ -168,5 +168,3 @@ def get_site_url(uri, site=''):
         parsed_uri = parsed_uri._replace(path=site_domain)
 
     return urlunparse(parsed_uri)
-
-

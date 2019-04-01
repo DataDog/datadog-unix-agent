@@ -133,4 +133,3 @@ def test_get_site():
     assert parsed_dd_site.netloc.split('.')[0:-2] == parsed_dd_url.netloc.split('.')[0:-2]
     assert parsed_dd_site.netloc.endswith('datadoghq.eu')
     assert parsed_dd_site.scheme == 'https'
-

@@ -1,8 +1,7 @@
 dd_url: https://app.datadoghq.com
+site: datadoghq.com
 api_key: <api_key_here>
-log_level: debug
-logging:
-    agent_log_file: agent.log
-proxy:
-    http: http://localhost:3128
-    https: http://localhost:3128
+log_level: info
+# proxy:
+#     http: http://localhost:3128
+#     https: http://localhost:3128

@@ -228,9 +228,11 @@ class Agent(Daemon):
         # instantiate Dogstatsd
         reporter = None
         dogstatsd = None
+
         dsd_enable = config['dogstatsd'].get('enable', False)
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
+            dsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
         api = APIServer(config, aggregator.stats)
@@ -256,10 +258,18 @@ class Agent(Daemon):
 
         if dsd_enable:
             reporter.start()
-            dsd_server.start()
+            dsd.start()
+
+            dsd.join()
+            logging.info("Dogstatsd server done...")
+            try:
+                dsd.raise_for_status()
+            except Exception as e:
+                log.error("There was a problem with the dogstatsd server: %s", e)
+                reporter.stop()
 
         runner.join()
-        logging.info("Agent done...")
+        logging.info("Collector done...")
 
         api.join()
         logging.info("API done...")

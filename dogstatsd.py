@@ -90,6 +90,7 @@ class Dogstatsd(Daemon):
 
         handler.stop()
         handler.join()
+        logging.info("Signal handler done...")
 
         logging.info("Thank you for shopping at DataDog! Come back soon!")
 

@@ -156,9 +156,7 @@ else
     $sudo_cmd sh -c "sed 's/api_key:.*/api_key: $apikey/' $CONF" > $tmp_config
     $sudo_cmd mv $tmp_config $CONF
   else
-    # If the import script failed for any reason, we might end here also in case
-    # of upgrade, let's not start the agent or it would fail because the api key
-    # is missing
+    # if for whatever reason there's no key, don't start
     if ! $sudo_cmd grep -q -E '^api_key: .+' $CONF; then
       printf "\033[31mThe Agent won't start automatically at the end of the script because the Api key is missing, please add one in datadog.yaml and start the agent manually.\n\033[0m\n"
       no_start=true
@@ -198,16 +196,16 @@ if [ $OS = "AIX" ]; then
 fi
 
 
-if [ $no_start ]; then
+if [ ! -z "${no_start}" ]; then
     printf "\033[34m
-* DD_INSTALL_ONLY environment variable set: the newly installed version of the agent
-will not be started. You will have to do it manually using the following
-command:
+* DD_INSTALL_ONLY environment variable set or no complete config available:
+the newly installed version of the agent will not be started. You will have
+to do it manually using the following commands:
 
     $stop_instructions && $start_instructions
 
 \033[0m\n"
-    exit
+    exit 0
 fi
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
@@ -228,5 +226,3 @@ And to run it again run:
     $start_instructions
 
 \033[0m"
-
-rm -f $npipe

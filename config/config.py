@@ -38,11 +38,17 @@ class Config(object):
 
     def __getitem__(self, key):
         try:
-            ret = self.data[key]
-        except KeyError:
-            ret = self.defaults[key]
+            item = self.data[key]
 
-        return ret
+            if isinstance(item, dict) and key in self.defaults and isinstance(self.defaults[key], dict):
+                # merge the configs
+                merge_config = copy.deepcopy(self.defaults[key])
+                merge_config.update(item)
+                item = merge_config
+        except KeyError:
+            item = self.defaults[key]
+
+        return item
 
     def __setitem__(self, key, value):
         self.set(key, value)
@@ -69,7 +75,10 @@ class Config(object):
         del self.data[key]
 
     def get(self, key, default=None):
-        return self.data.get(key, self.defaults.get(key, default))
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def get_loaded_config(self):
         return self._loaded_config

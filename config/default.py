@@ -66,7 +66,7 @@ def init(config):
             'https': None,
         },
         'dogstatsd': {
-            'enabled': True,
+            'enabled': False,
             'bind_host': DEFAULT_BIND_HOST,
             'port': DEFAULT_DOGSTATSD_PORT,
             'non_local_traffic': False,

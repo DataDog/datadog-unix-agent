@@ -38,16 +38,19 @@ def is_valid_hostname(hostname):
         return False
     return True
 
-def _get_hostname(cmd=[]):
+def _get_hostname(cmd=[], validate=False):
     fqdn = subprocess.check_output(cmd).strip()
-    if fqdn and is_valid_hostname(fqdn):
-        return fqdn
+    if fqdn:
+        if not validate:
+            return fqdn
+        elif is_valid_hostname(fqdn):
+            return fqdn
 
-def get_hostname_std():
-    return _get_hostname(['/bin/hostname', '-s'])
+def get_hostname_std(validate=False):
+    return _get_hostname(['/bin/hostname', '-s'], validate)
 
-def get_hostname_solaris():
-    return _get_hostname(['/bin/hostname'])
+def get_hostname_solaris(validate=False):
+    return _get_hostname(['/bin/hostname'], validate)
 
 def get_hostname(config_override=True):
     """

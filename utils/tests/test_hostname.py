@@ -11,10 +11,9 @@ from config import config
 
 def test_is_valid_hostname():
     assert not is_valid_hostname("localhost")
-    assert not is_valid_hostname('localhost')
-    assert not is_valid_hostname('localhost.localdomain')
-    assert not is_valid_hostname('localhost6.localdomain6')
-    assert not is_valid_hostname('ip6-localhost')
+    assert not is_valid_hostname("localhost.localdomain")
+    assert not is_valid_hostname("localhost6.localdomain6")
+    assert not is_valid_hostname("ip6-localhost")
 
     # test MAX_HOSTNAME_LEN
     assert not is_valid_hostname("a" * 256)
@@ -33,6 +32,13 @@ def test_get_hostname_conf():
 @mock.patch('subprocess.check_output', return_value="subprocess-hostname")
 def test_get_hostname_bin(subprocess):
     assert get_hostname() == "subprocess-hostname"
+
+@mock.patch('subprocess.check_output', return_value="subprocess_hostname")
+def test_get_hostname_bin(subprocess):
+    # this would fail validation if specified manually
+    # but since it's collected from the OS we let it fly
+    assert not is_valid_hostname("subprocess_hostname")
+    assert get_hostname() == "subprocess_hostname"
 
 @mock.patch("subprocess.check_output", return_value="")
 @mock.patch("socket.gethostname", return_value="socket-hostname")

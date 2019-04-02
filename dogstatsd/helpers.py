@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import logging
+from threading import Thread, Event
 
 from aggregator import MetricsBucketAggregator
 from aggregator.formatters import get_formatter
@@ -50,7 +51,6 @@ def init_dogstatsd(config, forwarder=None):
             dd_url,
             proxies=proxies,
         )
-        forwarder.start()
 
     aggregator = MetricsBucketAggregator(
         hostname,
@@ -83,3 +83,26 @@ def init_dogstatsd(config, forwarder=None):
                     forward_to_port=forward_to_port, so_rcvbuf=so_rcvbuf)
 
     return reporter, server, forwarder
+
+
+class DogstatsdRunner(Thread):
+    def __init__(self, server):
+        super(DogstatsdRunner, self).__init__()
+        self._server = server
+        self._error = None
+
+    def stop(self):
+        log.info('Stopping Dogstatsd Runner...')
+        self._server.stop()
+
+    def run(self):
+        log.info('Starting Dogstatsd Runner...')
+
+        try:
+            self._server.start()
+        except OSError as e:
+            self._error = e
+
+    def raise_for_status(self):
+        if self._error:
+            raise self._error

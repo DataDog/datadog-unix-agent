@@ -7,6 +7,8 @@ import logging
 import select
 import socket
 
+from threading import Event
+
 from utils.network import (
     IPPROTO_IPV6,
     IPV6_V6ONLY,
@@ -30,7 +32,7 @@ class Server(object):
         self.buffer_size = 1024 * 8
         self.so_rcvbuf = so_rcvbuf
 
-        self.running = False
+        self.running = Event()
 
         self.should_forward = forward_to_host is not None
 
@@ -92,9 +94,8 @@ class Server(object):
         forward_udp_sock = self.forward_udp_sock
 
         # Run our select loop.
-        self.running = True
         message = None
-        while self.running:
+        while not self.running.is_set():
             try:
                 ready = select_select(sock, [], [], timeout)
                 if ready[0]:
@@ -114,4 +115,4 @@ class Server(object):
                 logging.exception('Error receiving datagram `%s`', message)
 
     def stop(self):
-        self.running = False
+        self.running.set()

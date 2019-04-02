@@ -13,15 +13,15 @@ import sys
 
 from config import config
 from config.default import DEFAULT_PATH
-from forwarder import Forwarder
 from utils.daemon import Daemon
-from utils.hostname import get_hostname
 from utils.logs import initialize_logging
-from utils.network import get_proxy
 from utils.pidfile import PidFile
 from utils.signals import SignalHandler
 
-from dogstatsd.helpers import init_dogstatsd
+from dogstatsd.helpers import (
+    init_dogstatsd,
+    DogstatsdRunner,
+)
 
 # Globals
 PID_NAME = 'datadog-unix-agent.dogstatsd'
@@ -57,6 +57,8 @@ class Dogstatsd(Daemon):
     def run(self):
         reporter, server, forwarder = init_dogstatsd(config)
 
+        dsd = DogstatsdRunner(server)
+
         handler = SignalHandler()
         # components
         handler.register('forwarder', forwarder)
@@ -70,13 +72,18 @@ class Dogstatsd(Daemon):
         handler.start()
 
         # start components
+        forwarder.start()
         reporter.start()
+        dsd.start()
+
+        dsd.join()
+        logging.info("Dogstatsd server done...")
         try:
-            server.start()
-        except OSError as e:
-            log.error("There was a problem starting the dogstatsd server %s", e)
-            forwarder.stop()
+            dsd.raise_for_status()
+        except Exception as e:
+            log.error("There was a problem with the dogstatsd server: %s", e)
             reporter.stop()
+            forwarder.stop()
 
         reporter.join()
         logging.info("Dogstatsd reporter done...")

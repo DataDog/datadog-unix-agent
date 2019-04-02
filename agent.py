@@ -36,6 +36,12 @@ from serialize import Serializer
 from forwarder import Forwarder
 from api import APIServer
 
+from dogstatsd.helpers import (
+    init_dogstatsd,
+    DogstatsdRunner,
+)
+
+
 # Globals
 AGENT_VERSION = '0.8.0'
 PID_NAME = 'datadog-unix-agent'
@@ -226,6 +232,13 @@ class Agent(Daemon):
         # instantiate AgentRunner
         runner = AgentRunner(collector, serializer, config)
 
+        # instantiate Dogstatsd
+        reporter = None
+        dogstatsd = None
+        dsd_enable = config['dogstatsd'].get('enable', False)
+        if dsd_enable:
+            reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
+
         # instantiate API
         api = APIServer(config, collector, aggregator.stats)
 
@@ -234,6 +247,10 @@ class Agent(Daemon):
         handler.register('runner', runner)
         handler.register('forwarder', forwarder)
         handler.register('api', api)
+        if dsd_enable:
+            handler.register('reporter', reporter)
+            handler.register('dsd_server', dsd_server)
+
         # signals
         handler.handle(signal.SIGTERM)
         handler.handle(signal.SIGINT)
@@ -243,6 +260,10 @@ class Agent(Daemon):
 
         runner.start()
         api.start()
+
+        if dsd_enable:
+            reporter.start()
+            dsd_server.start()
 
         runner.join()
         logging.info("Agent done...")

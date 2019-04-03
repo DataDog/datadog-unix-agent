@@ -4,7 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import logging
-from threading import Thread, Event
+from threading import Thread
 
 from aggregator import MetricsBucketAggregator
 from aggregator.formatters import get_formatter

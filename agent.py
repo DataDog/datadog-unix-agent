@@ -226,13 +226,13 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate Dogstatsd
+        runner_dogstatsd = None
         reporter = None
-        dogstatsd = None
 
         dsd_enable = config['dogstatsd'].get('enable', False)
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
-            dsd = DogstatsdRunner(dsd_server)
+            runner_dogstatsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
         api = APIServer(config, aggregator.stats)
@@ -256,14 +256,14 @@ class Agent(Daemon):
         runner.start()
         api.start()
 
-        if dsd_enable:
+        if runner_dogstatsd:
             reporter.start()
-            dsd.start()
+            runner_dogstatsd.start()
 
-            dsd.join()
+            runner_dogstatsd.join()
             logging.info("Dogstatsd server done...")
             try:
-                dsd.raise_for_status()
+                runner_dogstatsd.raise_for_status()
             except Exception as e:
                 log.error("There was a problem with the dogstatsd server: %s", e)
                 reporter.stop()

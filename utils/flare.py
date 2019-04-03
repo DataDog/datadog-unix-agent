@@ -16,6 +16,7 @@ import requests
 from .network import get_proxy
 from .hostname import get_hostname
 from .strip import Replacer
+from .platform import get_os
 from config import config
 
 log = logging.getLogger(__name__)
@@ -107,12 +108,12 @@ class Flare(object):
 
         flare_path = self.get_archive_path()
         if not os.path.exists(flare_path):
-            return False
+            return False, None
 
         if not self._validate_size():
             log.info("%s won't be uploaded, its size is too large.\n"
                         "You can send it directly to support by email.", flare_path)
-            return False
+            return False, None
 
         log.info("Uploading {0} to Datadog Support".format(flare_path))
         with open(flare_path, 'rb') as flare_file:
@@ -123,6 +124,7 @@ class Flare(object):
                         'hostname': self._hostname,
                         'email': self._email,
                         'agent_version': self._agent_version,
+                        'platform': get_os(),
                     },
                     'files': {'flare_file': flare_file},
                     'timeout': self.TIMEOUT
@@ -135,9 +137,10 @@ class Flare(object):
                 resp = requests.post(url, **requests_options)
             except requests.exceptions.Timeout:
                 log.error("Connection timout to: %s", url)
-                return False
+                return False, None
 
             success = False
+            case_id = None
             if resp.status_code in (400, 404, 413):
                 log.error("Error code %d received while uploading flare to %s: %s, dropping it",
                         resp.status_code, url, str(resp.text))
@@ -148,8 +151,12 @@ class Flare(object):
             else:
                 log.debug("Successfully posted payload to %s: %s", url, resp.text)
                 success = True
+                try:
+                    case_id = resp.json().get('case_id', None)
+                except ValueError as e:
+                    log.info("bogus response after successful upload - could not retrieve case id: %s", e)
 
-        return success
+        return success, case_id
 
     def cleanup(self):
         if os.path.exists(self._tempdir):

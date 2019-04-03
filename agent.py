@@ -160,7 +160,13 @@ class Agent(Daemon):
             print('Aborting (you can still use {0})'.format(flarepath))
             sys.exit(0)
 
-        if myflare.submit():
+        success, case_id = myflare.submit()
+        if success:
+            if case_id:
+                print('Your flare was uploaded successfully, this is your case id: {}'.format(case_id))
+            else:
+                print('Your flare was uploaded successfully, but a case id could not be retrieved.')
+
             myflare.cleanup()
 
     def run(self):

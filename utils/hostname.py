@@ -47,9 +47,6 @@ def _get_hostname(cmd=[], validate=False):
             return fqdn
 
 def get_hostname_std(validate=False):
-    return _get_hostname(['/bin/hostname', '-s'], validate)
-
-def get_hostname_solaris(validate=False):
     return _get_hostname(['/bin/hostname'], validate)
 
 def get_hostname(config_override=True):
@@ -70,10 +67,7 @@ def get_hostname(config_override=True):
 
     try:
         # try fqdn
-        if platform.startswith('sunos'):
-            hostname = get_hostname_solaris()
-        else:
-            hostname = get_hostname_std()
+        hostname = get_hostname_std()
 
         if hostname:
             return hostname

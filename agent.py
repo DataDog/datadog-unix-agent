@@ -122,6 +122,11 @@ class Agent(Daemon):
         'flare': False,
     }
 
+    COMPONENTS = [
+        'agent',
+        'dogstatsd',
+    ]
+
     STATUS_TIMEOUT = 5
 
     @classmethod
@@ -129,28 +134,35 @@ class Agent(Daemon):
         return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS.keys()))
 
     @classmethod
-    def status(cls, to_screen=True):
+    def status(cls, config, to_screen=True):
+        status = {}
         rendered = None
         api_addr = config['api']['bind_host']
         api_port = config['api']['port']
-        target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
-        try:
+        for component in cls.COMPONENTS:
+            if component == 'dogstatsd' and not config['dogstatsd']['enable']:
+                continue
+
+            target = 'http://{host}:{port}/status/{component}'.format(
+                host=api_addr, port=api_port, component=component)
+            try:
+                r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
+                r.raise_for_status()
+
+                status[component] = r.json()
+            except requests.exceptions.HTTPError as e:
+                log.error("HTTP error collecting agent status: {}".format(e))
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
+
+        if status:
             here = os.path.dirname(os.path.realpath(__file__))
             templates = os.path.join(here, 'templates')
             template_env = Environment(loader=FileSystemLoader(templates))
             template = template_env.get_template('status.jinja')
-
-            r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
-            r.raise_for_status()
-
-            status = r.json()
             rendered = template.render(version=AGENT_VERSION, status=status)
             if to_screen:
                 print(rendered)
-        except requests.exceptions.HTTPError as e:
-            log.error("HTTP error collecting agent status: {}".format(e))
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            log.error("Problem connecting or connection timed out, is the agent up?\n\nError: {}".format(e))
 
         return rendered
 
@@ -237,12 +249,13 @@ class Agent(Daemon):
         dogstatsd = None
 
         dsd_enable = config['dogstatsd'].get('enable', False)
+        dsd_server = None
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
             dsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
-        api = APIServer(config, collector, aggregator.stats)
+        api = APIServer(config, collector, aggregator.stats, dsd_server.aggregator.stats if dsd_server else None)
 
         handler = SignalHandler()
         # components
@@ -337,7 +350,7 @@ def main():
         agent.restart()
 
     elif 'status' == command:
-        agent.status()
+        agent.status(config)
 
     elif 'flare' == command:
         case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()

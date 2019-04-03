@@ -14,7 +14,10 @@ from threading import Thread
 
 from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 
-from .handlers import APIStatusHandler
+from .handlers import (
+    AgentStatusHandler,
+    DogstatsdStatusHandler,
+)
 
 
 log = logging.getLogger(__name__)
@@ -22,7 +25,7 @@ log = logging.getLogger(__name__)
 
 class APIServer(Thread):
 
-    def __init__(self, config, collector, aggregator_stats):
+    def __init__(self, config, collector, aggregator_stats, dsd_aggregator_stats=None):
         # start API
         super(APIServer, self).__init__()
 
@@ -40,6 +43,7 @@ class APIServer(Thread):
                 started=self._start_time,
                 aggregator_stats=aggregator_stats)),
         ])
+
         self._server = tornado.httpserver.HTTPServer(self._app)
 
     def stop(self):

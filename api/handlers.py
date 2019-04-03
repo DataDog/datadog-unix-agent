@@ -18,7 +18,7 @@ from collector import CheckLoader, WheelLoader
 log = logging.getLogger(__name__)
 
 
-class APIStatusHandler(tornado.web.RequestHandler):
+class AgentStatusHandler(tornado.web.RequestHandler):
     LOADERS = [CheckLoader, WheelLoader]
 
     def initialize(self, config, collector, started, aggregator_stats):
@@ -85,6 +85,22 @@ class APIStatusHandler(tornado.web.RequestHandler):
 
         stats['redacted_api'] = '*'*20 + self._config.get('api_key')[-5:]
         stats['api_status'] = validate_api_key(self._config)
+
+        try:
+            self.write(json.dumps(stats))
+        except TypeError as e:
+            log.error("unable to handle status request: {}".format(e))
+
+
+class DogstatsdStatusHandler(tornado.web.RequestHandler):
+    def initialize(self, config, aggregator_stats):
+        self._config = config
+        self._aggregator_stats = aggregator_stats
+
+    def get(self):
+        stats = {}
+        if self._aggregator_stats:
+            stats = self._aggregator_stats.get_aggregator_stats()
 
         try:
             self.write(json.dumps(stats))

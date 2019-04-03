@@ -1,30 +1,32 @@
+{% set agent = status.get('agent', {}) %}
+{% set dogstatsd = status.get('dogstatsd', {}) %}
 {{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
 DataDog Unix Agent (v{{ version }})
 {{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
 
-  Pid: {{ status.get('pid') }}
-  Python Version: {{ status.get('python_version')  }}
-  Log Level: {{ status.get('log_level') }}
+  Pid: {{ agent.get('pid') }}
+  Python Version: {{ agent.get('python_version')  }}
+  Log Level: {{ agent.get('log_level') }}
 
 Host Info
 =========
-  Hostname: {{ status.get('hostname') }}
-  Hostname (collected): {{ status.get('hostname_native') }}
+  Hostname: {{ agent.get('hostname') }}
+  Hostname (collected): {{ agent.get('hostname_native') }}
 
 Clock
 =====
-  Agent uptime: {{ status.get('uptime') }}s
-  System UTC time: {{ status.get('utc_time') }}
+  Agent uptime: {{ agent.get('uptime') }}s
+  System UTC time: {{ agent.get('utc_time') }}
 
 Configuration
 =============
-  Agent Config: {{ status.get('agent_config_path')  }}
-  Agent Logs: {{ status.get('agent_log_path') }}
+  Agent Config: {{ agent.get('agent_config_path')  }}
+  Agent Logs: {{ agent.get('agent_log_path') }}
 
 Running Checks
 ==============
-{% if status.get('checks', {})|length > 0 -%}
-{% for check, stats in status.get('checks', {}).items() %}
+{% if agent.get('checks', {})|length > 0 -%}
+{% for check, stats in agent.get('checks', {}).items() %}
   - {{ check }}
     {{ '-'*check|length }}
     metrics: {{ stats.get('metrics', 0) }}
@@ -45,12 +47,12 @@ Running Checks
         {{ error.get('traceback', '')|indent(width=10) }}
     {% endfor %}
 {% endfor -%}
-  Last Flush Metric Count: {{ status.get('last_metric_pkt_count') }}
-  Last Flush Event Count: {{ status.get('last_event_pkt_count')}}
-  Last Flush Service Check Count: {{ status.get('last_service_check_pkt_count')}}
-  Total Metric Count: {{ status.get('total_metric_pkt_count') }}
-  Total Event Count: {{ status.get('total_event_pkt_count')}}
-  Total Service Check Count: {{ status.get('total_service_check_pkt_count')}}
+  Last Flush Metric Count: {{ agent.get('last_metric_pkt_count') }}
+  Last Flush Event Count: {{ agent.get('last_event_pkt_count')}}
+  Last Flush Service Check Count: {{ agent.get('last_service_check_pkt_count')}}
+  Total Metric Count: {{ agent.get('total_metric_pkt_count') }}
+  Total Event Count: {{ agent.get('total_event_pkt_count')}}
+  Total Service Check Count: {{ agent.get('total_service_check_pkt_count')}}
 
 {% if status.get('errors').get('loader', {})|length > 0 -%}
 Errors
@@ -64,6 +66,17 @@ Errors
 {% endfor -%}
 {% endif %}
 
+{% if dogstatsd|length > 0 -%}
+Dogstatsd
+=========
+  Last Flush Metric Count: {{ dogstatsd.get('last_metric_pkt_count') }}
+  Last Flush Event Count: {{ dogstatsd.get('last_event_pkt_count')}}
+  Last Flush Service Check Count: {{ dogstatsd.get('last_service_check_pkt_count')}}
+  Total Metric Count: {{ dogstatsd.get('total_metric_pkt_count') }}
+  Total Event Count: {{ dogstatsd.get('total_event_pkt_count')}}
+  Total Service Check Count: {{ dogstatsd.get('total_service_check_pkt_count')}}
+{% endif -%}
+
 API Key Status
-==============
-  API Key ending in {{ status.get('redacted_api') }}: {{ status.get('api_status') }}
+  API Key ending in {{ agent.get('redacted_api') }}: {{ agent.get('api_status') }}
+

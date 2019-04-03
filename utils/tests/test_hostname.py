@@ -34,7 +34,7 @@ def test_get_hostname_bin(subprocess):
     assert get_hostname() == "subprocess-hostname"
 
 @mock.patch('subprocess.check_output', return_value="subprocess_hostname")
-def test_get_hostname_bin(subprocess):
+def test_get_hostname_bin_nonrfc(subprocess):
     # this would fail validation if specified manually
     # but since it's collected from the OS we let it fly
     assert not is_valid_hostname("subprocess_hostname")

@@ -145,7 +145,7 @@ class Agent(Daemon):
     def flare(cls, case_id):
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
-        myflare = Flare(case_id=case_id, email=email)
+        myflare = Flare(version=AGENT_VERSION, case_id=case_id, email=email)
         myflare.add_path(config.get('conf_path'))
         myflare.add_path(config.get_loaded_config())
         myflare.add_path(config.get('logging').get('agent_log_file'))

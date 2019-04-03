@@ -33,7 +33,7 @@ class Flare(object):
         Replacer(Replacer.yaml_key_match_pattern(r'token'), r'\1 ********', ['token']),  # tokens
     ]
 
-    def __init__(self, paths=[], compression=zipfile.ZIP_DEFLATED, case_id=None, email=None):
+    def __init__(self, paths=[], compression=zipfile.ZIP_DEFLATED, version=None, case_id=None, email=None):
         self._filename = "datadog-agent-{}.zip".format(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
         self._tempdir = tempfile.mkdtemp(suffix='flare')
         self._compression = zipfile.ZIP_DEFLATED
@@ -45,6 +45,7 @@ class Flare(object):
         self._hostname = get_hostname()
         self._case_id = int(case_id) if case_id else None
         self._email = email
+        self._agent_version = version
 
     def redact(self, path):
         try:
@@ -120,7 +121,8 @@ class Flare(object):
                     'data': {
                         'case_id': self._case_id,
                         'hostname': self._hostname,
-                        'email': self._email
+                        'email': self._email,
+                        'agent_version': self._agent_version,
                     },
                     'files': {'flare_file': flare_file},
                     'timeout': self.TIMEOUT

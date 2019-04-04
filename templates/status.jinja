@@ -64,7 +64,7 @@ Errors
     {% for loader, error in errors.items() -%}
       {{ loader }}: {{ error }}
     {% endfor -%}
-{% endfor -%}
+{%- endfor %}
 {% endif %}
 
 {%- if dogstatsd|length > 0 -%}

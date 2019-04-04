@@ -43,7 +43,7 @@ from dogstatsd.helpers import (
 
 
 # Globals
-AGENT_VERSION = '0.8.0'
+AGENT_VERSION = '0.9.0'
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')

@@ -7,7 +7,6 @@ import re
 import logging
 import subprocess
 import socket
-from sys import platform
 
 from config import config
 

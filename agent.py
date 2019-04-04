@@ -122,11 +122,6 @@ class Agent(Daemon):
         'flare': False,
     }
 
-    COMPONENTS = [
-        'agent',
-        'dogstatsd',
-    ]
-
     STATUS_TIMEOUT = 5
 
     @classmethod
@@ -139,21 +134,19 @@ class Agent(Daemon):
         rendered = None
         api_addr = config['api']['bind_host']
         api_port = config['api']['port']
-        for component in cls.COMPONENTS:
-            if component == 'dogstatsd' and not config['dogstatsd']['enable']:
-                continue
 
-            target = 'http://{host}:{port}/status/{component}'.format(
-                host=api_addr, port=api_port, component=component)
-            try:
-                r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
-                r.raise_for_status()
+        target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
+        try:
+            r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
+            r.raise_for_status()
 
-                status[component] = r.json()
-            except requests.exceptions.HTTPError as e:
-                log.error("HTTP error collecting agent status: {}".format(e))
-            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-                log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
+            status[component] = r.json()
+        except requests.exceptions.HTTPError as e:
+            log.error("HTTP error collecting agent status: %s", e)
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            log.error("Problem connecting or connection timed out, is the agent up? Error: %s", e)
+        except ValueError as e:
+            log.error("There was a problem unmarshaling JSON response: %s", e)
 
         if status:
             here = os.path.dirname(os.path.realpath(__file__))
@@ -219,7 +212,7 @@ class Agent(Daemon):
         )
         forwarder.start()
 
-        # aggregator
+        # agent aggregator
         aggregator = MetricsAggregator(
             hostname,
             interval=config.get('aggregator_interval'),
@@ -255,7 +248,17 @@ class Agent(Daemon):
             dsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
-        api = APIServer(config, collector, aggregator.stats, dsd_server.aggregator.stats if dsd_server else None)
+        stats = {
+            'agent': aggregator.stats,
+        }
+        if dsd_server:
+            stats['dogstatsd'] = dsd_server.aggregator.stats
+
+        api = APIServer(
+            config,
+            collector,
+            stats=stats
+        )
 
         handler = SignalHandler()
         # components

@@ -21,23 +21,22 @@ log = logging.getLogger(__name__)
 class AgentStatusHandler(tornado.web.RequestHandler):
     LOADERS = [CheckLoader, WheelLoader]
 
-    def initialize(self, config, collector, started, aggregator_stats):
+    def initialize(self, config, collector, started, stats):
         self._config = config
         self._collector = collector
-        self._aggregator_stats = aggregator_stats
+        self._stats = stats
         self._started = started
 
     def get(self):
-        stats = self._aggregator_stats.get_aggregator_stats()
+        status = {}
 
-        check_stats = stats.pop('stats')
-        stats['checks'] = {}
-        for signature, values in check_stats.items():
-            check = signature[0]
-            if check in stats['checks']:
-                stats['checks'][check]['merics'] += values
-            else:
-                stats['checks'][check] = {'metrics': values}
+        for component, stats in self._stats.items():
+            log.debug("adding component %s to stats", component)
+            stats_snap, info_snap = stats.snapshot()
+            status[component] = {
+                'stats': stats_snap,
+                'info': info_snap if component != 'agent' else self.process_agent_info(info_snap),
+            }
 
         stats['errors'] = {
             'loader': {},
@@ -62,47 +61,46 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                 stats['errors']['runtime'][check][instance] = error
 
         now = datetime.utcnow()
-        stats['uptime'] = (now - self._started).total_seconds()
-        stats['utc_time'] = now.strftime("%a, %d %b %Y %H:%M:%S.%f %Z")
+        status['uptime'] = (now - self._started).total_seconds()
+        status['utc_time'] = now.strftime("%a, %d %b %Y %H:%M:%S.%f %Z")
 
-        stats['pid'] = os.getpid()
-        stats['python_version'] = "{major}.{minor}.{bugfix}".format(
+        status['pid'] = os.getpid()
+        status['python_version'] = "{major}.{minor}.{bugfix}".format(
             major=sys.version_info[0],
             minor=sys.version_info[1],
             bugfix=sys.version_info[2]
         )
 
-        stats['agent_log_path'] = self._config.get('logging', {}).get('agent_log_file')
-        stats['agent_config_path'] = self._config.get_loaded_config()
-        stats['log_level'] = self._config.get('log_level', 'INFO').upper()
+        status['agent_log_path'] = self._config.get('logging', {}).get('agent_log_file')
+        status['agent_config_path'] = self._config.get_loaded_config()
+        status['log_level'] = self._config.get('log_level', 'INFO').upper()
 
         try:
-            stats['hostname'] = get_hostname()
-            stats['hostname_native'] = get_hostname(config_override=False)
+            status['hostname'] = get_hostname()
+            status['hostname_native'] = get_hostname(config_override=False)
         except HostnameException:
-            stats['hostname'] = '' if 'hostname' not in stats else stats['hostname']
-            stats['hostname_native'] = ''
+            status['hostname'] = '' if 'hostname' not in status else status['hostname']
+            status['hostname_native'] = ''
 
-        stats['redacted_api'] = '*'*20 + self._config.get('api_key')[-5:]
-        stats['api_status'] = validate_api_key(self._config)
+        status['redacted_api'] = '*'*20 + self._config.get('api_key')[-5:]
+        status['api_status'] = validate_api_key(self._config)
 
         try:
-            self.write(json.dumps(stats))
+            log.debug('status response to render: %s', status)
+            self.write(json.dumps(status))
         except TypeError as e:
             log.error("unable to handle status request: {}".format(e))
 
+    def process_agent_info(self, info):
+        processed = {}
 
-class DogstatsdStatusHandler(tornado.web.RequestHandler):
-    def initialize(self, config, aggregator_stats):
-        self._config = config
-        self._aggregator_stats = aggregator_stats
+        for signature, values in info.get('sources', {}).items():
+            log.debug("processing %s, %s", signature, values)
+            check = signature[0]
+            if check in processed:
+                processed[check]['merics'] += values
+            else:
+                processed[check] = {'metrics': values}
 
-    def get(self):
-        stats = {}
-        if self._aggregator_stats:
-            stats = self._aggregator_stats.get_aggregator_stats()
+        return processed
 
-        try:
-            self.write(json.dumps(stats))
-        except TypeError as e:
-            log.error("unable to handle status request: {}".format(e))

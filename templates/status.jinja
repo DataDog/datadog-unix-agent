@@ -23,20 +23,46 @@ Configuration
 
 Running Checks
 ==============
+{% if status.get('checks', {})|length > 0 -%}
 {% for check, stats in status.get('checks', {}).items() %}
   - {{ check }}
     {{ '-'*check|length }}
     metrics: {{ stats.get('metrics', 0) }}
     events: {{ stats.get('events', 0) }}
     service checks: {{ stats.get('service_checks', 0) }}
-{% endfor %}
+{% endfor -%}
+{% else -%}
+  There are currently no running checks.
+{% endif -%}
+{% for check, errors in status.get('errors').get('runtime', {}).items() %}
+  - {{ check }}
+    {{ '-'*check|length }}
+    {% for instance, error in errors.items() -%}
+    instance ({{ instance }}):
 
+        Error: {{ error.get('message') }}
+
+        {{ error.get('traceback', '')|indent(width=10) }}
+    {% endfor %}
+{% endfor -%}
   Last Flush Metric Count: {{ status.get('last_metric_pkt_count') }}
   Last Flush Event Count: {{ status.get('last_event_pkt_count')}}
   Last Flush Service Check Count: {{ status.get('last_service_check_pkt_count')}}
   Total Metric Count: {{ status.get('total_metric_pkt_count') }}
   Total Event Count: {{ status.get('total_event_pkt_count')}}
   Total Service Check Count: {{ status.get('total_service_check_pkt_count')}}
+
+{% if status.get('errors').get('loader', {})|length > 0 -%}
+Errors
+======
+{% for check, errors in status.get('errors').get('loader', {}).items() %}
+  - {{ check }}
+    {{ '-'*check|length }}
+    {% for loader, error in errors.items() -%}
+      {{ loader }}: {{ error }}
+    {% endfor -%}
+{% endfor -%}
+{% endif %}
 
 API Key Status
 ==============

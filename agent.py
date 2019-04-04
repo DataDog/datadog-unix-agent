@@ -78,7 +78,7 @@ class AgentRunner(Thread):
         self.collection()
 
 
-def init_config():
+def init_config(do_log=True):
     # init default search path
     config.add_search_path("/etc/datadog-agent")
     config.add_search_path(os.path.join(DEFAULT_PATH, "etc/datadog-agent"))
@@ -87,40 +87,44 @@ def init_config():
     try:
         config.load()
     except Exception:
-        initialize_logging('agent')
+        if do_log:
+            initialize_logging('agent')
         raise
 
     # init log
-    initialize_logging('agent')
+    if do_log:
+        initialize_logging('agent')
 
     # add file provider
     file_provider = FileConfigProvider()
+    file_provider.add_place(os.path.join(os.path.dirname(config.get_loaded_config()), 'conf.d'))
     file_provider.add_place(os.path.join(config.get('conf_path'), 'conf.d'))
     file_provider.add_place(config.get('additional_checksd'))
     config.add_provider('file', file_provider)
 
-    # FIXME: do this elsewhere
-    # collect config
+    # FIXME: perhaps do this elsewhere
     config.collect_check_configs()
 
 
 class Agent(Daemon):
-    COMMANDS = [
-        'start',
-        'stop',
-        'restart',
-        'status',
-        'flare',
-    ]
+    # dictionary k:v - command:log
+    COMMANDS = {
+        'start': True,
+        'stop': True,
+        'restart': False,
+        'status': False,
+        'flare': False,
+    }
 
     STATUS_TIMEOUT = 5
 
     @classmethod
     def usage(cls):
-        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
+        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS.keys()))
 
     @classmethod
-    def status(cls):
+    def status(cls, to_screen=True):
+        rendered = None
         api_addr = config['api']['bind_host']
         api_port = config['api']['port']
         target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
@@ -134,12 +138,15 @@ class Agent(Daemon):
             r.raise_for_status()
 
             status = r.json()
-            out = template.render(version=AGENT_VERSION, status=status)
-            print(out)
+            rendered = template.render(version=AGENT_VERSION, status=status)
+            if to_screen:
+                print(rendered)
         except requests.exceptions.HTTPError as e:
             log.error("HTTP error collecting agent status: {}".format(e))
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
+            log.error("Problem connecting or connection timed out, is the agent up?\n\nError: {}".format(e))
+
+        return rendered
 
     @classmethod
     def flare(cls, case_id):
@@ -152,7 +159,7 @@ class Agent(Daemon):
         myflare.add_path(config.get('logging').get('dogstatsd_log_file'))
         myflare.add_path(config.get('additional_checksd'))
 
-        flarepath = myflare.create_archive()
+        flarepath = myflare.create_archive(status=cls.status(to_screen=False))
 
         print('The flare is going to be uploaded to Datadog')
         choice = input('Do you want to continue [Y/n]? ')
@@ -220,7 +227,7 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate API
-        api = APIServer(config, aggregator.stats)
+        api = APIServer(config, collector, aggregator.stats)
 
         handler = SignalHandler()
         # components
@@ -256,6 +263,8 @@ def main():
     parser = OptionParser()
     parser.add_option('-b', '--background', action='store_true', default=False,
                       dest='background', help='Run agent on the foreground')
+    parser.add_option('-l', '--force-logging', action='store_true', default=False,
+                      dest='logging', help='force logging')
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -268,7 +277,8 @@ def main():
         return 3
 
     try:
-        init_config()
+        do_log = options.logging or Agent.COMMANDS[command]
+        init_config(do_log=do_log)
     except Exception as e:
         logging.error("Problem initializing configuration: %s", e)
         return 1

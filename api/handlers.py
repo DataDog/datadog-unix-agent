@@ -38,7 +38,7 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                 'info': info_snap if component != 'agent' else self.process_agent_info(info_snap),
             }
 
-        stats['errors'] = {
+        status['errors'] = {
             'loader': {},
             'runtime': {},
         }
@@ -47,18 +47,18 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             if check in self._collector._check_classes:  # check eventually loaded
                 continue
 
-            stats['errors']['loader'][check] = {}
+            status['errors']['loader'][check] = {}
             for loader, error in errors.items():
                 if loader == CheckLoader.__name__:
                     for place, err in error.items():
-                        stats['errors']['loader'][check][loader] = '{path}: {err}'.format(path=place, err=err['error'])
+                        status['errors']['loader'][check][loader] = '{path}: {err}'.format(path=place, err=err['error'])
                 elif loader == WheelLoader.__name__:
-                    stats['errors']['loader'][check][loader] = str(error['error'])
+                    status['errors']['loader'][check][loader] = str(error['error'])
 
         for check, errors in runtime_errors.items():
-            stats['errors']['runtime'][check] = {}
+            status['errors']['runtime'][check] = {}
             for instance, error in errors.items():
-                stats['errors']['runtime'][check][instance] = error
+                status['errors']['runtime'][check][instance] = error
 
         now = datetime.utcnow()
         status['uptime'] = (now - self._started).total_seconds()
@@ -98,9 +98,8 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             log.debug("processing %s, %s", signature, values)
             check = signature[0]
             if check in processed:
-                processed[check]['merics'] += values
+                processed['sources'][check]['merics'] += values
             else:
                 processed[check] = {'metrics': values}
 
-        return processed
-
+        return { 'checks': processed }

@@ -140,7 +140,7 @@ class Agent(Daemon):
             r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
             r.raise_for_status()
 
-            status[component] = r.json()
+            status = r.json()
         except requests.exceptions.HTTPError as e:
             log.error("HTTP error collecting agent status: %s", e)
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:

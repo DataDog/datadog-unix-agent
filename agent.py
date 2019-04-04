@@ -158,7 +158,7 @@ class Agent(Daemon):
     def flare(cls, case_id):
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
-        myflare = Flare(case_id=case_id, email=email)
+        myflare = Flare(version=AGENT_VERSION, case_id=case_id, email=email)
         myflare.add_path(config.get('conf_path'))
         myflare.add_path(config.get_loaded_config())
         myflare.add_path(config.get('logging').get('agent_log_file'))
@@ -173,7 +173,13 @@ class Agent(Daemon):
             print('Aborting (you can still use {0})'.format(flarepath))
             sys.exit(0)
 
-        if myflare.submit():
+        success, case_id = myflare.submit()
+        if success:
+            if case_id:
+                print('Your flare was uploaded successfully, this is your case id: {}'.format(case_id))
+            else:
+                print('Your flare was uploaded successfully, but a case id could not be retrieved.')
+
             myflare.cleanup()
 
     def run(self):

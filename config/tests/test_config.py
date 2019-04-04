@@ -104,6 +104,24 @@ class TestConfig():
         assert api_conf.get('bind_host') == DEFAULT_BIND_HOST
         assert api_conf.get('port') == DEFAULT_API_PORT
 
+    def test_init_default_merge(self, conf):
+        default.init(conf)
+
+        conf.data = {
+            'dogstatsd': {
+                'enable': True,
+                'port': DEFAULT_DOGSTATSD_PORT + 1,
+            }
+        }
+
+        # assert configs got properly merged
+        dsd_conf = conf['dogstatsd']
+        assert dsd_conf is not None
+        assert dsd_conf.get('enable')
+        assert dsd_conf.get('port') == DEFAULT_DOGSTATSD_PORT + 1
+        assert dsd_conf.get('bind_host') == DEFAULT_BIND_HOST
+        assert dsd_conf.get('non_local_traffic') is False
+
     def test_set_and_reset(self, conf):
         assert conf.get("test") is None
         conf.set("test", 21)

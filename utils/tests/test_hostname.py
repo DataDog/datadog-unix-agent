@@ -29,6 +29,10 @@ def test_get_hostname_conf():
     assert get_hostname() == "test-hostname"
     config.reset("hostname")
 
+@mock.patch('subprocess.check_output', return_value=b"subprocess-hostname")
+def test_get_hostname_bytes(subprocess):
+    assert get_hostname() == "subprocess-hostname"
+
 @mock.patch('subprocess.check_output', return_value="subprocess-hostname")
 def test_get_hostname_bin(subprocess):
     assert get_hostname() == "subprocess-hostname"

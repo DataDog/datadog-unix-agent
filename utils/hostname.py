@@ -39,7 +39,13 @@ def is_valid_hostname(hostname):
 
 def _get_hostname(cmd=[], validate=False):
     fqdn = subprocess.check_output(cmd).strip()
+
     if fqdn:
+        try:
+            fqdn = fqdn.decode()
+        except AttributeError:
+            pass
+
         if not validate:
             return fqdn
         elif is_valid_hostname(fqdn):

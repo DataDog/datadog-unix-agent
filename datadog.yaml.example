@@ -2,9 +2,9 @@ api_key: <api_key_here>                # DD API key: required.
 #
 # site: datadoghq.com                  # DD Site you wish to submit to: US(datadoghq.com)[default] or EU(datadoghq.eu)
 #                                      #       - US (default): datadoghq.com
-#                                      #       - EU (default): datadoghq.eu
+#                                      #       - EU          : datadoghq.eu
 #
-# dd_url: https://app.datadoghq.com    # DD URL submissiont override. You shouldn't need to change this.
+# dd_url: https://app.datadoghq.com    # DD URL submission override. You shouldn't need to change this.
 #
 # log_level: info                      # Log level - available levels: critical, error, warning, info, debug
 #

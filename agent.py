@@ -248,17 +248,14 @@ class Agent(Daemon):
             dsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
-        stats = {
+        status = {
             'agent': aggregator.stats,
+            'collector': collector.status
         }
         if dsd_server:
-            stats['dogstatsd'] = dsd_server.aggregator.stats
+            status['dogstatsd'] = dsd_server.aggregator.stats
 
-        api = APIServer(
-            config,
-            collector,
-            stats=stats
-        )
+        api = APIServer(config, status=status)
 
         handler = SignalHandler()
         # components

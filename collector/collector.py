@@ -4,8 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 from collections import defaultdict
-from threading import Lock
-from copy import deepcopy
+from copy import copy, deepcopy
 import logging
 
 from . import CheckLoader, WheelLoader
@@ -14,6 +13,7 @@ from .wheel_loader import DD_WHEEL_NAMESPACE
 from aggregator import Aggregator
 from checks import AgentCheck
 from utils.hostname import get_hostname
+from utils.stats import Stats
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +22,6 @@ class Collector(object):
     CORE_CHECKS = ['cpu', 'load', 'iostat', 'memory', 'filesystem', 'uptime']
 
     def __init__(self, config, aggregator=None):
-        self._errors_mutex = Lock()
         self._config = config
         self._loaders = []
         self._check_classes = {}
@@ -32,6 +31,7 @@ class Collector(object):
         self._check_instance_signatures = {}
         self._hostname = get_hostname()
         self._aggregator = aggregator
+        self._status = Stats()
 
         self.set_loaders()
 
@@ -47,15 +47,9 @@ class Collector(object):
 
         self._aggregator = aggregator
 
-    def collector_status(self):
-        self._errors_mutex.acquire()
-        try:
-            loader_errors = deepcopy(self._check_classes_errors)
-            runtime_errors = deepcopy(self._check_instance_errors)
-        finally:
-            self._errors_mutex.release()
-
-        return loader_errors, runtime_errors
+    @property
+    def status(self):
+        return self._status
 
     def load_core_checks(self):
         from checks.corechecks.system import (
@@ -77,30 +71,29 @@ class Collector(object):
     def load_check_classes(self):
         self.load_core_checks()
 
-        self._errors_mutex.acquire()
-        try:
-            for _, check_configs in self._config.get_check_configs().items():
-                for check_name in check_configs:
-                    log.debug("Found config for check %s...", check_name)
+        for _, check_configs in self._config.get_check_configs().items():
+            for check_name in check_configs:
+                log.debug("Found config for check %s...", check_name)
 
-                    if check_name in self._check_classes:
-                        continue
+                if check_name in self._check_classes:
+                    continue
 
-                    for loader in self._loaders:
-                        try:
-                            check_class, errors = loader.load(check_name)
-                            if check_class:
-                                self._check_classes[check_name] = check_class
-                            if errors:
-                                self._check_classes_errors[check_name][type(loader).__name__] = errors
+                for loader in self._loaders:
+                    try:
+                        check_class, errors = loader.load(check_name)
+                        if check_class:
+                            self._check_classes[check_name] = check_class
+                        if errors:
+                            self._check_classes_errors[check_name][type(loader).__name__] = errors
 
-                            if check_class:
-                                log.debug("Class found for %s...", check_name)
-                                break
-                        except Exception:
-                            log.exception("unexpected error loading check %s", check_name)
-        finally:
-            self._errors_mutex.release()
+                        if check_class:
+                            log.debug("Class found for %s...", check_name)
+                            break
+                    except Exception:
+                        log.exception("unexpected error loading check %s", check_name)
+
+        self._status.set_info('check_classes', copy(self._check_classes))  # shallow copy suffices
+        self._status.set_info('loader_errors', deepcopy(self._check_classes_errors))
 
     def instantiate_checks(self):
         for source, check_configs in self._config.get_check_configs().items():
@@ -157,3 +150,5 @@ class Collector(object):
                     self._check_instance_errors[name][check.signature] = result
                     log.error('There was an error running your %s: %s', name, result.get('message'))
                     log.error('Traceback %s: %s', name, result.get('traceback'))
+
+        self._status.set_info('runtime_errors', deepcopy(self._check_instance_errors))

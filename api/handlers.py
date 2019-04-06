@@ -21,44 +21,28 @@ log = logging.getLogger(__name__)
 class AgentStatusHandler(tornado.web.RequestHandler):
     LOADERS = [CheckLoader, WheelLoader]
 
-    def initialize(self, config, collector, started, stats):
+    def initialize(self, config, started, status):
         self._config = config
-        self._collector = collector
-        self._stats = stats
+        self._status = status
         self._started = started
 
     def get(self):
         status = {}
 
-        for component, stats in self._stats.items():
+        for component, stats in self._status.items():
             log.debug("adding component %s to stats", component)
             stats_snap, info_snap = stats.snapshot()
+            if component == 'agent':
+                info_snap = self.process_agent_info(info_snap)
+            elif component == 'collector':
+                info_snap = self.process_collector_info(info_snap)
+
+            log.debug("processed %s info: %s", component, info_snap)
+
             status[component] = {
                 'stats': stats_snap,
-                'info': info_snap if component != 'agent' else self.process_agent_info(info_snap),
+                'info': info_snap,
             }
-
-        status['errors'] = {
-            'loader': {},
-            'runtime': {},
-        }
-        loader_errors, runtime_errors = self._collector.collector_status()
-        for check, errors in loader_errors.items():
-            if check in self._collector._check_classes:  # check eventually loaded
-                continue
-
-            status['errors']['loader'][check] = {}
-            for loader, error in errors.items():
-                if loader == CheckLoader.__name__:
-                    for place, err in error.items():
-                        status['errors']['loader'][check][loader] = '{path}: {err}'.format(path=place, err=err['error'])
-                elif loader == WheelLoader.__name__:
-                    status['errors']['loader'][check][loader] = str(error['error'])
-
-        for check, errors in runtime_errors.items():
-            status['errors']['runtime'][check] = {}
-            for instance, error in errors.items():
-                status['errors']['runtime'][check][instance] = error
 
         now = datetime.utcnow()
         status['uptime'] = (now - self._started).total_seconds()
@@ -103,3 +87,32 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                 processed[check] = {'metrics': values}
 
         return { 'checks': processed }
+
+    def process_collector_info(self, info):
+        processed = {
+            'loader': {},
+            'runtime': {},
+        }
+
+        check_classes = info.get('check_classes', {})
+        loader_errors = info.get('loader_errors', {})
+        runtime_errors = info.get('runtime_errors', {})
+
+        for check, errors in loader_errors.items():
+            if check in check_classes:  # check eventually loaded
+                continue
+
+            processed['loader'][check] = {}
+            for loader, error in errors.items():
+                if loader == CheckLoader.__name__:
+                    for place, err in error.items():
+                        processed['loader'][check][loader] = '{path}: {err}'.format(path=place, err=err['error'])
+                elif loader == WheelLoader.__name__:
+                    processed['loader'][check][loader] = str(error['error'])
+
+        for check, errors in runtime_errors.items():
+            processed['runtime'][check] = {}
+            for instance, error in errors.items():
+                processed['runtime'][check][hex(instance)] = error
+
+        return { 'errors': processed }

@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 class APIServer(Thread):
 
-    def __init__(self, config, collector, stats={}):
+    def __init__(self, config, status={}):
         # start API
         super(APIServer, self).__init__()
 
@@ -36,9 +36,8 @@ class APIServer(Thread):
         self._app = tornado.web.Application([
             (r"/status", AgentStatusHandler, dict(
                 config=self._config,
-                collector=collector,
                 started=self._start_time,
-                stats=stats,
+                status=status,
             )),
         ])
 

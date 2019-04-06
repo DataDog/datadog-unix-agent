@@ -1,4 +1,5 @@
 {% set agent = status.get('agent', {}) %}
+{% set collector = status.get('collector', {}) %}
 {% set dogstatsd = status.get('dogstatsd', {}) %}
 {{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
 DataDog Unix Agent (v{{ version }})
@@ -36,7 +37,7 @@ Running Checks
 {% else -%}
   There are currently no running checks.
 {% endif -%}
-{% for check, errors in status.get('errors').get('runtime', {}).items() %}
+{% for check, errors in collector.get('info').get('errors').get('runtime', {}).items() %}
   - {{ check }}
     {{ '-'*check|length }}
     {% for instance, error in errors.items() -%}
@@ -55,10 +56,10 @@ Running Checks
   Total Flush Event Count: {{ agent.get('stats', {}).get('events_total') }}
   Total Flush Service Check Count: {{ agent.get('stats', {}).get('service_checks_total') }}
 
-{% if status.get('errors').get('loader', {})|length > 0 -%}
+{% if collector.get('info').get('errors').get('loader', {})|length > 0 -%}
 Errors
 ======
-{% for check, errors in status.get('errors').get('loader', {}).items() %}
+{% for check, errors in collector.get('info').get('errors').get('loader', {}).items() %}
   - {{ check }}
     {{ '-'*check|length }}
     {% for loader, error in errors.items() -%}

@@ -25,9 +25,12 @@ class Stats(object):
         finally:
             self._stats_mutex.release()
 
-    def get_info(self, key):
+    def get_info(self, key, strict=False):
         self._stats_mutex.acquire()
         try:
+            if strict and key not in self._info:
+                raise KeyError()
+
             return self._info[key]
         finally:
             self._stats_mutex.release()

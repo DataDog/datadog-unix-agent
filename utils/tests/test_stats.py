@@ -3,49 +3,63 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from aggregator.stats import AggregatorStats
+import pytest
+
+from utils.stats import Stats
 
 
 def test_stats():
     # The min is not enabled by default
-    stats = AggregatorStats()
+    stats = Stats()
 
     metric_stats = {
         'foo': 2,
         'bar': 5,
     }
-    stats.set_last_flush_counts(mcount=4, ecount=2, sccount=1)
-    stats.set_last_flush_metric_stats(metric_stats)
 
-    flush_stats = stats.get_aggregator_stats()
-    assert flush_stats['stats'] == metric_stats
-    assert flush_stats['last_metric_pkt_count'] == 4
-    assert flush_stats['last_event_pkt_count'] == 2
-    assert flush_stats['last_service_check_pkt_count'] == 1
-    assert flush_stats['total_metric_pkt_count'] == 4
-    assert flush_stats['total_event_pkt_count'] == 2
-    assert flush_stats['total_service_check_pkt_count'] == 1
+    # setters
+    stats.set_stat('metrics', 4)
+    stats.set_stat('events', 2)
+    stats.set_stat('service_checks', 1)
+    # totals
+    stats.inc_stat('metrics_total', 4)
+    stats.inc_stat('events_total', 2)
+    stats.inc_stat('service_checks_total', 1)
+    # info
+    stats.set_info('metric_stats', metric_stats)
 
-    # test we got a deepcopy
-    metric_stats['foo'] += 10
-    assert flush_stats['stats'] != metric_stats
-    assert flush_stats['stats']['foo'] == 2
+    stats_snapshot, info_snapshot = stats.snapshot()
+    assert info_snapshot['metric_stats'] == metric_stats
+    assert stats_snapshot['metrics'] == 4
+    assert stats_snapshot['events'] == 2
+    assert stats_snapshot['service_checks'] == 1
+    assert stats_snapshot['metrics_total'] == 4
+    assert stats_snapshot['events_total'] == 2
+    assert stats_snapshot['service_checks_total'] == 1
 
-    # test flush counters
-    mcount_1, ecount_1, sccount_1 = stats.get_last_flush_counts()
-    assert mcount_1 == 4
-    assert ecount_1 == 2
-    assert sccount_1 == 1
+    # test we got a deepcopy for stats
+    stats.set_stat('metrics', 10)
+    stats.inc_stat('metrics_total', 10)
+    assert stats_snapshot != metric_stats
+    assert stats_snapshot['metrics'] != stats.get_stat('metrics')
 
-    # update last flush counts
-    stats.set_last_flush_counts(mcount=3, ecount=1, sccount=1)
-    mcount_2, ecount_2, sccount_2 = stats.get_last_flush_counts()
-    assert mcount_2 == 3
-    assert ecount_2 == 1
-    assert sccount_2 == 1
+    # test we got a deepcopy for info
+    metric_stats['bar'] += 1
+    stats.set_info('metric_stats', metric_stats)
+    assert info_snapshot != metric_stats
+    assert info_snapshot['metric_stats']['foo'] == metric_stats['foo']
+    assert info_snapshot['metric_stats']['bar'] != metric_stats['bar']
 
-    # check totals
-    mcount, ecount, sccount = stats.get_total_counts()
-    assert mcount == mcount_1 + mcount_2
-    assert ecount == ecount_1 + ecount_2
-    assert sccount == sccount_1 + sccount_2
+    # test for updated snapshots
+    stats_snapshot, info_snapshot = stats.snapshot()
+    assert stats_snapshot['metrics'] == 10
+    assert stats_snapshot['metrics_total'] == 14
+    assert info_snapshot['metric_stats']['foo'] == metric_stats['foo']
+    assert info_snapshot['metric_stats']['bar'] == metric_stats['bar']
+
+    # test strict get
+    with pytest.raises(KeyError):
+        stats.get_stat('nonexistent', strict=True)
+    with pytest.raises(KeyError):
+        stats.get_info('nonexistent', strict=True)
+

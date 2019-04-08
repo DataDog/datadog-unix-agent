@@ -22,6 +22,9 @@ from . import (
     Reporter,
 )
 
+# Globals
+PID_NAME = 'datadog-unix-agent.dogstatsd'
+
 log = logging.getLogger('dogstatsd')
 
 

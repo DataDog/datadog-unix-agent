@@ -3,6 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import sys
+
 
 def freeze(o):
     """
@@ -22,4 +24,4 @@ def freeze(o):
 
 
 def hash_mutable(m):
-    return hash(freeze(m))
+    return hash(freeze(m)) % ((sys.maxsize + 1) * 2)  # as unsigned

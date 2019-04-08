@@ -129,28 +129,33 @@ class Agent(Daemon):
         return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS.keys()))
 
     @classmethod
-    def status(cls, to_screen=True):
+    def status(cls, config, to_screen=True):
+        status = {}
         rendered = None
         api_addr = config['api']['bind_host']
         api_port = config['api']['port']
+
         target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
         try:
-            here = os.path.dirname(os.path.realpath(__file__))
-            templates = os.path.join(here, 'templates')
-            template_env = Environment(loader=FileSystemLoader(templates))
-            template = template_env.get_template('status.jinja')
-
             r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
             r.raise_for_status()
 
             status = r.json()
+        except requests.exceptions.HTTPError as e:
+            log.error("HTTP error collecting agent status: %s", e)
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+            log.error("Problem connecting or connection timed out, is the agent up? Error: %s", e)
+        except ValueError as e:
+            log.error("There was a problem unmarshaling JSON response: %s", e)
+
+        if status:
+            here = os.path.dirname(os.path.realpath(__file__))
+            templates = os.path.join(here, 'templates')
+            template_env = Environment(loader=FileSystemLoader(templates))
+            template = template_env.get_template('status.jinja')
             rendered = template.render(version=AGENT_VERSION, status=status)
             if to_screen:
                 print(rendered)
-        except requests.exceptions.HTTPError as e:
-            log.error("HTTP error collecting agent status: {}".format(e))
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            log.error("Problem connecting or connection timed out, is the agent up?\n\nError: {}".format(e))
 
         return rendered
 
@@ -207,7 +212,7 @@ class Agent(Daemon):
         )
         forwarder.start()
 
-        # aggregator
+        # agent aggregator
         aggregator = MetricsAggregator(
             hostname,
             interval=config.get('aggregator_interval'),
@@ -233,16 +238,25 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate Dogstatsd
-        runner_dogstatsd = None
         reporter = None
+        dogstatsd = None
 
         dsd_enable = config['dogstatsd'].get('enable', False)
+        dsd_server = None
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
-            runner_dogstatsd = DogstatsdRunner(dsd_server)
+            dsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
-        api = APIServer(config, collector, aggregator.stats)
+        status = {
+            'agent': aggregator.stats,
+            'forwarder': forwarder.stats,
+            'collector': collector.status,
+        }
+        if dsd_server:
+            status['dogstatsd'] = dsd_server.aggregator.stats
+
+        api = APIServer(config, status=status)
 
         handler = SignalHandler()
         # components
@@ -263,14 +277,14 @@ class Agent(Daemon):
         runner.start()
         api.start()
 
-        if runner_dogstatsd:
+        if dsd_enable:
             reporter.start()
-            runner_dogstatsd.start()
+            dsd.start()
 
-            runner_dogstatsd.join()
+            dsd.join()
             logging.info("Dogstatsd server done...")
             try:
-                runner_dogstatsd.raise_for_status()
+                dsd.raise_for_status()
             except Exception as e:
                 log.error("There was a problem with the dogstatsd server: %s", e)
                 reporter.stop()
@@ -337,7 +351,7 @@ def main():
         agent.restart()
 
     elif 'status' == command:
-        agent.status()
+        agent.status(config)
 
     elif 'flare' == command:
         case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()

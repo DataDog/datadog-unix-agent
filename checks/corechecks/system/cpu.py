@@ -14,6 +14,7 @@ class Cpu(AgentCheck):
 
     def __init__(self, *args, **kwargs):
         super(Cpu, self).__init__(*args, **kwargs)
+        self.first_run = True
 
     def check(self, instance):
         usage = psutil.cpu_times_percent(percpu=True)
@@ -26,5 +27,7 @@ class Cpu(AgentCheck):
                     value = getattr(core_usage, attr)
                     self.gauge("system.cpu.{}".format(attr), value, tags=metric_tags)
                 except AttributeError:
-                    self.log.debug('CPU usage attribute %s not available on this platform', attr)
-                    pass
+                    if self.first_run:
+                        self.log.debug('CPU usage attribute %s not available on this platform', attr)
+
+        self.first_run = False

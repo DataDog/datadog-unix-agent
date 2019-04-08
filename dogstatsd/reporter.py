@@ -36,7 +36,7 @@ class Reporter(threading.Thread):
 
         logging.info("Reporting every %ss" % self.interval)
 
-        while not self.finished.isSet():  # Use camel case isSet for 2.4 support.
+        while not self.finished.is_set():
             self.finished.wait(self.interval)
             self.aggregator.send_packet_count('datadog.dogstatsd.packet.count')
             self.flush()

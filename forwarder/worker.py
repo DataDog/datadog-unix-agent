@@ -14,11 +14,12 @@ log = logging.getLogger(__name__)
 
 class Worker(Thread):
 
-    def __init__(self, input_queue, retry_queue):
+    def __init__(self, input_queue, retry_queue, stats):
         super(Worker, self).__init__()
         self.input_queue = input_queue
         self.retry_queue = retry_queue
         self.exit = Event()
+        self._stats = stats
 
     def stop(self):
         self.exit.set()
@@ -36,8 +37,12 @@ class Worker(Thread):
                 t.reschedule()
                 try:
                     self.retry_queue.put_nowait(t)
+                    self._stats.inc_stat('transactions_rescheduled', 1)
                 except queue.Full as e:
                     log.error("Could not retry transaction to '%s', queue is full (dropping it): %s", t.get_endpoint(), e)
+                    self._stats.inc_stat('queue_full_errors', 1)
+            else:
+                self._stats.inc_stat('transactions_success', 1)
         except Exception as e:
             log.exception("unknown error processing transaction")
 
@@ -50,8 +55,8 @@ class RetryWorker(Worker):
     DEFAULT_FLUSH_INTERVAL = 5 # seconds
     GET_TIMEOUT = 1 # seconds
 
-    def __init__(self, input_queue, retry_queue, flush_interval=DEFAULT_FLUSH_INTERVAL):
-        super(RetryWorker, self).__init__(input_queue, retry_queue)
+    def __init__(self, input_queue, retry_queue, stats, flush_interval=DEFAULT_FLUSH_INTERVAL):
+        super(RetryWorker, self).__init__(input_queue, retry_queue, stats)
         self.transactions = []
         self.flush_interval = flush_interval
         self.retry_queue_max_size = config.get("forwarder_retry_queue_max_size")

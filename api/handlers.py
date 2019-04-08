@@ -108,7 +108,7 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             else:
                 processed[check] = {'metrics': values}
 
-        return { 'checks': processed }
+        return {'checks': processed}
 
     def process_collector_info(self, info):
         processed = {
@@ -137,4 +137,4 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             for instance, error in errors.items():
                 processed['runtime'][check][hex(instance)] = error
 
-        return { 'errors': processed }
+        return {'errors': processed}

@@ -62,4 +62,3 @@ def test_stats():
         stats.get_stat('nonexistent', strict=True)
     with pytest.raises(KeyError):
         stats.get_info('nonexistent', strict=True)
-

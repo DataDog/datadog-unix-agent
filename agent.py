@@ -160,7 +160,7 @@ class Agent(Daemon):
         return rendered
 
     @classmethod
-    def flare(cls, case_id):
+    def flare(cls, config, case_id):
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
         myflare = Flare(case_id=case_id, email=email)
@@ -170,7 +170,7 @@ class Agent(Daemon):
         myflare.add_path(config.get('logging').get('dogstatsd_log_file'))
         myflare.add_path(config.get('additional_checksd'))
 
-        flarepath = myflare.create_archive(status=cls.status(to_screen=False))
+        flarepath = myflare.create_archive(status=cls.status(config, to_screen=False))
 
         print('The flare is going to be uploaded to Datadog')
         choice = input('Do you want to continue [Y/n]? ')
@@ -239,10 +239,8 @@ class Agent(Daemon):
 
         # instantiate Dogstatsd
         reporter = None
-        dogstatsd = None
-
-        dsd_enable = config['dogstatsd'].get('enable', False)
         dsd_server = None
+        dsd_enable = config['dogstatsd'].get('enable', False)
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
             dsd = DogstatsdRunner(dsd_server)
@@ -355,7 +353,7 @@ def main():
 
     elif 'flare' == command:
         case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()
-        agent.flare(case_id)
+        agent.flare(config, case_id)
 
 
 if __name__ == "__main__":

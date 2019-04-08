@@ -36,6 +36,12 @@ from serialize import Serializer
 from forwarder import Forwarder
 from api import APIServer
 
+from dogstatsd.helpers import (
+    init_dogstatsd,
+    DogstatsdRunner,
+)
+
+
 # Globals
 AGENT_VERSION = '0.8.0'
 PID_NAME = 'datadog-unix-agent'
@@ -219,6 +225,15 @@ class Agent(Daemon):
         # instantiate AgentRunner
         runner = AgentRunner(collector, serializer, config)
 
+        # instantiate Dogstatsd
+        runner_dogstatsd = None
+        reporter = None
+
+        dsd_enable = config['dogstatsd'].get('enable', False)
+        if dsd_enable:
+            reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
+            runner_dogstatsd = DogstatsdRunner(dsd_server)
+
         # instantiate API
         api = APIServer(config, aggregator.stats)
 
@@ -227,6 +242,10 @@ class Agent(Daemon):
         handler.register('runner', runner)
         handler.register('forwarder', forwarder)
         handler.register('api', api)
+        if dsd_enable:
+            handler.register('reporter', reporter)
+            handler.register('dsd_server', dsd_server)
+
         # signals
         handler.handle(signal.SIGTERM)
         handler.handle(signal.SIGINT)
@@ -237,8 +256,20 @@ class Agent(Daemon):
         runner.start()
         api.start()
 
+        if runner_dogstatsd:
+            reporter.start()
+            runner_dogstatsd.start()
+
+            runner_dogstatsd.join()
+            logging.info("Dogstatsd server done...")
+            try:
+                runner_dogstatsd.raise_for_status()
+            except Exception as e:
+                log.error("There was a problem with the dogstatsd server: %s", e)
+                reporter.stop()
+
         runner.join()
-        logging.info("Agent done...")
+        logging.info("Collector done...")
 
         api.join()
         logging.info("API done...")

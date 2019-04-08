@@ -74,7 +74,7 @@ def init(config):
             'forward_port': None,
             'so_rcvbuf': None,
             'metric_namespace': None,
-            'utf8_decoding': False,
+            'utf8_decoding': True,
         },
         'api': {
             'bind_host': DEFAULT_BIND_HOST,

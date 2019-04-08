@@ -11,7 +11,7 @@ from aggregator.formatters import get_formatter
 from forwarder import Forwarder
 from serialize import Serializer
 from utils.hostname import get_hostname
-from utils.network import get_proxy
+from utils.network import get_proxy, get_site_url
 
 from .constants import (  # pylint: disable=no-name-in-module
     DOGSTATSD_FLUSH_INTERVAL,
@@ -51,7 +51,7 @@ def init_dogstatsd(config, forwarder=None):
     if not forwarder:
         forwarder = Forwarder(
             api_key,
-            dd_url,
+            get_site_url(dd_url, site=config.get('site')),
             proxies=proxies,
         )
 

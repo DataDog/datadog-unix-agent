@@ -26,7 +26,7 @@ from utils.hostname import HostnameException, get_hostname
 from utils.daemon import Daemon
 from utils.signals import SignalHandler
 from utils.pidfile import PidFile
-from utils.network import get_proxy
+from utils.network import get_proxy, get_site_url
 from utils.flare import Flare
 from metadata import get_metadata
 
@@ -205,9 +205,10 @@ class Agent(Daemon):
         proxies = get_proxy()
         logging.debug('Proxy configuration used: %s', proxies)
 
+        # get site url
         forwarder = Forwarder(
             api_key,
-            dd_url,
+            get_site_url(dd_url, site=config.get('site')),
             proxies=proxies,
         )
         forwarder.start()

@@ -18,22 +18,34 @@ class Stats(object):
         self._stats = Counter()
         self._info = {}
 
-    def set_info(self, key, value):
+    def lock_acquire(self):
         self._stats_mutex.acquire()
+
+    def lock_release(self):
+        self._stats_mutex.release()
+
+    def set_info(self, key, value):
+        self.lock_acquire()
         try:
-            self._info[key] = value
+            self.set_info_unsafe(key, value)
         finally:
-            self._stats_mutex.release()
+            self.lock_release()
 
     def get_info(self, key, strict=False):
-        self._stats_mutex.acquire()
+        self.lock_acquire()
         try:
-            if strict and key not in self._info:
-                raise KeyError()
-
-            return self._info[key]
+            return self.get_info_unsafe(key, strict)
         finally:
-            self._stats_mutex.release()
+            self.lock_release()
+
+    def set_info_unsafe(self, key, value):
+        self._info[key] = value
+
+    def get_info_unsafe(self, key, strict=False):
+        if strict and key not in self._info:
+            raise KeyError()
+
+        return self._info[key]
 
     def inc_stat(self, key, value):
         self._stats_mutex.acquire()

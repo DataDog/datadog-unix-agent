@@ -49,6 +49,7 @@ class Aggregator(object):
         self.service_checks = []
 
         self.stats = Stats()
+        self.stats = Stats()
 
         # TODO(jaime): we can probably kill total counts
         self.packet_count = 0

@@ -9,16 +9,19 @@ import time
 from forwarder.worker import Worker, RetryWorker
 from forwarder.transaction import Transaction
 
+from utils.stats import Stats
+
 
 def test_init():
+    stats = Stats()
     input_queue = queue.Queue(2)
     retry_queue = queue.Queue(2)
-    w = Worker(input_queue, retry_queue)
+    w = Worker(input_queue, retry_queue, stats)
 
     assert w.input_queue == input_queue
     assert w.retry_queue == retry_queue
 
-    rw = RetryWorker(input_queue, retry_queue)
+    rw = RetryWorker(input_queue, retry_queue, stats)
 
     assert rw.input_queue == input_queue
     assert rw.retry_queue == retry_queue
@@ -27,9 +30,10 @@ def test_init():
     assert rw.retry_queue_max_size == 30 # default value from config
 
 def test_worker_process_transactions(m):
+    stats = Stats()
     input_queue = queue.Queue(2)
     retry_queue = queue.Queue(2)
-    w = Worker(input_queue, retry_queue)
+    w = Worker(input_queue, retry_queue, stats)
 
     t_success = Transaction("data", "https://datadog.com", "/success", None)
     t_error = Transaction("data", "https://datadog.com", "/error", None)
@@ -54,9 +58,10 @@ def test_worker_process_transactions(m):
     assert t_error == retry_item
 
 def test_worker_stop():
+    stats = Stats()
     input_queue = queue.Queue()
     retry_queue = queue.Queue()
-    w = Worker(input_queue, retry_queue)
+    w = Worker(input_queue, retry_queue, stats)
     w.start()
 
     w.stop()
@@ -64,9 +69,10 @@ def test_worker_stop():
     assert not w.isAlive()
 
 def test_retry_worker_flush():
+    stats = Stats()
     input_queue = queue.Queue(1)
     retry_queue = queue.Queue(1)
-    w = RetryWorker(input_queue, retry_queue)
+    w = RetryWorker(input_queue, retry_queue, stats)
 
     t_ready = Transaction("data", "https://datadog.com", "/success", None)
     t_ready.next_flush = time.time() - 10
@@ -88,10 +94,11 @@ def test_retry_worker_flush():
     assert t == t_ready
 
 def test_retry_worker_process_transaction():
+    stats = Stats()
     input_queue = queue.Queue(2)
     retry_queue = queue.Queue(2)
 
-    w = RetryWorker(input_queue, retry_queue, flush_interval=1)
+    w = RetryWorker(input_queue, retry_queue, stats, flush_interval=1)
 
     # test pulling 1 transaction without flushing
     t1 = Transaction("data", "https://datadog.com", "/success", None)
@@ -125,9 +132,10 @@ def test_retry_worker_process_transaction():
     assert flush_time <= end + 1
 
 def test_retryworker_stop():
+    stats = Stats()
     input_queue = queue.Queue()
     retry_queue = queue.Queue()
-    w = RetryWorker(input_queue, retry_queue)
+    w = RetryWorker(input_queue, retry_queue, stats)
     w.start()
 
     w.stop()

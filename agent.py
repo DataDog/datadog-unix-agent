@@ -250,7 +250,8 @@ class Agent(Daemon):
         # instantiate API
         status = {
             'agent': aggregator.stats,
-            'collector': collector.status
+            'forwarder': forwarder.stats,
+            'collector': collector.status,
         }
         if dsd_server:
             status['dogstatsd'] = dsd_server.aggregator.stats

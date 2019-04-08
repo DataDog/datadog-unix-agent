@@ -1,5 +1,6 @@
 {% set agent = status.get('agent', {}) %}
 {% set collector = status.get('collector', {}) %}
+{% set forwarder = status.get('forwarder', {}) %}
 {% set dogstatsd = status.get('dogstatsd', {}) %}
 {{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
 DataDog Unix Agent (v{{ version }})
@@ -68,7 +69,16 @@ Errors
 {%- endfor %}
 {% endif %}
 
-{%- if dogstatsd|length > 0 -%}
+Forwarder
+=========
+  Submitted Series Payloads: {{ forwarder.get('stats', {}).get('series_payloads', 0) }}
+  Submitted Intake Payloads: {{ forwarder.get('stats', {}).get('intake_payloads', 0) }}
+  Submitted Service Check Payloads: {{ forwarder.get('stats', {}).get('service_check_payloads', 0) }}
+  Transactions Submitted: {{ forwarder.get('stats', {}).get('transactions_success', 0) }}
+  Transactions Rescheduled: {{ forwarder.get('stats', {}).get('transactions_rescheduled', 0) }}
+  Full Queue Errors: {{ forwarder.get('stats', {}).get('queue_full_errors', 0) }}
+
+{% if dogstatsd|length > 0 %}
 Dogstatsd
 =========
   Last Flush Metric Count: {{ dogstatsd.get('stats', {}).get('metrics') }}

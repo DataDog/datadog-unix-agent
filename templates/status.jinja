@@ -1,7 +1,7 @@
-{% set agent = status.get('agent', {}) %}
-{% set collector = status.get('collector', {}) %}
-{% set forwarder = status.get('forwarder', {}) %}
-{% set dogstatsd = status.get('dogstatsd', {}) %}
+{%- set agent = status.get('agent', {}) %}
+{%- set collector = status.get('collector', {}) %}
+{%- set forwarder = status.get('forwarder', {}) %}
+{%- set dogstatsd = status.get('dogstatsd', {}) %}
 {{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
 DataDog Unix Agent (v{{ version }})
 {{ '='*"DataDog Unix Agent (v{})".format(version)|length }}
@@ -67,7 +67,7 @@ Errors
       {{ loader }}: {{ error }}
     {% endfor -%}
 {%- endfor %}
-{% endif %}
+{%- endif %}
 
 Forwarder
 =========

@@ -89,18 +89,6 @@ Dogstatsd
   Total Flush Service Check Count: {{ dogstatsd.get('stats', {}).get('service_checks_total') }}
 {% endif %}
 
-{% if status.get('errors').get('loader', {})|length > 0 -%}
-Errors
-======
-{% for check, errors in status.get('errors').get('loader', {}).items() %}
-  - {{ check }}
-    {{ '-'*check|length }}
-    {% for loader, error in errors.items() -%}
-      {{ loader }}: {{ error }}
-    {% endfor -%}
-{% endfor -%}
-{% endif %}
-
 API Key Status
 ==============
   API Key ending in {{ status.get('redacted_api') }}: {{ status.get('api_status') }}

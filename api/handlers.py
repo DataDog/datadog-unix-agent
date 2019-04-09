@@ -37,8 +37,6 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             elif component == 'collector':
                 info_snap = self.process_collector_info(info_snap)
 
-            log.debug("processed %s info: %s", component, info_snap)
-
             status[component] = {
                 'stats': stats_snap,
                 'info': info_snap,

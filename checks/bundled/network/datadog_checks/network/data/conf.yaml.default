@@ -1,0 +1,5 @@
+init_config:
+  # no init_config for the network check
+
+instances:
+  - name: default

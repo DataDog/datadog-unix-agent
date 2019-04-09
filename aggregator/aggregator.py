@@ -644,17 +644,11 @@ class MetricsAggregator(Aggregator):
             stats_by_source[source] = len(contexts)
 
         # Save some stats.
-<<<<<<< HEAD
         self.stats.set_info('sources', stats_by_source)
         self.stats.set_stat('metrics', self.metric_count)
         self.stats.inc_stat('metrics_total', self.metric_count)
-=======
-        self.stats.set_last_flush_metric_stats(stats_by_source)
-        self.stats.set_last_flush_counts(mcount=self.metric_count)
-        log.info("Received %s metric since last flush" % self.metric_count)
->>>>>>> jaime/logs_defaults
 
-        log.debug("received %s metric since last flush" % self.metric_count)
+        log.info("Received %s metric since last flush" % self.metric_count)
         self.metric_count = 0
 
         return metrics

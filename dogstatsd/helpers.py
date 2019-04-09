@@ -1,55 +1,31 @@
-#!/opt/datadog-agent/embedded/bin/python
-
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
 import logging
-import optparse
-import signal
-import os
-import sys
+from threading import Thread
 
 from aggregator import MetricsBucketAggregator
 from aggregator.formatters import get_formatter
-from config import config
-from config.default import DEFAULT_PATH
-from serialize import Serializer
 from forwarder import Forwarder
+from serialize import Serializer
 from utils.hostname import get_hostname
-from utils.logs import initialize_logging
 from utils.network import get_proxy, get_site_url
-from utils.signals import SignalHandler
 
-from dogstatsd import (
-    Server,
-    Reporter,
-)
-from dogstatsd.constants import (  # pylint: disable=no-name-in-module
+from .constants import (  # pylint: disable=no-name-in-module
     DOGSTATSD_FLUSH_INTERVAL,
     DOGSTATSD_AGGREGATOR_BUCKET_SIZE,
+)
+from . import (
+    Server,
+    Reporter,
 )
 
 log = logging.getLogger('dogstatsd')
 
 
-def init_config():
-    config.add_search_path("/etc/datadog-agent")
-    config.add_search_path(os.path.join(DEFAULT_PATH, "etc/datadog-agent"))
-    config.add_search_path("./etc/datadog-agent")
-    config.add_search_path(".")
-    try:
-        config.load()
-        config.add_search_path(config.get('conf_path'))
-
-        #  load again
-        config.load()
-    finally:
-        initialize_logging('dogstatsd')
-
-
-def init_dogstatsd(config):
+def init_dogstatsd(config, forwarder=None):
     api_key = config['api_key']
     recent_point_threshold = config.get('recent_point_threshold', None)
     server_host = config['dogstatsd']['bind_host']
@@ -69,12 +45,12 @@ def init_dogstatsd(config):
     # get proxy settings
     proxies = get_proxy()
 
-    forwarder = Forwarder(
-        api_key,
-        get_site_url(dd_url, site=config.get('site')),
-        proxies=proxies,
-    )
-    forwarder.start()
+    if not forwarder:
+        forwarder = Forwarder(
+            api_key,
+            get_site_url(dd_url, site=config.get('site')),
+            proxies=proxies,
+        )
 
     aggregator = MetricsBucketAggregator(
         hostname,
@@ -109,62 +85,24 @@ def init_dogstatsd(config):
     return reporter, server, forwarder
 
 
-def main(config_path=None):
-    """ The main entry point for the unix version of dogstatsd. """
-    COMMANDS_START_DOGSTATSD = [
-        'start',
-        'restart',
-    ]
+class DogstatsdRunner(Thread):
+    def __init__(self, server):
+        super(DogstatsdRunner, self).__init__()
+        self._server = server
+        self._error = None
 
-    parser = optparse.OptionParser("%prog [start|stop|restart|status]")
-    parser.add_option('-u', '--use-local-forwarder', action='store_true',
-                      dest="use_forwarder", default=False)
-    opts, args = parser.parse_args()
+    def stop(self):
+        log.info('Stopping Dogstatsd Runner...')
+        self._server.stop()
 
-    try:
-        init_config()
-    except Exception as e:
-        logging.error("Problem initializing configuration: %s", e)
-        return 1
+    def run(self):
+        log.info('Starting Dogstatsd Runner...')
 
-    if not args or args[0] in COMMANDS_START_DOGSTATSD:
-        reporter, server, forwarder = init_dogstatsd(config)
+        try:
+            self._server.start()
+        except OSError as e:
+            self._error = e
 
-    # If no args were passed in, run the server in the foreground.
-    command = 'start' if not args else args[0]
-
-    if command == 'start'or command == 'restart':
-
-        handler = SignalHandler()
-        # components
-        handler.register('forwarder', forwarder)
-        handler.register('server', server)
-        handler.register('reporter', reporter)
-        # signals
-        handler.handle(signal.SIGTERM)
-        handler.handle(signal.SIGINT)
-
-        # start signal handler
-        handler.start()
-
-        # start components
-        reporter.start()
-        server.start()
-
-        reporter.join()
-        logging.info("Dogstatsd reporter done...")
-
-        handler.stop()
-        handler.join()
-
-        logging.info("Thank you for shopping at DataDog! Come back soon!")
-    else:
-        sys.stderr.write("Unknown command: %s\n\n" % command)
-        parser.print_help()
-        sys.exit(1)
-
-    sys.exit(0)
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+    def raise_for_status(self):
+        if self._error:
+            raise self._error

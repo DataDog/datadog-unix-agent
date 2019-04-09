@@ -7,7 +7,6 @@ import re
 import logging
 import subprocess
 import socket
-from sys import platform
 
 from config import config
 
@@ -38,16 +37,22 @@ def is_valid_hostname(hostname):
         return False
     return True
 
-def _get_hostname(cmd=[]):
+def _get_hostname(cmd=[], validate=False):
     fqdn = subprocess.check_output(cmd).strip()
-    if fqdn and is_valid_hostname(fqdn):
-        return fqdn
 
-def get_hostname_std():
-    return _get_hostname(['/bin/hostname', '-s'])
+    if fqdn:
+        try:
+            fqdn = fqdn.decode()
+        except AttributeError:
+            pass
 
-def get_hostname_solaris():
-    return _get_hostname(['/bin/hostname'])
+        if not validate:
+            return fqdn
+        elif is_valid_hostname(fqdn):
+            return fqdn
+
+def get_hostname_std(validate=False):
+    return _get_hostname(['/bin/hostname'], validate)
 
 def get_hostname(config_override=True):
     """
@@ -67,10 +72,7 @@ def get_hostname(config_override=True):
 
     try:
         # try fqdn
-        if platform.startswith('sunos'):
-            hostname = get_hostname_solaris()
-        else:
-            hostname = get_hostname_std()
+        hostname = get_hostname_std()
 
         if hostname:
             return hostname

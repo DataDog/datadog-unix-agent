@@ -36,6 +36,12 @@ from serialize import Serializer
 from forwarder import Forwarder
 from api import APIServer
 
+from dogstatsd.helpers import (
+    init_dogstatsd,
+    DogstatsdRunner,
+)
+
+
 # Globals
 AGENT_VERSION = '0.8.0'
 PID_NAME = 'datadog-unix-agent'
@@ -145,7 +151,7 @@ class Agent(Daemon):
     def flare(cls, case_id):
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
-        myflare = Flare(case_id=case_id, email=email)
+        myflare = Flare(version=AGENT_VERSION, case_id=case_id, email=email)
         myflare.add_path(config.get('conf_path'))
         myflare.add_path(config.get_loaded_config())
         myflare.add_path(config.get('logging').get('agent_log_file'))
@@ -160,7 +166,13 @@ class Agent(Daemon):
             print('Aborting (you can still use {0})'.format(flarepath))
             sys.exit(0)
 
-        if myflare.submit():
+        success, case_id = myflare.submit()
+        if success:
+            if case_id:
+                print('Your flare was uploaded successfully, this is your case id: {}'.format(case_id))
+            else:
+                print('Your flare was uploaded successfully, but a case id could not be retrieved.')
+
             myflare.cleanup()
 
     def run(self):
@@ -220,6 +232,15 @@ class Agent(Daemon):
         # instantiate AgentRunner
         runner = AgentRunner(collector, serializer, config)
 
+        # instantiate Dogstatsd
+        runner_dogstatsd = None
+        reporter = None
+
+        dsd_enable = config['dogstatsd'].get('enable', False)
+        if dsd_enable:
+            reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
+            runner_dogstatsd = DogstatsdRunner(dsd_server)
+
         # instantiate API
         api = APIServer(config, aggregator.stats)
 
@@ -228,6 +249,10 @@ class Agent(Daemon):
         handler.register('runner', runner)
         handler.register('forwarder', forwarder)
         handler.register('api', api)
+        if dsd_enable:
+            handler.register('reporter', reporter)
+            handler.register('dsd_server', dsd_server)
+
         # signals
         handler.handle(signal.SIGTERM)
         handler.handle(signal.SIGINT)
@@ -238,8 +263,20 @@ class Agent(Daemon):
         runner.start()
         api.start()
 
+        if runner_dogstatsd:
+            reporter.start()
+            runner_dogstatsd.start()
+
+            runner_dogstatsd.join()
+            logging.info("Dogstatsd server done...")
+            try:
+                runner_dogstatsd.raise_for_status()
+            except Exception as e:
+                log.error("There was a problem with the dogstatsd server: %s", e)
+                reporter.stop()
+
         runner.join()
-        logging.info("Agent done...")
+        logging.info("Collector done...")
 
         api.join()
         logging.info("API done...")

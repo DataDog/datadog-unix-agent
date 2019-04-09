@@ -8,6 +8,8 @@ import threading
 
 from utils.hostname import get_hostname
 
+log = logging.getLogger('dogstatsd')
+
 
 class Reporter(threading.Thread):
     """
@@ -29,12 +31,12 @@ class Reporter(threading.Thread):
         self.api_key = api_key
 
     def stop(self):
-        logging.info("Stopping reporter")
+        log.debug("Stopping reporter")
         self.finished.set()
 
     def run(self):
 
-        logging.info("Reporting every %ss" % self.interval)
+        log.info("Reporting every %ss" % self.interval)
 
         while not self.finished.is_set():
             self.finished.wait(self.interval)
@@ -42,21 +44,21 @@ class Reporter(threading.Thread):
             self.flush()
 
         # Clean up the status messages.
-        logging.debug("Stopped reporter")
+        log.info("Stopped reporter")
 
     def flush(self):
         try:
             self.flush_count += 1
             metric_count, event_count, service_check_count = self.submit()
 
-            logging.debug("Flush #%s: flushed %s metric(s), %s event(s), and %s service check(s)" %
+            log.info("Flush #%s: flushed %s metric(s), %s event(s), and %s service check(s)" %
                           (self.flush_count, metric_count, event_count, service_check_count))
 
         except Exception:
             if self.finished.isSet():
-                logging.debug("Couldn't flush metrics, but that's expected as we're stopping")
+                log.debug("Couldn't flush metrics, but that's expected as we're stopping")
             else:
-                logging.exception("Error flushing metrics")
+                log.exception("Error flushing metrics")
 
     def submit(self):
         return self.serializer.serialize_and_push()

@@ -355,7 +355,7 @@ class Aggregator(object):
         self.total_count += self.event_count
         self.event_count = 0
 
-        log.debug("Received %d events since last flush" % len(events))
+        log.info("Received %d events since last flush" % len(events))
 
         return events
 
@@ -367,7 +367,7 @@ class Aggregator(object):
         self.total_count += self.service_check_count
         self.service_check_count = 0
 
-        log.debug("Received {0} service check runs since last flush".format(len(service_checks)))
+        log.info("Received {0} service check runs since last flush".format(len(service_checks)))
 
         return service_checks
 
@@ -508,7 +508,7 @@ class MetricsBucketAggregator(Aggregator):
             self.num_discarded_old_points = 0
 
         # Save some stats.
-        log.debug("received %s payloads since last flush" % self.metric_count)
+        log.info("Received %s payloads since last flush" % self.metric_count)
         self.stats.set_last_flush_counts(mcount=self.metric_count)
         self.total_count += self.metric_count
         self.metric_count = 0
@@ -643,7 +643,7 @@ class MetricsAggregator(Aggregator):
         # Save some stats.
         self.stats.set_last_flush_metric_stats(stats_by_source)
         self.stats.set_last_flush_counts(mcount=self.metric_count)
-        log.debug("received %s metric since last flush" % self.metric_count)
+        log.info("Received %s metric since last flush" % self.metric_count)
 
         self.total_count += self.metric_count
         self.metric_count = 0

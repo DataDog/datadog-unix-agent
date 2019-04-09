@@ -60,7 +60,7 @@ class Transaction(object):
             log.error("error %d while sending transaction to %s, rescheduling it", resp.status_code, log_url)
             return False
         else:
-            log.debug("Successfully posted payload to %s: %s", log_url, resp.text)
+            log.info("Successfully posted payload to %s: %s", log_url, resp.text)
         return True
 
     def reschedule(self):

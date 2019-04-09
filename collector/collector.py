@@ -128,7 +128,7 @@ class Collector(object):
 
     def run_checks(self):
         for name, checks in self._check_instances.items():
-            log.debug('running check %s...', name)
+            log.info('running check %s...', name)
             for check in checks:
                 try:
                     result = check.run()

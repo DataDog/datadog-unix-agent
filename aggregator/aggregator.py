@@ -354,7 +354,7 @@ class Aggregator(object):
         self.stats.inc_stat('events_total', self.event_count)
         self.event_count = 0
 
-        log.debug("Received %d events since last flush" % len(events))
+        log.info("Received %d events since last flush" % len(events))
 
         return events
 
@@ -366,7 +366,7 @@ class Aggregator(object):
         self.stats.inc_stat('service_checks_total', self.service_check_count)
         self.service_check_count = 0
 
-        log.debug("Received {0} service check runs since last flush".format(len(service_checks)))
+        log.info("Received {0} service check runs since last flush".format(len(service_checks)))
 
         return service_checks
 
@@ -648,7 +648,7 @@ class MetricsAggregator(Aggregator):
         self.stats.set_stat('metrics', self.metric_count)
         self.stats.inc_stat('metrics_total', self.metric_count)
 
-        log.debug("received %s metric since last flush", self.metric_count)
+        log.info("Received %s metric since last flush", self.metric_count)
         self.metric_count = 0
 
         return metrics

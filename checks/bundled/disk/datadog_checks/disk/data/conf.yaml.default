@@ -5,6 +5,7 @@
 init_config:
 
 instances:
+  - name: default
 
   ## @param all_partitions - boolean - optional
   ## Instruct the check to collect from partitions even without device names.

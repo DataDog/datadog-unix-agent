@@ -84,9 +84,12 @@ Dogstatsd
   Last Flush Metric Count: {{ dogstatsd.get('stats', {}).get('metrics') }}
   Last Flush Event Count: {{ dogstatsd.get('stats', {}).get('events') }}
   Last Flush Service Check Count: {{ dogstatsd.get('stats', {}).get('service_checks') }}
-  Total Flush Metric Count: {{ dogstatsd.get('stats', {}).get('metrics_total') }}
-  Total Flush Event Count: {{ dogstatsd.get('stats', {}).get('events_total') }}
-  Total Flush Service Check Count: {{ dogstatsd.get('stats', {}).get('service_checks_total') }}
+  Last Flush Packet Count: {{ dogstatsd.get('stats', {}).get('packets') }}
+
+  Total Metric Count: {{ dogstatsd.get('stats', {}).get('metrics_total') }}
+  Total Event Count: {{ dogstatsd.get('stats', {}).get('events_total') }}
+  Total Service Check Count: {{ dogstatsd.get('stats', {}).get('service_checks_total') }}
+  Total Received Packet Count: {{ dogstatsd.get('stats', {}).get('packets_total') }}
 {% endif %}
 
 API Key Status

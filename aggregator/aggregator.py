@@ -450,6 +450,7 @@ class MetricsBucketAggregator(Aggregator):
                                  hostname, self.metric_config.get(metric_class))
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
+            self.metric_count += 1
 
     def create_empty_metrics(self, sample_time_by_context, expiry_timestamp, flush_timestamp, metrics):
         # Even if no data is submitted, Counters keep reporting "0" for expiry_seconds.  The other Metrics

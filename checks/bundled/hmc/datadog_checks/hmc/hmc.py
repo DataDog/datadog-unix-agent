@@ -180,7 +180,7 @@ class HMC(AgentCheck):
                 raise Exception("Please specify a valid {0}".format(option))
 
             if value is None or not isinstance(value, expected_type):
-                self.log.debug("Bad or missing value for {0} parameter. Using default".format(option))
+                self.log.debug("Bad or missing value for %s parameter. Using default", option)
                 value = default
 
             params.append(value)
@@ -260,7 +260,7 @@ class HMC(AgentCheck):
                         sample_rate = self.hmc_get_sample_rate(client, server, environment=self.HMC_LSLPARUTIL_ENV)
                         server.sample_rate = sample_rate
                     except ValueError:
-                        self.log.error('Unable to collect sample rate for {}'.format(server.name))
+                        self.log.error('Unable to collect sample rate for %s', server.name)
                         continue
 
                 tags = ['server:{name}'.format(name=server.name)]
@@ -340,7 +340,7 @@ class HMC(AgentCheck):
             output = stdout.read()
             sample_rate = int(output)
         except ValueError:
-            self.log.error("unable to collect sample rate for {}: {}".format(server.name, output))
+            self.log.error("unable to collect sample rate for %s: %s", server.name, output)
             raise
 
         return sample_rate
@@ -426,7 +426,7 @@ class HMC(AgentCheck):
                     else:
                         pass
                 except ValueError:
-                    self.log.exception("unable to submit metric for {}".format(field))
+                    self.log.exception("unable to submit metric for %s", field)
 
     def hmc_ls(self, ssh_client, environment={}):
         try:

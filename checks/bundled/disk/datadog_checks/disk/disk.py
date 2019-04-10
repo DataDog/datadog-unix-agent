@@ -70,7 +70,7 @@ class Disk(AgentCheck):
 
     def _collect_io_metrics(self):
         for disk_name, counters in psutil.disk_io_counters(True).items():
-            self.log.debug('IO Counters: {} -> {}'.format(disk_name, counters))
+            self.log.debug('IO Counters: %s -> %s', disk_name, counters)
 
             for counter in self.IO_ATTRS:
                 try:
@@ -90,7 +90,7 @@ class Disk(AgentCheck):
                 except AttributeError as e:
                     # Some OS don't return read_time/write_time fields
                     # http://psutil.readthedocs.io/en/latest/#psutil.disk_io_counters
-                    self.log.debug('IO metrics not collected for {}: {}'.format(disk_name, e))
+                    self.log.debug('IO metrics not collected for %s: %s', disk_name, e)
 
     def _exclude_partition(self, partition):
         if partition.device in self._device_blacklist:

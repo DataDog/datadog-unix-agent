@@ -160,14 +160,13 @@ class Process(AgentCheck):
                     try:
                         result[acc] = getattr(res, acc)
                     except AttributeError:
-                        self.log.debug("psutil.{}().{} attribute does"
-                                       "not exist".format(method, acc))
+                        self.log.debug("psutil.%s().%s attribute does not exist", method, acc)
         except (NotImplementedError, AttributeError):
-            self.log.debug("psutil method {} not implemented".format(method))
+            self.log.debug("psutil method %s not implemented", method)
         except psutil.AccessDenied:
-            self.log.debug("psutil was denied access for method {}".format(method))
+            self.log.debug("psutil was denied access for method %s", method)
         except psutil.NoSuchProcess:
-            self.warning("Process {} disappeared while scanning".format(process.pid))
+            self.warning("Process %s disappeared while scanning", process.pid)
 
         return result
 
@@ -189,10 +188,10 @@ class Process(AgentCheck):
                 new_process = True
                 try:
                     self.process_cache[name][pid] = psutil.Process(pid)
-                    self.log.debug('New process in cache: {}'.format(pid))
+                    self.log.debug('New process in cache: %s', pid)
                 # Skip processes dead in the meantime
                 except psutil.NoSuchProcess:
-                    self.warning('Process {} disappeared while scanning'.format(pid))
+                    self.warning('Process %s disappeared while scanning', pid)
                     # reset the PID cache now, something changed
                     self.last_pid_cache_ts[name] = 0
                     continue
@@ -229,7 +228,7 @@ class Process(AgentCheck):
                     st['cpu_norm'].append(cpu_percent/cpu_count)
                 else:
                     self.log.debug('could not calculate the normalized '
-                                   'cpu pct, cpu_count: {}'.format(cpu_count))
+                                   'cpu pct, cpu_count: %s', cpu_count)
             st['open_fd'].append(self.psutil_wrapper(p, 'num_fds', None))
 
             ioinfo = self.psutil_wrapper(p, 'io_counters',
@@ -253,7 +252,7 @@ class Process(AgentCheck):
         for pid in pids:
             try:
                 children = psutil.Process(pid).children(recursive=True)
-                self.log.debug('{} children were collected for process {}'.format(len(children), pid))
+                self.log.debug('%s children were collected for process %s', len(children), pid)
                 for child in children:
                     children_pids.add(child.pid)
             except psutil.NoSuchProcess:
@@ -295,7 +294,7 @@ class Process(AgentCheck):
                     pids = self._get_pid_set(int(pid_line))
             except IOError as e:
                 # pid file doesn't exist, assuming the process is not running
-                self.log.debug('Unable to find pid file: {}'.format(e))
+                self.log.debug('Unable to find pid file: %s', e)
                 pids = set()
         elif search_string is not None:
             pids = self.find_pids(
@@ -318,7 +317,7 @@ class Process(AgentCheck):
         # FIXME 6.x remove the `name` tag
         tags.extend(['process_name:{}'.format(name), name])
 
-        self.log.debug('ProcessCheck: process {} analysed'.format(name))
+        self.log.debug('ProcessCheck: process %s analyzed', name)
         self.gauge('system.processes.number', len(pids), tags=tags)
 
         if len(pids) == 0:
@@ -391,10 +390,10 @@ class Process(AgentCheck):
             try:
                 proc = psutil.Process(pid)
                 if proc.username() == user:
-                    self.log.debug("Collecting pid {} belonging to {}".format(pid, user))
+                    self.log.debug("Collecting pid %s belonging to %s", pid, user)
                     filtered_pids.add(pid)
                 else:
-                    self.log.debug("Discarding pid {} not belonging to {}".format(pid, user))
+                    self.log.debug("Discarding pid %s not belonging to %s", pid, user)
             except psutil.NoSuchProcess:
                 pass
 

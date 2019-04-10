@@ -9,7 +9,7 @@ set -e
 logfile="ddagent-install.log"
 
 CHANNEL=${CHANNEL:-stable}
-AIX_ARTIFACT_SOURCE="https://s3.amazonaws.com/dd-unix-agent"
+AIX_ARTIFACT_SOURCE=${AIX_ARTIFACT_SOURCE:-https://s3.amazonaws.com/dd-unix-agent}
 
 ETCDIR="/etc/datadog-agent"
 CONF="$ETCDIR/datadog.yaml"
@@ -50,6 +50,14 @@ solve your problem.\n\033[0m\n"
 }
 trap on_error ERR
 
+use_proxy_creds=
+if [ -n "$PROXY_USER" -a -n "$PROXY_PASSWORD" ]; then
+  use_proxy_creds=true
+elif [ -n "$PROXY_USER" -o -n "$PROXY_PASSWORD" ]; then
+    printf "\033[31When using proxy credentials you must specify both PROXY_USER and PROXY_PASSWORD\033[0m\n"
+    exit 1;
+fi
+
 if [ -n "$DD_HOSTNAME" ]; then
     dd_hostname=$DD_HOSTNAME
 fi
@@ -72,12 +80,6 @@ if [ -n "$DD_HOST_TAGS" ]; then
     host_tags=$DD_HOST_TAGS
 fi
 
-if [ -n "$REPO_URL" ]; then
-  repo_url=$REPO_URL
-else
-  repo_url="datadoghq.com"
-fi
-
 dd_upgrade=
 if [ -n "$DD_UPGRADE" ]; then
   dd_upgrade=$DD_UPGRADE
@@ -85,6 +87,23 @@ fi
 
 if [ -n "$INSECURE" ]; then
     dl_cmd="${dl_cmd} ${insecure_flag}"
+fi
+
+if [ -n "$PROXY" ]; then
+
+  if [ $(command -v curl) ]; then
+    # curl
+    dl_cmd="${dl_cmd} -x $PROXY"
+    if [ ! -z "${use_proxy_creds}" ]; then
+      dl_cmd="${dl_cmd} -U $PROXY_USER:$PROXY_PASSWORD"
+    fi
+  else
+    # wget
+    dl_cmd="${dl_cmd} -e use_proxy=on -e http_proxy=$PROXY -e https_proxy=$PROXY"
+    if [ ! -z "${use_proxy_creds}" ]; then
+      dl_cmd="${dl_cmd} --proxy_user=$PROXY_USER --proxy_password=$PROXY_PASSWORD"
+    fi
+  fi
 fi
 
 if [ ! "${apikey}" ]; then

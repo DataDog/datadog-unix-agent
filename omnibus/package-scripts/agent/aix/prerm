@@ -18,10 +18,7 @@ stop_datadog_services()
   stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
-# TODO: make sure this all makes sense on AIX.
-#
-#       Enable once we pre-compile the bytecode.
-remove_py_compiled_files()
+remove_pyc_compiled_files()
 {
     # Delete all the .pyc files in the embedded dir that are part of the agent's package
     if [ -f "$PYC_COMPILED_FILES" ]; then
@@ -32,7 +29,7 @@ remove_py_compiled_files()
 
 
 # Delete all .pyc files in the `agent/` and the `bin/agent/dist` dirs
-remove_py_compiled_files
+remove_pyc_compiled_files
 
 stop_datadog_services
 

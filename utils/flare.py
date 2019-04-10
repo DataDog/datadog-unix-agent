@@ -103,7 +103,7 @@ class Flare(object):
         if self._case_id:
             endpoint = urllib.parse.urljoin(endpoint, str(self._case_id))
 
-        base_uri = get_site_url(config.get('dd_url'), site=config.get('site')),
+        base_uri = get_site_url(config.get('dd_url'), site=config.get('site'))
         endpoint = urllib.parse.urljoin(endpoint, "?api_key={}".format(config.get('api_key')))
         url = urllib.parse.urljoin(base_uri, endpoint)
 

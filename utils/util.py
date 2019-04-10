@@ -18,5 +18,5 @@ def _is_affirmative(s):
     try:
         return s.lower() in ('yes', 'true', '1')
     except AttributeError:
-        log.info("unexpected type for {} - defaulting to False".format(s))
+        log.info("unexpected type for %s - defaulting to False", s)
         return False  # if we can't cast, just false

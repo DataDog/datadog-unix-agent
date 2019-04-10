@@ -143,9 +143,9 @@ class Agent(Daemon):
             out = template.render(version=AGENT_VERSION, status=status)
             print(out)
         except requests.exceptions.HTTPError as e:
-            log.error("HTTP error collecting agent status: {}".format(e))
+            log.error("HTTP error collecting agent status: %s", e)
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
+            log.error("Problem connecting or connection timed out, is the agent up? Error: %s", e)
 
     @classmethod
     def flare(cls, case_id):

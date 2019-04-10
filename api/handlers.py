@@ -63,4 +63,4 @@ class APIStatusHandler(tornado.web.RequestHandler):
         try:
             self.write(json.dumps(stats))
         except TypeError as e:
-            log.error("unable to handle status request: {}".format(e))
+            log.error("unable to handle status request: %s", e)

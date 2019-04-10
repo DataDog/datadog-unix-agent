@@ -204,12 +204,12 @@ class Config(object):
             try:
                 val = val.strip()
                 if val not in valid_values:
-                    log.warning("Ignored histogram aggregate {0}, invalid".format(val))
+                    log.warning("Ignored histogram aggregate %s, invalid", val)
                     continue
                 else:
                     result.append(val)
             except Exception:
-                log.exception("Error when parsing histogram aggregate {0}, invalid".format(val))
+                log.exception("Error when parsing histogram aggregate %s, invalid", val)
 
         self.data['histogram_aggregates'] = result
 
@@ -240,8 +240,7 @@ class Config(object):
                     )
                 result.append(floatval)
             except ValueError:
-                log.warning("Bad histogram percentile value {0}, must be float in ]0;1[, skipping"
-                            .format(val))
+                log.warning("Bad histogram percentile value %s, must be float in ]0;1[, skipping", val)
             except Exception:
                 log.exception("Error when parsing histogram percentiles, skipping")
                 return None

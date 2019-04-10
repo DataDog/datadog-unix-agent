@@ -367,7 +367,7 @@ class Aggregator(object):
         self.total_count += self.service_check_count
         self.service_check_count = 0
 
-        log.info("Received {0} service check runs since last flush".format(len(service_checks)))
+        log.info("Received %d service check runs since last flush", len(service_checks))
 
         return service_checks
 

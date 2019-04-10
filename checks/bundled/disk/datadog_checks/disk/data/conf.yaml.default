@@ -5,12 +5,11 @@
 init_config:
 
 instances:
-  - name: default
 
   ## @param all_partitions - boolean - optional
   ## Instruct the check to collect from partitions even without device names.
   #
-  #  all_partitions: false
+  - all_partitions: false
 
   ## @param tags  - list of key:value string - optional
   ## List of tags to attach to every metric and service check emitted by this integration.

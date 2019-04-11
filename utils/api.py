@@ -7,7 +7,7 @@ import logging
 
 import requests
 
-from utils.network import get_proxy
+from utils.network import get_proxy, get_site_url
 
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,8 @@ def validate_api_key(config):
     try:
         proxy = get_proxy()
 
-        r = requests.get("{}/api/v1/validate".format(config.get('dd_url').rstrip('/')),
+        base_uri = get_site_url(config.get('dd_url'), site=config.get('site'))
+        r = requests.get("{}/api/v1/validate".format(base_uri.rstrip('/')),
             params={'api_key': config.get('api_key')}, proxies=proxy,
             timeout=3, verify=(not config.get('skip_ssl_validation', False)))
 

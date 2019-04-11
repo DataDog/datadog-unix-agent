@@ -46,6 +46,7 @@ def init(config):
     config_defaults = {
         'dd_url': DEFAULT_DD_URL,
         'api_key': '',
+        'site': '',
         'hostname': '',
         'tags': [],
         'log_level': DEFAULT_LOG_LEVEL,

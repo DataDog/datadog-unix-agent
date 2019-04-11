@@ -234,7 +234,7 @@ service has stopped.
 fi
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$stop_instructions
+$stop_instructions || true
 eval "${wait_instructions}" && $start_instructions
 
 # Metrics are submitted, echo some instructions and exit

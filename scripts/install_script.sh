@@ -213,7 +213,7 @@ fi
 
 if [ $OS = "AIX" ]; then
   stop_instructions="$sudo_cmd stopsrc -s datadog-agent"
-  wait_instructions="CNT=0; until lssrc -s datadog-agent | grep -q inoperative || [ $$CNT -eq $SHUTDOWN_WAIT ]; do echo \"Waiting for agent to stop\"; sleep $$(( CNT++ )); done"
+  wait_instructions="CNT=0; until lssrc -s datadog-agent | grep -q inoperative || [ \$CNT -eq $SHUTDOWN_WAIT ]; do echo \"Waiting for agent to stop\"; sleep \$(( CNT=CNT+1 )); done"
   start_instructions="$sudo_cmd startsrc -s datadog-agent"
 fi
 
@@ -234,7 +234,8 @@ service has stopped.
 fi
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$stop_instructions || $wait_instructions && $start_instructions
+$stop_instructions
+eval "${wait_instructions}" && $start_instructions
 
 # Metrics are submitted, echo some instructions and exit
 printf "\033[32m

@@ -224,7 +224,7 @@ if [ ! -z "${no_start}" ]; then
 the newly installed version of the agent will not be started. You will have
 to do it manually using the following commands:
 
-    $stop_instructions && $wait_instructions && $start_instructions
+    $stop_instructions || $wait_instructions && $start_instructions
 
 * should the wait expire, please run $start_instructions manually once the
 service has stopped.
@@ -234,7 +234,7 @@ service has stopped.
 fi
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$stop_instructions && $wait_instructions && $start_instructions
+$stop_instructions || $wait_instructions && $start_instructions
 
 # Metrics are submitted, echo some instructions and exit
 printf "\033[32m

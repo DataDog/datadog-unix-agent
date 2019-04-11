@@ -8,6 +8,7 @@
 
 INSTALL_DIR=/opt/datadog-agent
 SERVICE_NAME=datadog-agent
+PYC_COMPILED_FILES=$INSTALL_DIR/embedded/.pyc_compiled_files.txt
 
 
 stop_datadog_services()
@@ -17,21 +18,18 @@ stop_datadog_services()
   stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
-# TODO: make sure this all makes sense on AIX.
-#
-#       Enable once we pre-compile the bytecode.
-remove_py_compiled_files()
+remove_pyc_compiled_files()
 {
     # Delete all the .pyc files in the embedded dir that are part of the agent's package
-    if [ -f "$INSTALL_DIR/embedded/.py_compiled_files.txt" ]; then
+    if [ -f "$PYC_COMPILED_FILES" ]; then
         # (commented lines are filtered out)
-        cat $INSTALL_DIR/embedded/.py_compiled_files.txt | grep -v '^#' | xargs rm -f
+        cat $PYC_COMPILED_FILES | grep -v '^#' | xargs rm -f
     fi
 }
 
 
 # Delete all .pyc files in the `agent/` and the `bin/agent/dist` dirs
-# remove_py_compiled_files
+remove_pyc_compiled_files
 
 stop_datadog_services
 

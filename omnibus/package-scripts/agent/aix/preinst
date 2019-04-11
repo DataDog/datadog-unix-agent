@@ -9,6 +9,7 @@
 INSTALL_DIR=/opt/datadog-agent
 LOG_DIR=/var/log/datadog
 SERVICE_NAME=datadog-agent
+PYC_COMPILED_FILES=$INSTALL_DIR/embedded/.pyc_compiled_files.txt
 
 set -e
 
@@ -24,9 +25,9 @@ tentative_stop_datadog_services()
 tentative_stop_datadog_services
 
 # Delete all the .pyc/.pyo files in the embedded dir that are part of the old agent's package
-if [ -f "$INSTALL_DIR/embedded/.py_compiled_files.txt" ]; then
+if [ -f "$PYC_COMPILED_FILES" ]; then
     # (commented lines are filtered out)
-    cat $INSTALL_DIR/embedded/.py_compiled_files.txt | grep -v '^#' | xargs rm -f
+    cat $PYC_COMPILED_FILES | grep -v '^#' | xargs rm -f
 fi
 
 exit 0

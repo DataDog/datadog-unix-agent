@@ -84,7 +84,7 @@ class AgentRunner(Thread):
         self.collection()
 
 
-def init_config():
+def init_config(do_log=True):
     # init default search path
     config.add_search_path("/etc/datadog-agent")
     config.add_search_path(os.path.join(DEFAULT_PATH, "etc/datadog-agent"))
@@ -93,62 +93,74 @@ def init_config():
     try:
         config.load()
     except Exception:
-        initialize_logging('agent')
+        if do_log:
+            initialize_logging('agent')
         raise
 
     # init log
-    initialize_logging('agent')
+    if do_log:
+        initialize_logging('agent')
 
     # add file provider
     file_provider = FileConfigProvider()
+    file_provider.add_place(os.path.join(os.path.dirname(config.get_loaded_config()), 'conf.d'))
     file_provider.add_place(os.path.join(config.get('conf_path'), 'conf.d'))
     file_provider.add_place(config.get('additional_checksd'))
     config.add_provider('file', file_provider)
 
-    # FIXME: do this elsewhere
-    # collect config
+    # FIXME: perhaps do this elsewhere
     config.collect_check_configs()
 
 
 class Agent(Daemon):
-    COMMANDS = [
-        'start',
-        'stop',
-        'restart',
-        'status',
-        'flare',
-    ]
+    # dictionary k:v - command:log
+    COMMANDS = {
+        'start': True,
+        'stop': True,
+        'restart': False,
+        'status': False,
+        'flare': False,
+    }
 
     STATUS_TIMEOUT = 5
 
     @classmethod
     def usage(cls):
-        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS))
+        return "Usage: %s %s\n" % (sys.argv[0], "|".join(cls.COMMANDS.keys()))
 
     @classmethod
-    def status(cls):
+    def status(cls, config, to_screen=True):
+        status = {}
+        rendered = None
         api_addr = config['api']['bind_host']
         api_port = config['api']['port']
+
         target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
         try:
-            here = os.path.dirname(os.path.realpath(__file__))
-            templates = os.path.join(here, 'templates')
-            template_env = Environment(loader=FileSystemLoader(templates))
-            template = template_env.get_template('status.jinja')
-
             r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
             r.raise_for_status()
 
             status = r.json()
-            out = template.render(version=AGENT_VERSION, status=status)
-            print(out)
         except requests.exceptions.HTTPError as e:
-            log.error("HTTP error collecting agent status: {}".format(e))
+            log.error("HTTP error collecting agent status: %s", e)
         except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
-            log.error("Problem connecting or connection timed out, is the agent up? Error: {}".format(e))
+            log.error("Problem connecting or connection timed out, is the agent up? Error: %s", e)
+        except ValueError as e:
+            log.error("There was a problem unmarshaling JSON response: %s", e)
+
+        if status:
+            here = os.path.dirname(os.path.realpath(__file__))
+            templates = os.path.join(here, 'templates')
+            template_env = Environment(loader=FileSystemLoader(templates))
+            template = template_env.get_template('status.jinja')
+            rendered = template.render(version=AGENT_VERSION, status=status)
+            if to_screen:
+                print(rendered)
+
+        return rendered
 
     @classmethod
-    def flare(cls, case_id):
+    def flare(cls, config, case_id):
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
         myflare = Flare(version=AGENT_VERSION, case_id=case_id, email=email)
@@ -158,7 +170,7 @@ class Agent(Daemon):
         myflare.add_path(config.get('logging').get('dogstatsd_log_file'))
         myflare.add_path(config.get('additional_checksd'))
 
-        flarepath = myflare.create_archive()
+        flarepath = myflare.create_archive(status=cls.status(config, to_screen=False))
 
         print('The flare is going to be uploaded to Datadog')
         choice = input('Do you want to continue [Y/n]? ')
@@ -207,7 +219,7 @@ class Agent(Daemon):
         )
         forwarder.start()
 
-        # aggregator
+        # agent aggregator
         aggregator = MetricsAggregator(
             hostname,
             interval=config.get('aggregator_interval'),
@@ -233,16 +245,23 @@ class Agent(Daemon):
         runner = AgentRunner(collector, serializer, config)
 
         # instantiate Dogstatsd
-        runner_dogstatsd = None
         reporter = None
-
+        dsd_server = None
         dsd_enable = config['dogstatsd'].get('enable', False)
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
-            runner_dogstatsd = DogstatsdRunner(dsd_server)
+            dsd = DogstatsdRunner(dsd_server)
 
         # instantiate API
-        api = APIServer(config, aggregator.stats)
+        status = {
+            'agent': aggregator.stats,
+            'forwarder': forwarder.stats,
+            'collector': collector.status,
+        }
+        if dsd_server:
+            status['dogstatsd'] = dsd_server.aggregator.stats
+
+        api = APIServer(config, status=status)
 
         handler = SignalHandler()
         # components
@@ -263,14 +282,14 @@ class Agent(Daemon):
         runner.start()
         api.start()
 
-        if runner_dogstatsd:
+        if dsd_enable:
             reporter.start()
-            runner_dogstatsd.start()
+            dsd.start()
 
-            runner_dogstatsd.join()
+            dsd.join()
             logging.info("Dogstatsd server done...")
             try:
-                runner_dogstatsd.raise_for_status()
+                dsd.raise_for_status()
             except Exception as e:
                 log.error("There was a problem with the dogstatsd server: %s", e)
                 reporter.stop()
@@ -294,6 +313,8 @@ def main():
     parser = OptionParser()
     parser.add_option('-b', '--background', action='store_true', default=False,
                       dest='background', help='Run agent on the foreground')
+    parser.add_option('-l', '--force-logging', action='store_true', default=False,
+                      dest='logging', help='force logging')
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -306,7 +327,8 @@ def main():
         return 3
 
     try:
-        init_config()
+        do_log = options.logging or Agent.COMMANDS[command]
+        init_config(do_log=do_log)
     except Exception as e:
         logging.error("Problem initializing configuration: %s", e)
         return 1
@@ -334,11 +356,11 @@ def main():
         agent.restart()
 
     elif 'status' == command:
-        agent.status()
+        agent.status(config)
 
     elif 'flare' == command:
         case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()
-        agent.flare(case_id)
+        agent.flare(config, case_id)
 
 
 if __name__ == "__main__":

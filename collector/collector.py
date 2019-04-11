@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 from collections import defaultdict
+from copy import copy, deepcopy
 import logging
 
 from . import CheckLoader, WheelLoader
@@ -12,6 +13,7 @@ from .wheel_loader import DD_WHEEL_NAMESPACE
 from aggregator import Aggregator
 from checks import AgentCheck
 from utils.hostname import get_hostname
+from utils.stats import Stats
 
 log = logging.getLogger(__name__)
 
@@ -23,19 +25,21 @@ class Collector(object):
         self._config = config
         self._loaders = []
         self._check_classes = {}
-        self._check_classes_errors = {}
+        self._check_classes_errors = defaultdict(dict)
+        self._check_instance_errors = defaultdict(dict)
         self._check_instances = defaultdict(list)
         self._check_instance_signatures = {}
         self._hostname = get_hostname()
         self._aggregator = aggregator
+        self._status = Stats()
 
         self.set_loaders()
 
     def set_loaders(self):
-        self._loaders = [WheelLoader(namespace=DD_WHEEL_NAMESPACE)]
         check_loader = CheckLoader()
         check_loader.add_place(self._config['additional_checksd'])
-        self._loaders.append(check_loader)
+        self._loaders = [check_loader]
+        self._loaders.append(WheelLoader(namespace=DD_WHEEL_NAMESPACE))
 
     def set_aggregator(self, aggregator):
         if not isinstance(aggregator, Aggregator):
@@ -43,8 +47,9 @@ class Collector(object):
 
         self._aggregator = aggregator
 
-    def collector_status(self):
-        pass
+    @property
+    def status(self):
+        return self._status
 
     def load_core_checks(self):
         from checks.corechecks.system import (
@@ -65,8 +70,11 @@ class Collector(object):
 
     def load_check_classes(self):
         self.load_core_checks()
+
         for _, check_configs in self._config.get_check_configs().items():
             for check_name in check_configs:
+                log.debug("Found config for check %s...", check_name)
+
                 if check_name in self._check_classes:
                     continue
 
@@ -76,13 +84,16 @@ class Collector(object):
                         if check_class:
                             self._check_classes[check_name] = check_class
                         if errors:
-                            self._check_classes_errors[check_name] = errors
+                            self._check_classes_errors[check_name][type(loader).__name__] = errors
 
                         if check_class:
                             log.debug("Class found for %s...", check_name)
                             break
                     except Exception:
                         log.exception("unexpected error loading check %s", check_name)
+
+        self._status.set_info('check_classes', copy(self._check_classes))  # shallow copy suffices
+        self._status.set_info('loader_errors', deepcopy(self._check_classes_errors))
 
     def instantiate_checks(self):
         for source, check_configs in self._config.get_check_configs().items():
@@ -136,5 +147,8 @@ class Collector(object):
                     log.exception("error for instance: %s", str(check.instance))
 
                 if result:
+                    self._check_instance_errors[name][check.signature] = result
                     log.error('There was an error running your %s: %s', name, result.get('message'))
                     log.error('Traceback %s: %s', name, result.get('traceback'))
+
+        self._status.set_info('runtime_errors', deepcopy(self._check_instance_errors))

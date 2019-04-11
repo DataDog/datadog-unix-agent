@@ -9,6 +9,8 @@ import logging
 from .worker import Worker, RetryWorker
 from .transaction import Transaction
 
+from utils.stats import Stats
+
 log = logging.getLogger(__name__)
 
 
@@ -26,6 +28,7 @@ class Forwarder(object):
     def __init__(self, api_key, domain, nb_worker=4, proxies={}):
         self.api_key = api_key
         self.domain = domain
+        self.stats = Stats()
         self.input_queue = queue.Queue(self.QUEUES_SIZE)
         self.retry_queue = queue.Queue(self.QUEUES_SIZE)
         self.workers = []
@@ -34,11 +37,11 @@ class Forwarder(object):
         self.proxies = proxies
 
     def start(self):
-        self.retry_worker = RetryWorker(self.input_queue, self.retry_queue)
+        self.retry_worker = RetryWorker(self.input_queue, self.retry_queue, self.stats)
         self.retry_worker.start()
 
         for i in range(self.nb_worker):
-            w = Worker(self.input_queue, self.retry_queue)
+            w = Worker(self.input_queue, self.retry_queue, self.stats)
             w.start()
             self.workers.append(w)
 
@@ -75,10 +78,13 @@ class Forwarder(object):
             log.error("Could not submit transaction to '%s', queue is full (dropping it): %s", endpoint, e)
 
     def submit_v1_series(self, payload, extra_header):
+        self.stats.inc_stat('series_payloads', 1)
         self._submit_payload(self.V1_SERIES_ENDPOINT, payload, extra_header)
 
     def submit_v1_intake(self, payload, extra_header):
+        self.stats.inc_stat('intake_payloads', 1)
         self._submit_payload(self.V1_ENDPOINT, payload, extra_header)
 
     def submit_v1_service_checks(self, payload, extra_header):
+        self.stats.inc_stat('service_check_payloads', 1)
         self._submit_payload(self.V1_SERVICE_CHECKS_ENDPOINT, payload, extra_header)

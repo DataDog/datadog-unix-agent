@@ -20,7 +20,7 @@ from .types import (
 from config.default import DEFAULT_RECENT_POINT_THRESHOLD
 from .formatters import api_formatter
 from .types import MetricTypes
-from. stats import AggregatorStats
+from utils.stats import Stats
 
 
 log = logging.getLogger(__name__)
@@ -47,15 +47,13 @@ class Aggregator(object):
         # TODO(jaime): add support for event, service_check sources
         self.events = []
         self.service_checks = []
-
-        self.stats = AggregatorStats()
+        self.stats = Stats()
 
         # TODO(jaime): we can probably kill total counts
         self.packet_count = 0
         self.metric_count = 0
         self.event_count = 0
         self.service_check_count = 0
-        self.total_count = 0
 
         self.hostname = hostname
         self.expiry_seconds = expiry_seconds
@@ -259,6 +257,7 @@ class Aggregator(object):
                 continue
 
             self.packet_count += 1
+
             if packet.startswith(self.EVENT_PREFIX):
                 event = self.parse_event_packet(packet)
                 self.event(**event)
@@ -351,8 +350,8 @@ class Aggregator(object):
         events = self.events
         self.events = []
 
-        self.stats.set_last_flush_counts(ecount=self.event_count)
-        self.total_count += self.event_count
+        self.stats.set_stat('events', self.event_count)
+        self.stats.inc_stat('events_total', self.event_count)
         self.event_count = 0
 
         log.debug("Received %d events since last flush" % len(events))
@@ -363,8 +362,8 @@ class Aggregator(object):
         service_checks = self.service_checks
         self.service_checks = []
 
-        self.stats.set_last_flush_counts(sccount=self.service_check_count)
-        self.total_count += self.service_check_count
+        self.stats.set_stat('service_checks', self.service_check_count)
+        self.stats.inc_stat('service_checks_total', self.service_check_count)
         self.service_check_count = 0
 
         log.debug("Received {0} service check runs since last flush".format(len(service_checks)))
@@ -451,6 +450,7 @@ class MetricsBucketAggregator(Aggregator):
                                  hostname, self.metric_config.get(metric_class))
 
             metric_by_context[context].sample(value, sample_rate, timestamp)
+            self.metric_count += 1
 
     def create_empty_metrics(self, sample_time_by_context, expiry_timestamp, flush_timestamp, metrics):
         # Even if no data is submitted, Counters keep reporting "0" for expiry_seconds.  The other Metrics
@@ -509,8 +509,11 @@ class MetricsBucketAggregator(Aggregator):
 
         # Save some stats.
         log.debug("received %s payloads since last flush" % self.metric_count)
-        self.stats.set_last_flush_counts(mcount=self.metric_count)
-        self.total_count += self.metric_count
+        self.stats.set_stat('metrics', self.metric_count)
+        self.stats.inc_stat('metrics_total', self.metric_count)
+        self.stats.set_stat('packets', self.packet_count)
+        self.stats.inc_stat('packets_total', self.packet_count)
+
         self.metric_count = 0
         self.packet_count = 0
         self.current_bucket = None
@@ -641,11 +644,11 @@ class MetricsAggregator(Aggregator):
             stats_by_source[source] = len(contexts)
 
         # Save some stats.
-        self.stats.set_last_flush_metric_stats(stats_by_source)
-        self.stats.set_last_flush_counts(mcount=self.metric_count)
-        log.debug("received %s metric since last flush" % self.metric_count)
+        self.stats.set_info('sources', stats_by_source)
+        self.stats.set_stat('metrics', self.metric_count)
+        self.stats.inc_stat('metrics_total', self.metric_count)
 
-        self.total_count += self.metric_count
+        log.debug("received %s metric since last flush", self.metric_count)
         self.metric_count = 0
 
         return metrics

@@ -915,9 +915,9 @@ class TestMetricsAggregator():
         metrics = self.sort_metrics(myaggregator.flush()[:-1])
         assert len(metrics) == 2
 
-        sources = myaggregator.stats.get_aggregator_stats()
-        assert len(sources['stats']) == 4
-        assert sources['stats']['foo'] == 2
-        assert sources['stats']['bar'] == 2
-        assert sources['stats']['haz'] == 1
-        assert sources['stats'][UNKNOWN_SOURCE] == 1
+        _, info = myaggregator.stats.snapshot()
+        assert len(info['sources']) == 4
+        assert info['sources']['foo'] == 2
+        assert info['sources']['bar'] == 2
+        assert info['sources']['haz'] == 1
+        assert info['sources'][UNKNOWN_SOURCE] == 1

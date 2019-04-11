@@ -11,6 +11,7 @@ logfile="ddagent-install.log"
 CHANNEL=${CHANNEL:-stable}
 VERSION=${VERSION:-latest}
 AIX_ARTIFACT_SOURCE=${AIX_ARTIFACT_SOURCE:-https://s3.amazonaws.com/dd-unix-agent}
+SHUTDOWN_WAIT=${SHUTDOWN_WAIT:-5}  # 5 + 4 + 3 + 2 + 1 secs
 
 ETCDIR="/etc/datadog-agent"
 CONF="$ETCDIR/datadog.yaml"
@@ -212,6 +213,7 @@ fi
 
 if [ $OS = "AIX" ]; then
   stop_instructions="$sudo_cmd stopsrc -s datadog-agent"
+  wait_instructions="CNT=0; until lssrc -s datadog-agent | grep -q inoperative || [ $$CNT -eq $SHUTDOWN_WAIT ]; do echo "Waiting for agent to stop"; sleep $$(( CNT++ )); done $sudo_cmd stopsrc -s datadog-agent"
   start_instructions="$sudo_cmd startsrc -s datadog-agent"
 fi
 
@@ -222,14 +224,17 @@ if [ ! -z "${no_start}" ]; then
 the newly installed version of the agent will not be started. You will have
 to do it manually using the following commands:
 
-    $stop_instructions && $start_instructions
+    $stop_instructions && $wait_instructions && $start_instructions
+
+* should the wait expire, please run $start_instructions manually once the
+service has stopped.
 
 \033[0m\n"
     exit 0
 fi
 
 printf "\033[34m* Starting the Agent...\n\033[0m\n"
-$stop_instructions && $start_instructions
+$stop_instructions && $wait_instructions && $start_instructions
 
 # Metrics are submitted, echo some instructions and exit
 printf "\033[32m

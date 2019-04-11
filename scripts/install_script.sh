@@ -213,7 +213,7 @@ fi
 
 if [ $OS = "AIX" ]; then
   stop_instructions="$sudo_cmd stopsrc -s datadog-agent"
-  wait_instructions="CNT=0; until lssrc -s datadog-agent | grep -q inoperative || [ \$CNT -eq $SHUTDOWN_WAIT ]; do echo \"Waiting for agent to stop\"; sleep \$(( CNT=CNT+1 )); done"
+  wait_instructions="CNT=0; echo \"Waiting for the agent to stop\"; until lssrc -s datadog-agent | grep -q inoperative || [ \$CNT -eq $SHUTDOWN_WAIT ]; do sleep \$(( CNT=CNT+1 )); done"
   start_instructions="$sudo_cmd startsrc -s datadog-agent"
 fi
 

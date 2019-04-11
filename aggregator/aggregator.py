@@ -648,7 +648,7 @@ class MetricsAggregator(Aggregator):
         self.stats.set_stat('metrics', self.metric_count)
         self.stats.inc_stat('metrics_total', self.metric_count)
 
-        log.debug("received %s metric since last flush" % self.metric_count)
+        log.debug("received %s metric since last flush", self.metric_count)
         self.metric_count = 0
 
         return metrics

@@ -36,7 +36,7 @@ class Reporter(threading.Thread):
 
     def run(self):
 
-        log.info("Reporting every %ss" % self.interval)
+        log.info("Reporting every %ss", self.interval)
 
         while not self.finished.is_set():
             self.finished.wait(self.interval)
@@ -51,8 +51,8 @@ class Reporter(threading.Thread):
             self.flush_count += 1
             metric_count, event_count, service_check_count = self.submit()
 
-            log.info("Flush #%s: flushed %s metric(s), %s event(s), and %s service check(s)" %
-                          (self.flush_count, metric_count, event_count, service_check_count))
+            log.info("Flush #%s: flushed %s metric(s), %s event(s), and %s service check(s)",
+                     self.flush_count, metric_count, event_count, service_check_count)
 
         except Exception:
             if self.finished.isSet():

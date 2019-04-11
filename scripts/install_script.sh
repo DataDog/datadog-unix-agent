@@ -185,22 +185,22 @@ else
   fi
   if [ $site ]; then
     printf "\033[34m\n* Setting SITE in the Agent configuration: $CONF\n\033[0m\n"
-    $sudo_cmd sh -c "sed 's/# site:.*/site: $site/' $CONF" > $tmp_config
+    $sudo_cmd sh -c "sed 's|# site:.*|site: $site|' $CONF" > $tmp_config
     $sudo_cmd mv $tmp_config $CONF
   fi
   if [ -n "$DD_URL" ]; then
-    $sudo_cmd sh -c "sed 's/# dd_url:.*/dd_url: $DD_URL/' $CONF" > $tmp_config
+    $sudo_cmd sh -c "sed 's|# dd_url:.*|dd_url: $DD_URL|' $CONF" > $tmp_config
     $sudo_cmd mv $tmp_config $CONF
   fi
   if [ $dd_hostname ]; then
     printf "\033[34m\n* Adding your HOSTNAME to the Agent configuration: $CONF\n\033[0m\n"
-    $sudo_cmd sh -c "sed 's/# hostname:.*/hostname: $dd_hostname/' $CONF" > $tmp_config
+    $sudo_cmd sh -c "sed 's|# hostname:.*|hostname: $dd_hostname|' $CONF" > $tmp_config
     $sudo_cmd mv $tmp_config $CONF
   fi
   if [ $host_tags ]; then
       printf "\033[34m\n* Adding your HOST TAGS to the Agent configuration: $CONF\n\033[0m\n"
-      formatted_host_tags="['"$( echo "$host_tags" | sed "s/,/','/g" )"']"  # format `env:prod,foo:bar` to yaml-compliant `['env:prod','foo:bar']`
-      $sudo_cmd sh -c "sed \"s/# tags:.*/tags: "$formatted_host_tags"/\" $CONF" > $tmp_config
+      formatted_host_tags="['"$( echo "$host_tags" | sed "s|,|','|g" )"']"  # format `env:prod,foo:bar` to yaml-compliant `['env:prod','foo:bar']`
+      $sudo_cmd sh -c "sed \"s|# tags:.*|tags: "$formatted_host_tags"/\" $CONF" > $tmp_config
       $sudo_cmd mv $tmp_config $CONF
   fi
   $sudo_cmd chown dd-agent:dd-agent $CONF

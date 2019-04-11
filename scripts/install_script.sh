@@ -11,7 +11,7 @@ logfile="ddagent-install.log"
 CHANNEL=${CHANNEL:-stable}
 VERSION=${VERSION:-latest}
 AIX_ARTIFACT_SOURCE=${AIX_ARTIFACT_SOURCE:-https://s3.amazonaws.com/dd-unix-agent}
-SHUTDOWN_WAIT=${SHUTDOWN_WAIT:-5}  # 5 + 4 + 3 + 2 + 1 secs
+SHUTDOWN_WAIT=${SHUTDOWN_WAIT:-8}  # 8 + 7 + ... + 2 + 1 secs
 
 ETCDIR="/etc/datadog-agent"
 CONF="$ETCDIR/datadog.yaml"

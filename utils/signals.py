@@ -98,10 +98,10 @@ class SignalHandler(Thread):
         pass
 
     def _signal_handler(self, signal, frame):
-        log.debug("Signal {} received".format(signal))
+        log.debug("Signal %s received", signal)
         for identifier, component in self._components.items():
-            log.info("Stopping {}".format(identifier))
+            log.info("Stopping %s", identifier)
             try:
                 component.stop()
             except AttributeError:
-                log.error("Registered component does not implement stop(): {}".format(identifier))
+                log.error("Registered component does not implement stop(): %s", identifier)

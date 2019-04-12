@@ -120,7 +120,7 @@ class Flare(object):
                         "You can send it directly to support by email.", flare_path)
             return False, None
 
-        log.info("Uploading {0} to Datadog Support".format(flare_path))
+        log.info("Uploading %s to Datadog Support", flare_path)
         with open(flare_path, 'rb') as flare_file:
             try:
                 requests_options = {

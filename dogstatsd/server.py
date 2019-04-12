@@ -16,6 +16,8 @@ from utils.network import (
     get_socket_address,
 )
 
+log = logging.getLogger('dogstatsd')
+
 
 class Server(object):
     """
@@ -42,13 +44,13 @@ class Server(object):
             if forward_to_port is None:
                 forward_to_port = 8125
 
-            logging.info("External statsd forwarding enabled. All packets received \
-                         will be forwarded to %s:%s" % (forward_to_host, forward_to_port))
+            log.info("External statsd forwarding enabled. All packets received \
+                     will be forwarded to %s:%s", forward_to_host, forward_to_port)
             try:
                 self.forward_udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 self.forward_udp_sock.connect((forward_to_host, forward_to_port))
             except Exception:
-                logging.exception("Error while setting up connection to external statsd server")
+                log.exception("Error while setting up connection to external statsd server")
 
     def start(self):
         """
@@ -74,13 +76,13 @@ class Server(object):
             self.sockaddr = get_socket_address(self.host, int(self.port), ipv4_only=ipv4_only)
             self.socket.bind(self.sockaddr)
         except TypeError:
-            logging.error('Unable to start Dogstatsd server loop, exiting...')
+            log.error('Unable to start Dogstatsd server loop, exiting...')
             raise
         except socket.error as e:
-            logging.warn('unable to bind to socket (%s): %s', str(self.sockaddr), e)
+            log.warn('unable to bind to socket (%s): %s', str(self.sockaddr), e)
             raise
 
-        logging.info('Listening on socket address: %s', str(self.sockaddr))
+        log.info('Listening on socket address: %s', str(self.sockaddr))
 
         # Inline variables for quick look-up.
         buffer_size = self.buffer_size
@@ -112,7 +114,7 @@ class Server(object):
             except (KeyboardInterrupt, SystemExit):
                 break
             except Exception:
-                logging.exception('Error receiving datagram `%s`', message)
+                log.debug('Error receiving datagram `%s`', message)
 
     def stop(self):
         self.running.set()

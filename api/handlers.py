@@ -71,7 +71,7 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             log.debug('status response to render: %s', status)
             self.write(json.dumps(status))
         except TypeError as e:
-            log.error("unable to handle status request: {}".format(e))
+            log.error("unable to handle status request: %s", e)
 
     def process_agent_info(self, info):
         processed = {}

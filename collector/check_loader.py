@@ -42,11 +42,11 @@ class CheckLoader(Loader):
 
         try:
             source = os.path.join(place, "{}.py".format(check_name))
-            check_module = imp.load_source('checksd_%s' % check_name, source)
+            check_module = imp.load_source('checksd_{}'.format(check_name), source)
         except Exception as e:
             traceback_message = traceback.format_exc()
             # There is a configuration file for that check but the module can't be imported
-            log.exception('Unable to import check module %s.py from location %s' % (check_name, place))
+            log.debug('Unable to import check module %s.py from location %s', check_name, place)
             return None, {'error': e, 'traceback': traceback_message}
 
         return check_module, None

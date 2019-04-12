@@ -91,7 +91,7 @@ class Aggregator(object):
         name_and_metadata = packet.split(':', 1)
 
         if len(name_and_metadata) != 2:
-            raise Exception('Unparseable metric packet: %s' % packet)
+            raise Exception('Unparseable metric packet: {}'.format(packet))
 
         name = name_and_metadata[0]
         broken_split = name_and_metadata[1].split(':')
@@ -112,7 +112,7 @@ class Aggregator(object):
             value_and_metadata = datum.split('|')
 
             if len(value_and_metadata) < 2:
-                raise Exception('Unparseable metric packet: %s' % packet)
+                raise Exception('Unparseable metric packet: {}'.format(packet))
 
             # Submit the metric
             raw_value = value_and_metadata[0]
@@ -132,7 +132,7 @@ class Aggregator(object):
                         value = float(raw_value)
                     except ValueError:
                         # Otherwise, raise an error saying it must be a number
-                        raise Exception('Metric value must be a number: %s, %s' % (name, raw_value))
+                        raise Exception('Metric value must be a number: {}, {}'.format(name, raw_value))
 
             # Parse the optional values - sample rate & tags.
             sample_rate = 1
@@ -165,7 +165,7 @@ class Aggregator(object):
             name_and_metadata = packet.split(':', 1)
 
             if len(name_and_metadata) != 2:
-                raise Exception('Unparseable event packet: %s' % packet)
+                raise Exception('Unparseable event packet: {}'.format(packet))
             # Event syntax:
             # _e{5,4}:title|body|meta
             name = name_and_metadata[0]
@@ -197,7 +197,7 @@ class Aggregator(object):
                     event['tags'] = self.deduplicate_tags(m[1:].split(','))
             return event
         except (IndexError, ValueError):
-            raise Exception('Unparseable event packet: %s' % packet)
+            raise Exception('Unparseable event packet: {}'.format(packet))
 
     def parse_sc_packet(self, packet):
         try:
@@ -238,7 +238,7 @@ class Aggregator(object):
             return service_check
 
         except (IndexError, ValueError):
-            raise Exception('Unparseable service check packet: %s' % packet)
+            raise Exception('Unparseable service check packet: {}'.format(packet))
 
     def submit_packets(self, packets):
         # We should probably consider that packets are always encoded
@@ -354,7 +354,7 @@ class Aggregator(object):
         self.stats.inc_stat('events_total', self.event_count)
         self.event_count = 0
 
-        log.debug("Received %d events since last flush" % len(events))
+        log.info("Received %d events since last flush", len(events))
 
         return events
 
@@ -366,7 +366,7 @@ class Aggregator(object):
         self.stats.inc_stat('service_checks_total', self.service_check_count)
         self.service_check_count = 0
 
-        log.debug("Received {0} service check runs since last flush".format(len(service_checks)))
+        log.info("Received %d service check runs since last flush", len(service_checks))
 
         return service_checks
 
@@ -428,7 +428,7 @@ class MetricsBucketAggregator(Aggregator):
         # Check to make sure that the timestamp that is passed in (if any) is
         # not older than recent_point_threshold.  If so, discard the point.
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
-            log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))
+            log.debug("Discarding %s - ts = %s , current ts = %s ", name, timestamp, cur_time)
             self.num_discarded_old_points += 1
         else:
             timestamp = timestamp or cur_time
@@ -457,7 +457,7 @@ class MetricsBucketAggregator(Aggregator):
         #  (Set, Gauge, Histogram) do not report if no data is submitted
         for context, last_sample_time in list(sample_time_by_context.items()):
             if last_sample_time is None or last_sample_time < expiry_timestamp:
-                log.debug("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
+                log.debug("%s hasn't been submitted in %ss. Expiring.", context, self.expiry_seconds)
                 self.last_sample_time_by_context.pop(context, None)
             else:
                 # The expiration currently only applies to Counters
@@ -483,7 +483,7 @@ class MetricsBucketAggregator(Aggregator):
                     for context, metric in list(metric_by_context.items()):
                         if metric.last_sample_time is None or metric.last_sample_time < expiry_timestamp:
                             # This should never happen
-                            log.warning("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
+                            log.warning("%s hasn't been submitted in %ss. Expiring.", context, self.expiry_seconds)
                             not_sampled_in_this_bucket.pop(context, None)
                             self.last_sample_time_by_context.pop(context, None)
                         else:
@@ -504,11 +504,11 @@ class MetricsBucketAggregator(Aggregator):
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
-            log.warn('%s points were discarded as a result of having an old timestamp' % self.num_discarded_old_points)
+            log.warn('%s points were discarded as a result of having an old timestamp', self.num_discarded_old_points)
             self.num_discarded_old_points = 0
 
         # Save some stats.
-        log.debug("received %s payloads since last flush" % self.metric_count)
+        log.debug("received %s payloads since last flush", self.metric_count)
         self.stats.set_stat('metrics', self.metric_count)
         self.stats.inc_stat('metrics_total', self.metric_count)
         self.stats.set_stat('packets', self.packet_count)
@@ -578,7 +578,7 @@ class MetricsAggregator(Aggregator):
 
         cur_time = time()
         if timestamp is not None and cur_time - int(timestamp) > self.recent_point_threshold:
-            log.debug("Discarding %s - ts = %s , current ts = %s " % (name, timestamp, cur_time))
+            log.debug("Discarding %s - ts = %s , current ts = %s ", name, timestamp, cur_time)
             self.num_discarded_old_points += 1
         else:
             self.metrics[context].sample(value, sample_rate, timestamp)
@@ -618,7 +618,7 @@ class MetricsAggregator(Aggregator):
         metrics = []
         for context, metric in list(self.metrics.items()):
             if metric.last_sample_time is None or metric.last_sample_time < expiry_timestamp:
-                log.debug("%s hasn't been submitted in %ss. Expiring." % (context, self.expiry_seconds))
+                log.debug("%s hasn't been submitted in %ss. Expiring.", context, self.expiry_seconds)
                 del self.metrics[context]
             else:
                 metrics += metric.flush(timestamp, self.interval)
@@ -635,7 +635,7 @@ class MetricsAggregator(Aggregator):
 
         # Log a warning regarding metrics with old timestamps being submitted
         if self.num_discarded_old_points > 0:
-            log.warn('%s points were discarded as a result of having an old timestamp' % self.num_discarded_old_points)
+            log.warn('%s points were discarded as a result of having an old timestamp', self.num_discarded_old_points)
             self.num_discarded_old_points = 0
 
         # generate some stats
@@ -648,7 +648,7 @@ class MetricsAggregator(Aggregator):
         self.stats.set_stat('metrics', self.metric_count)
         self.stats.inc_stat('metrics_total', self.metric_count)
 
-        log.debug("received %s metric since last flush", self.metric_count)
+        log.info("Received %s metric since last flush", self.metric_count)
         self.metric_count = 0
 
         return metrics

@@ -1,5 +1,7 @@
 pytest==3.6.2
+pylint==2.3.1
 requests-mock[fixture]==1.5.2
 tox==3.3.0
 datadog-a7==0.0.6
-
+invoke==1.0.0
+reno==2.9.2

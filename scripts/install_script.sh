@@ -12,6 +12,7 @@ CHANNEL=${CHANNEL:-stable}
 VERSION=${VERSION:-latest}
 AIX_ARTIFACT_SOURCE=${AIX_ARTIFACT_SOURCE:-https://s3.amazonaws.com/dd-unix-agent}
 SHUTDOWN_WAIT=${SHUTDOWN_WAIT:-8}  # 8 + 7 + ... + 2 + 1 secs
+TMP_LOC=${TMP_LOC:/tmp}  # 8 + 7 + ... + 2 + 1 secs
 
 ETCDIR="/etc/datadog-agent"
 CONF="$ETCDIR/datadog.yaml"
@@ -28,7 +29,7 @@ else
 fi
 
 # Set up a named pipe for logging
-npipe=/tmp/$$.tmp
+npipe=${TMP_LOC}/$$.tmp
 mknod $npipe p
 
 # Log all output to a log for error checking
@@ -137,10 +138,10 @@ if [ "$OS" = "AIX" ]; then
 
     printf "\033[34m\n* Downloading version ${VERSION} if available...\n\033[0m\n"
     BFF="datadog-unix-agent-${VERSION}.${ARCH}.aix.${MAJOR}.${MINOR}.bff"
-    $dl_cmd -o /tmp/${BFF} ${AIX_ARTIFACT_SOURCE}/${OS_LOWER}/${CHANNEL}/${BFF}
+    $dl_cmd -o ${TMP_LOC}/${BFF} ${AIX_ARTIFACT_SOURCE}/${OS_LOWER}/${CHANNEL}/${BFF}
 
     INSTALLED_FILESET=$(lslpp -l "datadog-unix-agent" 2>&1 | grep -i datadog-unix-agent | awk '{ print $2 }' | head -n 1)
-    CURRENT_FILESET=$(installp -ld /tmp/${BFF} 2>&1 | grep -i datadog-unix-agent | awk '{ print $2 }' | head -n 1)
+    CURRENT_FILESET=$(installp -ld ${TMP_LOC}/${BFF} 2>&1 | grep -i datadog-unix-agent | awk '{ print $2 }' | head -n 1)
     INSTALL_FLAGS=$INSTALL_UPGRADE_FLAGS
     if [ "$INSTALLED_FILESET" = "$CURRENT_FILESET" ]; then
         INSTALL_FLAGS=$REINSTALL_FLAGS
@@ -153,7 +154,7 @@ See the logs above to determine the cause.
 If the cause is unclear, please contact Datadog support.
 *****
 "
-    installp ${INSTALL_FLAGS} /tmp/${BFF} datadog-unix-agent
+    installp ${INSTALL_FLAGS} ${TMP_LOC}/${BFF} datadog-unix-agent
     ERROR_MESSAGE=""
 else
     printf "\033[31mYour OS or distribution are not supported by this install script.
@@ -164,7 +165,7 @@ Please follow the instructions on the Agent setup page:
 fi
 
 # Set the configuration
-tmp_config=/tmp/dd-tmp-config.$$
+tmp_config=${TMP_LOC}/dd-tmp-config.$$
 trap "rm -f $tmp_config" EXIT
 if [ -e "${CONF}" -a -z "${dd_upgrade}" ]; then
   printf "\033[34m\n* Keeping old datadog.yaml configuration file\n\033[0m\n"

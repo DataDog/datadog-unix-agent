@@ -24,8 +24,8 @@ class LPARStats(AgentCheck):
 
     def check(self, instance):
         sudo = instance.get('sudo', False)
-        root = running_root()
-        if not root and not sudo:
+        root = running_root() or sudo
+        if not root:
             self.log.info('Not running as root or sudo - entitlement and hypervisor metrics might be unavailable')
 
         timeout = None

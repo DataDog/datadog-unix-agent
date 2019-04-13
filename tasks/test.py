@@ -4,11 +4,15 @@ High level testing tasks
 import os
 import fnmatch
 import glob
+import json
 import re
 import operator
 import sys
-import pylint.lint
 import pathlib
+
+from termcolor import colored
+from json.decoder import JSONDecodeError
+from pylint import epylint
 
 import invoke
 from invoke import task
@@ -49,7 +53,6 @@ def test(ctx, targets=None, coverage=False, cpus=0, timeout=120):
     Example invokation:
         inv test --targets=./pkg/collector/check,./pkg/aggregator --race
     """
-    unwanted
 
     if isinstance(targets, basestring):
         # when this function is called from the command line, targets are passed
@@ -83,10 +86,23 @@ def get_lintable(path):
 @task
 def lint_py(ctx, targets=None):
     here = os.path.dirname(os.path.realpath(__file__))
-    files = get_lintable(os.path.abspath(os.path.join(here, '..')))
 
-    pylint.lint.Run(files)
+    args = "--rcfile={} --reports=y".format(os.path.abspath(os.path.join(here, "..", PYLINT_RC)))
+    files = get_lintable(os.path.abspath(os.path.join(here, "..")))
 
+    stdout, _ = epylint.py_run("{target} {args}".format(target=" ".join(files), args=args), return_std=True)
+
+    try:
+        msgs = json.load(stdout)
+        for msg in msgs:
+            if msg['type'].lower() == 'error':
+                print(colored(json.dumps(msg, sort_keys=True, indent=4), "red"))
+            else:
+                print(colored(json.dumps(msg, sort_keys=True, indent=4), "green"))
+        else:
+            print(colored("Nice! No lint errors!", "green"))
+    except JSONDecodeError:
+        print(colored("Whoopsie Daisy! There was an issue linting your code!", "red"))
 
 @task
 def lint_milestone(ctx):
@@ -123,9 +139,10 @@ def lint_teamassignment(ctx):
 
         res = requests.get("https://api.github.com/repos/DataDog/datadog-agent/issues/{}".format(pr_id))
         issue = res.json()
-        if any([re.match('team/', l['name']) for l in issue.get('labels', {})]):
-            print("Team Assignment: %s" % l['name'])
-            return
+        for label in issue.get('labels', {}):
+            if re.match('team/', label['name']):
+                print("Team Assignment: %s" % label['name'])
+                return
 
         print("PR %s requires team assignment" % pr_url)
         raise Exit(code=1)
@@ -134,28 +151,6 @@ def lint_teamassignment(ctx):
     else:
         print("PR not yet created, skipping check for team assignment")
 
-@task
-def lint_milestone(ctx):
-    """
-    Make sure PRs are assigned a milestone
-    """
-    pr_url = os.environ.get("CIRCLE_PULL_REQUEST")
-    if pr_url:
-        import requests
-        pr_id = pr_url.rsplit('/')[-1]
-
-        res = requests.get("https://api.github.com/repos/DataDog/datadog-agent/issues/{}".format(pr_id))
-        pr = res.json()
-        if pr.get("milestone"):
-            print("Milestone: %s" % pr["milestone"].get("title", "NO_TITLE"))
-            return
-
-        print("PR %s requires a milestone" % pr_url)
-        raise Exit(code=1)
-
-    # The PR has not been created yet
-    else:
-        print("PR not yet created, skipping check for milestone")
 
 @task
 def lint_releasenote(ctx):

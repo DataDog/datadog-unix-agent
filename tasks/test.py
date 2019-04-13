@@ -2,8 +2,6 @@
 High level testing tasks
 """
 import os
-import fnmatch
-import glob
 import json
 import re
 import operator
@@ -14,12 +12,11 @@ from termcolor import colored
 from json.decoder import JSONDecodeError
 from pylint import epylint
 
-import invoke
 from invoke import task
 from invoke.exceptions import Exit
 
-#We use `basestring` in the code for compat with python2 unicode strings.
-#This makes the same code work in python3 as well.
+# We use `basestring` in the code for compat with python2 unicode strings.
+# This makes the same code work in python3 as well.
 try:
     basestring
 except NameError:
@@ -28,16 +25,6 @@ except NameError:
 PROFILE_COV = "profile.cov"
 
 PYLINT_RC = ".pylintrc"
-
-DEFAULT_TOOL_TARGETS = [
-    "./pkg",
-    "./cmd",
-]
-
-DEFAULT_TEST_TARGETS = [
-    "./pkg",
-    "./cmd",
-]
 
 LINT_SKIP_PATTERNS = [
     ".*\/venv.*\/",
@@ -53,17 +40,6 @@ def test(ctx, targets=None, coverage=False, cpus=0, timeout=120):
     Example invokation:
         inv test --targets=./pkg/collector/check,./pkg/aggregator --race
     """
-
-    if isinstance(targets, basestring):
-        # when this function is called from the command line, targets are passed
-        # as comma separated tokens in a string
-        tool_targets = test_targets = targets.split(',')
-    elif targets is None:
-        tool_targets = DEFAULT_TOOL_TARGETS
-        test_targets = DEFAULT_TEST_TARGETS
-    else:
-        tool_targets = test_targets = targets
-
     pass
 
 def get_lintable(path):

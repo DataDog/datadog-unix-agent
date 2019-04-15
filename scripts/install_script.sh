@@ -86,7 +86,7 @@ solve your problem.\n\033[0m\n"
 }
 trap on_error ERR
 
-if [ -n "$HELP" -o "$1" == "-h" -o "$1" == "help" ] ; then ]; then
+if [ -n "$HELP" -o "$1" == "-h" -o "$1" == "help" ]; then
     help
     exit 1;
 fi

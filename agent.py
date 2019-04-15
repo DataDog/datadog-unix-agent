@@ -310,27 +310,31 @@ class Agent(Daemon):
 
 
 def main():
+    CRED = '\033[91m'
+    CEND = '\033[0m'
+
     parser = OptionParser()
     parser.add_option('-b', '--background', action='store_true', default=False,
                       dest='background', help='Run agent on the foreground')
     parser.add_option('-l', '--force-logging', action='store_true', default=False,
                       dest='logging', help='force logging')
+    parser.add_option('-m', '--manual', action='store_true', default=False,
+                      dest='manual', help='Apply action manually - advanced feature')
     options, args = parser.parse_args()
-
     if len(args) < 1:
         sys.stderr.write(Agent.usage())
         return 2
 
     command = args[0]
     if command not in Agent.COMMANDS:
-        sys.stderr.write("Unknown command: %s\n" % command)
+        sys.stderr.write(CRED + "Unknown command: {}\n".format(command) + CEND)
         return 3
 
     try:
         do_log = options.logging or Agent.COMMANDS[command]
         init_config(do_log=do_log)
     except Exception as e:
-        logging.error("Problem initializing configuration: %s", e)
+        logging.error(CRED + "Problem initializing configuration: {}".format(e) + CEND)
         return 1
 
     if (os.path.dirname(os.path.realpath(__file__)) != os.path.join(DEFAULT_PATH, 'agent')):
@@ -339,21 +343,34 @@ def main():
                  logs, run path, etc. And remember to drop the configuration
                  file in one of the supported locations.""" % DEFAULT_PATH)
 
-    pid_dir = config.get('run_path')
+        # if pid_dir below doesn't exist a temporary dir will be used
+        pid_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'run')
+    else:
+        pid_dir = config.get('run_path')
+
     agent = Agent(PidFile(PID_NAME, pid_dir).get_path())
 
     foreground = not options.background
+    manual = options.manual
     if 'start' == command:
-        logging.info('Start daemon')
-        agent.start(foreground=foreground)
+        if manual:
+            logging.info('Start daemon')
+            agent.start(foreground=foreground)
+        else:
+            sys.stderr.write(CRED + 'Please use OS facilities to start the agenti!\n' + CEND)
+            return 1
 
     elif 'stop' == command:
         logging.info('Stop daemon')
         agent.stop()
 
     elif 'restart' == command:
-        logging.info('Restart daemon')
-        agent.restart()
+        if manual:
+            logging.info('Restart daemon')
+            agent.restart()
+        else:
+            sys.stderr.write(CRED + 'Please use OS facilities to restart the agent!\n' + CEND)
+            return 1
 
     elif 'status' == command:
         agent.status(config)

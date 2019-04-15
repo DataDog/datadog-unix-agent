@@ -10,7 +10,7 @@ logfile="ddagent-install.log"
 
 CHANNEL=${CHANNEL:-stable}
 VERSION=${VERSION:-latest}
-AIX_ARTIFACT_SOURCE=${AIX_ARTIFACT_SOURCE:-https://s3.amazonaws.com/dd-unix-agent}
+ARTIFACT_SOURCE=${ARTIFACT_SOURCE:-https://s3.amazonaws.com/dd-unix-agent}
 SHUTDOWN_WAIT=${SHUTDOWN_WAIT:-8}  # 8 + 7 + ... + 2 + 1 secs
 
 ETCDIR="/etc/datadog-agent"
@@ -137,7 +137,7 @@ if [ "$OS" = "AIX" ]; then
 
     printf "\033[34m\n* Downloading version ${VERSION} if available...\n\033[0m\n"
     BFF="datadog-unix-agent-${VERSION}.${ARCH}.aix.${MAJOR}.${MINOR}.bff"
-    $dl_cmd -o /tmp/${BFF} ${AIX_ARTIFACT_SOURCE}/${OS_LOWER}/${CHANNEL}/${BFF}
+    $dl_cmd -o /tmp/${BFF} ${ARTIFACT_SOURCE}/${OS_LOWER}/${CHANNEL}/${BFF}
 
     INSTALLED_FILESET=$(lslpp -l "datadog-unix-agent" 2>&1 | grep -i datadog-unix-agent | awk '{ print $2 }' | head -n 1)
     CURRENT_FILESET=$(installp -ld /tmp/${BFF} 2>&1 | grep -i datadog-unix-agent | awk '{ print $2 }' | head -n 1)

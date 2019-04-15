@@ -6,3 +6,4 @@ tox==3.3.0
 datadog-a7==0.0.6
 invoke==1.0.0
 reno==2.9.2
+GitPython==2.1.11

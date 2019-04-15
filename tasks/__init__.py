@@ -11,7 +11,15 @@ from invoke import Collection
 
 from . import release
 
-from .test import test, lint_teamassignment, lint_releasenote, lint_milestone, lint_filenames, lint_py
+from .test import (
+    test,
+    lint_teamassignment,
+    lint_licenses,
+    lint_releasenote,
+    lint_milestone,
+    lint_filenames,
+    lint_py
+)
 
 # the root namespace
 ns = Collection()
@@ -19,6 +27,7 @@ ns = Collection()
 # add single tasks to the root
 ns.add_task(test)
 ns.add_task(lint_py)
+ns.add_task(lint_licenses)
 ns.add_task(lint_teamassignment)
 ns.add_task(lint_releasenote)
 ns.add_task(lint_milestone)

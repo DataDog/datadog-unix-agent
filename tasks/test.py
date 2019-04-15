@@ -8,6 +8,7 @@ High level testing tasks
 """
 import os
 import json
+import mmap
 import re
 import operator
 import sys
@@ -16,9 +17,12 @@ import pathlib
 from termcolor import colored
 from json.decoder import JSONDecodeError
 from pylint import epylint
+from git import Repo
 
 from invoke import task
 from invoke.exceptions import Exit
+
+from .utils import get_matching
 
 # We use `basestring` in the code for compat with python2 unicode strings.
 # This makes the same code work in python3 as well.
@@ -35,6 +39,16 @@ LINT_SKIP_PATTERNS = [
     ".*\/venv.*\/",
     ".*\/.tox\/",
 ]
+UNLICENSED_EXT_PATTERNS = [
+    '.*\.txt$',
+    '.*\.patch$',
+    '.*\.yaml.*$',
+    '.*\.md$',
+    '.*\.ini$'
+]
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+
 
 @task()
 def test(ctx, targets=None, coverage=False, cpus=0, timeout=120):
@@ -47,29 +61,12 @@ def test(ctx, targets=None, coverage=False, cpus=0, timeout=120):
     """
     pass
 
-def get_lintable(path):
-    p = pathlib.Path(os.path.abspath(path))
-
-    lintable = []
-
-    for f in p.glob('**/*'):
-        if not re.search('.*\.py$', f.name):
-            continue
-
-        matches = [re.search(pattern, f.as_posix()) for pattern in LINT_SKIP_PATTERNS]
-        if any(matches):
-            continue
-
-        lintable.append(f.as_posix())
-
-    return lintable
 
 @task
 def lint_py(ctx, targets=None):
-    here = os.path.dirname(os.path.realpath(__file__))
-
-    args = "--rcfile={} --reports=y".format(os.path.abspath(os.path.join(here, "..", PYLINT_RC)))
-    files = get_lintable(os.path.abspath(os.path.join(here, "..")))
+    args = "--rcfile={} --reports=y".format(os.path.abspath(os.path.join(HERE, "..", PYLINT_RC)))
+    files = get_matching(os.path.abspath(os.path.join(HERE, "..")),
+                         patterns=['.*\.py$'], exclude_patterns=LINT_SKIP_PATTERNS)
 
     stdout, _ = epylint.py_run("{target} {args}".format(target=" ".join(files), args=args), return_std=True)
 
@@ -225,6 +222,34 @@ def lint_filenames(ctx):
 
     if failure:
         raise Exit(code=1)
+
+
+@task
+def lint_licenses(ctx, branch=None):
+    """
+    Scan files to ensure there are no filenames too long or containing illegal characters
+    """
+    unlicensed = []
+    LICENSE_CUE = b"# Unless explicitly stated otherwise all files in this repository are licensed"
+
+    files = get_matching(os.path.abspath(os.path.join(HERE, "..")),
+                         exclude_patterns=UNLICENSED_EXT_PATTERNS, reference=branch)
+    for f in files:
+        try:
+            with open(f, 'rb', 0) as fp, mmap.mmap(fp.fileno(), 0, access=mmap.ACCESS_READ) as s:
+                if s.find(LICENSE_CUE) == -1:
+                    unlicensed.append(f)
+        except ValueError:
+            unlicensed.append(f)
+
+    if not unlicensed:
+        print(colored('All good!', 'green'))
+        return
+
+    for f in unlicensed:
+        print(colored("File {} is missing a license header".format(f), "red"))
+
+    raise Exit(code=1)
 
 
 class TestProfiler:

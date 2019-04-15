@@ -42,4 +42,3 @@ def get_matching(path, patterns=[], exclude_patterns=[], reference=None):
         matching.append(f)
 
     return matching
-

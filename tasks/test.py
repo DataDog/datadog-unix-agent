@@ -12,12 +12,10 @@ import mmap
 import re
 import operator
 import sys
-import pathlib
 
 from termcolor import colored
 from json.decoder import JSONDecodeError
 from pylint import epylint
-from git import Repo
 
 from invoke import task
 from invoke.exceptions import Exit

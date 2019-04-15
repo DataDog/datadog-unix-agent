@@ -37,6 +37,40 @@ exec 1>&-
 exec 1>$npipe 2>&1
 trap "rm -f $npipe" EXIT
 
+help() {
+    printf "Datadog Unix Agent
+
+This script should provide a one-step installation method for the unix agent.
+
+Available Installation Environment Variables:
+  - CHANNEL: defaults to stable. Specifies the package repository channel.
+             Values: stable, beta, unstable
+  - VERSION: defaults to latest. Specifies the package version.
+  - PROXY: defaults to none. Specifies the proxy uri.
+           Example: http://proxy.foo.com
+  - PROXY_USER: defaults to empty. Specifies the proxy server username.
+  - PROXY_PASSWORD: defaults to empty. Specifies the proxy server password.
+  - INSECURE: defaults to false. Allows skipping TLS validation.
+  - HELP: show this help message.
+
+Available Agent Configuration Environment Variables:
+  - DD_API_KEY: API key, typically required unless upgrading.
+  - DD_SITE: defaults to empty. Specify if you wish to override the default site.
+  - DD_HOSTNAME: defaults to empty. Specify if you wish to override/set a
+                 hostname manually in the config file.
+  - DD_HOST_TAGS: defaults to empty. Specify if you wish to include host tags into
+                  the agent config file.
+                  Example: foo:bar,env:prod,quz - comma separated list of tags.
+  - DD_INSTALL_ONLY: defaults to empty. Install but don't start agent.
+
+Troubleshooting and basic usage information for the Agent are available at:
+
+    https://docs.datadoghq.com/agent/basic_agent_usage/
+
+If you're still having problems setting up the agent, please send an email to
+support@datadoghq.com
+"
+}
 
 on_error() {
     printf "\033[31m$ERROR_MESSAGE
@@ -51,6 +85,11 @@ with the contents of ddagent-install.log and we'll do our very best to help you
 solve your problem.\n\033[0m\n"
 }
 trap on_error ERR
+
+if [ -n "$HELP" -o "$1" == "-h" -o "$1" == "help" ]; then
+    help
+    exit 1;
+fi
 
 use_proxy_creds=
 if [ -n "$PROXY_USER" -a -n "$PROXY_PASSWORD" ]; then

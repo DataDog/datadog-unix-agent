@@ -62,7 +62,7 @@ create_system_services()
     RC=$?
     set -e
     if [ "${RC}" != "0" ]; then
-        mkssys -s ${SERVICE_NAME} -p "${INSTALL_DIR}/agent/agent.py" -a "start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
+        mkssys -s ${SERVICE_NAME} -p "${INSTALL_DIR}/agent/agent.py" -a "-m start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
     fi
 
     # adding inittab entry if non-existant

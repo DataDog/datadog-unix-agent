@@ -315,6 +315,8 @@ def main():
                       dest='background', help='Run agent on the foreground')
     parser.add_option('-l', '--force-logging', action='store_true', default=False,
                       dest='logging', help='force logging')
+    parser.add_option('-m', '--manual', action='store_true', default=False,
+                      dest='manual', help='Apply action manually - advanced feature')
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -343,17 +345,26 @@ def main():
     agent = Agent(PidFile(PID_NAME, pid_dir).get_path())
 
     foreground = not options.background
+    manual = options.manual
     if 'start' == command:
-        logging.info('Start daemon')
-        agent.start(foreground=foreground)
+        if manual:
+            logging.info('Start daemon')
+            agent.start(foreground=foreground)
+        else:
+            sys.stderr.write('Please use OS facilities to start the agent')
+            return 1
 
     elif 'stop' == command:
         logging.info('Stop daemon')
         agent.stop()
 
     elif 'restart' == command:
-        logging.info('Restart daemon')
-        agent.restart()
+        if manual:
+            logging.info('Restart daemon')
+            agent.restart()
+        else:
+            sys.stderr.write('Please use OS facilities to restart the agent')
+            return 1
 
     elif 'status' == command:
         agent.status(config)

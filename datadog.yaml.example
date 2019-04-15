@@ -9,5 +9,11 @@ api_key: <api_key_here>                # DD API key: required.
 # log_level: info                      # Log level - available levels: critical, error, warning, info, debug
 #
 # proxy:
-#     http: http://localhost:3128     # should you wish to setup a proxy for your agent, please do
-#     https: http://localhost:3128    # do so here.
+#   http: http://localhost:3128     # should you wish to setup a proxy for your agent, please do
+#   https: http://localhost:3128    # do so here.
+#
+# dogstatsd:                        # Dogstatsd configuration options
+#   enabled: false                  # disabled by default
+#   bind_host: localhost            # address we'll be binding to
+#   port: 8125                      # dogstatsd UDP listening port
+#   non_local_traffic: false        # listen to non-local traffic

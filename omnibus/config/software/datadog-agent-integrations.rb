@@ -25,6 +25,7 @@ requirements_file = 'requirements.txt'
 
 blacklist = [
   'datadog_checks_base',           # namespacing package for wheels (NOT AN INTEGRATION)
+  'hmc',                           # HMC in-development
 ]
 
 build do
@@ -32,7 +33,7 @@ build do
   checks = []
 
   if aix?
-    env = aix_env 
+    env = aix_env
     env["M4"] = "/opt/freeware/bin/m4"
   else
     env = with_standard_compiler_flags(with_embedded_path)

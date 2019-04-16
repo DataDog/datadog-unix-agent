@@ -1,38 +1,41 @@
 # Datadog Unix Agent
 
-#### NOTE: This agent and all artifacts made available are still in early development.
-
 A Datadog Agent specifically designed for Unix-based systems.
 
-Note: This agent is currently in development for AIX. It has not been tested on other systems. If
-you have any questions, please contact our [support team](https://docs.datadoghq.com/help/).
+Note: This agent has been designed with portability in mind but has only been tested at the
+time of this writing on AIX.
+If you have any questions, please contact our [support team](https://docs.datadoghq.com/help/).
 
-This agent targets miscellaneous Unix operating systems not supported by our currently available
-agents. To do so, it has been stripped of unnecessary bloat and cut around irrelevant use-cases
-given the target platforms, sometimes at the expense of certain features. To maximize portability
-the agent will attempt to reduce the number of non pure-python dependencies to a minimum, and rely
-on packages with native support for the targeted operating systems (currently AIX).
+The goal of this agent is to provide support for miscellaneous Unix operating systems not supported
+by our currently available agents. To do so, it has been stripped of unnecessary bloat and cut around
+less relevant use-cases given the target platforms. Only a subset of key and OS-specific features have
+been implemented, please do not expect feature parity.
 
 ## AIX
 
 ### Omnibus Build
 
-An omnibus build is now available for the agent. The omnibus build provides a self-contained
-environment aiming to address the short-comings of previous approaches where we attempted to
-provide dependencies externally. That approach proved error-prone since we always respected
-packages already available in target LPARs to avoid risking breaking the system. Unfortuantely,
-installed libraries could be potentially outdated or incompatible with the actual requirements.
+An omnibus build is available for the agent. The omnibus build provides a self-contained
+environment, shipping all required dependencies, including python3 and other depending shared
+objects. The omnibus build will however depend on a small subset of system-level dependencies
+expected to be present on any AIX LPAR image; namely: libc, libpthreads, libdl and libcrypy.
 
-Although we have been able to successfully test the agent in those platforms the omnibus build
-is in its earliest iteration and some issues could surface given the wide disparity between LPAR
-images. These issues are not expected but may occur due to the early maturity of this new build.
+Unfortunately, disparities exist between some of the system libs available symbols across AIX
+technology levels on the *same* AIX version. This is an AIX particularity and means that we can
+only guarantee the agent will run successfully on machines matching our builders' technology
+level. That is:
 
 #### Target Platforms
 
-The omnibus build has been tested on the target platforms:
-- AIX 6.1
-- AIX 7.1
-- AIX 7.2
+The omnibus build has been build and tested on the target platforms at the time of this writing:
+
+- AIX 6.1 TL9 SP6
+- AIX 7.1 TL5 SP3
+- AIX 7.2 TL3 SP0
+
+Should you attempt to install and run the agent package on a lesser version your mileage will
+vary, you may or may not have all dependent symbols available. We are working to improve our
+support across al target platforms.
 
 #### Omnibus Bootstrap
 
@@ -75,7 +78,7 @@ Note how we're logging to `dd-aix-install.log`, you may skip that by removing th
 
 #### Running the agent
 
-As of `0.7.0` the expected configuration location is:
+The expected configuration location is:
 ```
 /etc/datadog-agent/datadog.yaml
 ```
@@ -86,14 +89,17 @@ taken):
 - `./etc/datadog-agent/datadog.yaml`
 - `./datadog.yaml`
 
-This should support legacy configuration locations, but please try to update to the
-preferred location to avoid issues in the future with potential deprecations.
+This should support legacy configuration locations from early adopters who may have
+installed earlier dev images. Please try to update to the preferred location to avoid
+issues in the future with potential deprecations.
 
-A sample configuration file may be found in `/opt/datadog-agent/etc/datadog-agent`.
+A sample configuration file may be found in `/etc/datadog-agent/datadog.yaml.example`.
 
-A basic configuration will typically require a destination `dd_url` and  your
-datadog API key. Occassionally a proxy configuration must be specified depending
-on your network setup.
+A basic configuration will typically require your datadog API key. Should you require
+to submit your metrics to the EU instance, the `site` configuration option is available.
+You may also override the `dd_url` manually, but that should not be required.
+
+Occassionally a proxy configuration must be specified depending on your network setup.
 
 In versions `>=0.7.0`, an SRC subsystem is created so you can now manage the agent
 using the usual AIX commands to manage it. Thus, with the configuration in place,
@@ -118,6 +124,24 @@ to disable this behavior please run the corresponding `rmitab` command:
 ```bash
 rmitab "datadog-agent"
 ```
+
+The default `inittab` configuration enables the service in `respawn` mode, such that if
+the agent should crash, it will be automatically respawned. The goal of this behavior
+is to help avoid a loss in observability in the event of an agent crash. AIX service
+management is a little rudimentary, so if this behavior is too invasive for your liking
+you may change the behavior from `respawn` to `once`:
+```bash
+chitab "datadog-agent:2:once:/usr/bin/startsrc -s datadog-agent"
+```
+
+**Note: in this scenario the agent will not be automatically restarted in the event of
+a crash.**
+
+##### Deprecated
+
+The following instructions refer only to earlier iterations of this project and do not
+apply to the `stable` agent (1.0.0) or dev versions `>=0.7.0`. These are here for historic
+reference.
 
 With older versions of the agent, you will have to resort to the manual start procedure
 for the agent daemon:
@@ -145,33 +169,58 @@ Dogstatsd allows collecting and submitting custom metrics to datadog. It listens
 a UDP port and statsd metrics may be submitted to it. These will then be relayed
 to Datadog.
 
-Dogstatsd relies on the same configuration file defined for the agent and runs in
-a separate process. To run `dogstatsd` you may do the following:
+Dogstatsd relies on the same configuration file defined for the agent where a `dogstatsd`
+configuration section is available. The dogstatsd server will typically run within the
+same agent process, but should you need a dedicated process it may also be launched in
+standalone mode.
 
-```bash
-cd /opt/datadog-agent/agent
-./dogstatsd.py
+To enable dogstatsd, simply edit `/etc/datadog-agent/datadog.yaml` and set the relevant
+configuration options.
+
+```yaml
+dogstatsd:                        # Dogstatsd configuration options
+  enabled: true                   # disabled by default
+  bind_host: localhost            # address we'll be binding to
+  port: 8125                      # dogstatsd UDP listening port
+  non_local_traffic: false        # listen to non-local traffic
 ```
-
-Note that `dogstatsd` doesn't currently daemonize and will run in the foreground.
-
-There are also facilities to run the agent via the known python `supervisor`, this
-might be your preferred way to manage the agent daemon if you are familiar with the
-tool. There are currently entries for both the `agent` and `dogstatsd`.
-
 
 ### Integrations
 
-Additional integrations currently available or in development:
- - process
- - lparstats
- - hmc
+#### System Integrations
 
-For non-core integrations, a configuration file should be put in place to enable
-the integration. These are expected to be found in `./etc/datadog-agent/conf.d`.
+The following system-level integrations are enabled by default:
+
+ - CPU
+ - Filesystem
+ - IOStat
+ - Load
+ - Memory
+ - Uptime
+
+#### Bundled Integrations
+
+Additional integrations currently available:
+ - Disk
+ - LPARstats
+ - Network 
+ - Process
+
+For bundled integrations, a configuration file should be put in place to enable
+the integration. Some of these, like the network check, might already be enabled
+by default. These configuration files should be found in `./etc/datadog-agent/conf.d`.
 The name of the YAML configuration file should match that of the integration:
-`./etc/datadog-agent/conf.d/foo.yaml` will enable integration foo, and set its
+`./etc/datadog-agent/conf.d/foo.yaml` will enable integration `foo`, and set its
 configuration.
+
+If changes are made to an agent integration, the agent will have to be restarted,
+configuration changes are not picked up automatically.
+
+These integrations are shipped as python wheels. You may develop your own should
+yout need to, all you have to do is follow the blueprint set by the bundled wheels
+[here](https://github.com/DataDog/datadog-unix-agent/tree/master/checks/bundled).
+
+See more in the developer notes [here](#integrations).
 
 ### Uninstall
 To remove an installed agent you will run a similar `installp` command:
@@ -181,6 +230,12 @@ installp -e dd-aix-uninstall.log -uv datadog-unix-agent
 Note how we're again logging to `dd-aix-install.log`, you may skip that by removing the `-e` switch.
 
 #### Removing Older Agents
+
+##### Deprecated
+
+The following instructions should only apply to early adopters who may have installed
+early `dev` versions of the unix agent. The following does **NOT** apply to agent installs
+that used the BFF package. Kept here for historic reference.
 
 If you had used the previous scripted installer to install a previous early-development version of the
 agent, the former location was `/opt/datadog/datadog-unix-agent`, you will have to remove that manually.
@@ -221,8 +276,12 @@ so wish. This is the list of former RPM requirements:
 
 ## Developer Notes
 
-You will typically want `setuptools`, `wheel` and `virtualenv` on your python
-development environment.
+The agent runs on Python3.  You will typically want `setuptools`, `wheel` and `virtualenv`
+on your python development environment. We also have some development tools requirements,
+you may install them with:
+```bash
+pip install -r requirements-dev.txt
+```
 
 You may mostly work on this repo from any \*nix environment. We do have some python
 binary wheel dependencies, on linux these are typically provided as `manylinux`
@@ -308,11 +367,11 @@ the `OMNIBUS_RUBY_VERSION` and `OMNIBUS_SOFTWARE_VERSION` respectively - followe
 Triggering a build is the easiest part, we just need to specify a few more env vars currently:
 - `JMXFETCH_VERSION`: JMXFetch version to bundle with the agent.
 - `JMXFETCH_HASH`: SHA256 hash for the JMXFetch artifact.
-- `PYTHON_VERSION`: 2 or 3 - currently only Python 2 supported.
+- `PYTHON_VERSION`: 2 or 3 - defaults to 3. Version 2 will be deprecated.
 
 Typically:
 ```
-JMXFETCH_VERSION="<version>" JMXFETCH_HASH="<hash>" PYTHON_VERSION="2" bundle exec omnibus build agent --log-level=info
+JMXFETCH_VERSION="<version>" JMXFETCH_HASH="<hash>" PYTHON_VERSION="3" bundle exec omnibus build agent --log-level=info
 ```
 
 #### Deprecated: Scripted Installer
@@ -335,54 +394,54 @@ installer that should just work across supported AIX environments.
 ### Integrations
 
 The agent has two types of checks or integrations.
-  - Core checks
-  - Wheel checks
+  - Core checks: built into the agent.
+  - Wheel checks: additional integrations we may package, bundle and install on an
+  agent environment.
 
-The core checks are part of the agent core and are good to go. Wheels checks must
-be installed as wheels (if you're using the installer they will be installed automatically).
+Here, we will mostly discuss wheel checks, as they provide the natural facilities to
+extend the agent.
 
-First install the `checks-base` wheel:
-```bash
-pip install -c requirements.txt --no-index --find-links file://path/to/repo/deps/env/ /path/to/repo/checks/bundled/datadog_checks_base
+All checks (both core and whell) depend on the AgentCheck base class, shipped in the
+project's `checks.agent_check` module, and will inherit from it. This base class will
+ship with the agent and can be considered part of the environment, wheel checks can
+expect its availability.
+
+The pattern for the wheel checks has been taken from [integrations-core](https://docs.datadoghq.com/developers/integrations/),
+so if you're familiar with that, you should be able to hit the ground running.
+
+A check wheel `foo` should have the following skeleton:
+
+```
+checks/bundled/foo/README.md                                    # check README.
+checks/bundled/foo/setup.py                                     # python package setup.
+checks/bundled/foo/tests/                                       # tests - we use pytest.
+checks/bundled/foo/datadog_checks/__init__.py                   # namespace module init - note: this file is not shipped with the wheel. 
+checks/bundled/foo/datadog_checks/foo/__about__.py              # foo module about - includes version info.
+checks/bundled/foo/datadog_checks/foo/__init__.py               # foo module init.
+checks/bundled/foo/datadog_checks/foo/foo.py                    # foo check implementation.
+checks/bundled/foo/datadog_checks/foo/data/conf.yaml.example    # sample configuration.
+checks/bundled/foo/pytest.ini                                   # any additional pytest config.
+checks/bundled/foo/requirements-dev.txt                         # (optional) any additional dev requirements.
 ```
 
-Then install any wheel check you wish (HMC in this example):
-```bash
-pip install -c requirements.txt --no-index --find-links file://path/to/repo/deps/env/ /path/to/repo/checks/bundled/hmc
-```
+Please take a look at any of the bundled checks [here](https://github.com/DataDog/datadog-unix-agent/tree/master/checks/bundled)
+for inspiration.
 
 ### AIX
 If you wish to develop directly on an AIX rig, we recommend the following development
 requirements be met. We will assume these conditions are met when we discuss AIX
 development workflows:
  - yum (use script here: https://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh)
- - python2.7+ _(should be installed with the yum script)_
+ - python3.6+ _(should be installed with the yum script)_
  - python-tools _(should be installed with the yum script)_
  - gcc _(install with yum)_
  - virtualenv _(recommended)_
 
 
-Unfortunately on AIX assuming a compiler will be available is a bit far-fetched. This
-repository provides pre-built AIX wheels for 6.1, 7.1 and 7.2 environments. They may
-be found in the `deps/` directory.
-
-You may install the wheels if you're developing on AIX into your environment like this:
+Should you need to build a binary wheel, you would typically build and compile it as follows:
 
 ```bash
-python -m pip install --no-index --find-links file:///path/to/repo/deps/env -r requirements.txt
-```
-
-Most wheels we've pre-compiled required some manual work to build. Though the XL compiler
-is perhaps the expected compiler on AIX rigs, XL is not free and we have built the
-dependencies relying on GCC (available via yum). We will also assume the python version
-installed is provided by the AIX Linux toolbox (rpm package) via rpm/yum (*not* the AIXTOOLS
-version).
-
-You will typically download the python package source tarball, untar, `cd <python-package>` and
-compile as follows:
-
-```bash
-CC="gcc -lgcc"  LDSHARED="/opt/freeware/lib/python2.7/config/ld_so_aix gcc -bI:/opt/freeware/lib/python2.7/config/python.exp" CFLAGS="-fno-strict-aliasing -Wall  -Wstrict-prototypes -fPIC -O2" python setup.py bdist_wheel
+CC="gcc -lgcc"  LDSHARED="/opt/freeware/lib/python3.6/config/ld_so_aix gcc -bI:/opt/freeware/lib/python2.7/config/python.exp" CFLAGS="-fno-strict-aliasing -Wall  -Wstrict-prototypes -fPIC -O2" python setup.py bdist_wheel
 ```
 
 The command above is a blueprint, but might require some tweaking as far as the include (`-I`) and
@@ -391,18 +450,7 @@ lib (`-L`) directives may go.
 If the command succeeds you'll typically find the compiled wheel in the python-package `dist/`
 directory.
 
-#### psutil
 
-We are currently working on merging some changes upstream into `psutil` to avoid having to apply
-any patches manually, but until then please use the `psutil.patch` file provided in the `patch/`
-subdir on the vanilla psutil:
-
-Clone the `psutil` repository somewhere in your filesystem, keep the repositories separate, so
-clone this outside of `datadog-unix-agent`.
-
-```
-git clone git@github.com:giampaolo/psutil.git
-patch -p0 < psutil.patch
-```
+Please let us know if you have any questions or issues!
 
 Happy DataDoggin'!

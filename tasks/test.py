@@ -38,7 +38,13 @@ LINT_SKIP_PATTERNS = [
     ".*\/.tox\/",
 ]
 UNLICENSED_EXT_PATTERNS = [
+    'LICENSE$',
+    '\..*$',
+    '.*Gemfile(\.lock)?$',
+    '.*Berksfile(\.lock)?$',
+    '.*\.rb$',
     '.*\.txt$',
+    '.*\.json$',
     '.*\.patch$',
     '.*\.yaml.*$',
     '.*\.md$',

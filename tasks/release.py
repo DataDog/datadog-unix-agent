@@ -64,22 +64,26 @@ def update_changelog(ctx, new_version):
         raise
 
     # removing releasenotes from bugfix on the old minor.
-    previous_minor = "%s.%s" % (new_version_int[0], new_version_int[1] - 1)
-    logs = repo.git.log("{}.0...remotes/origin/{}.x".format(previous_minor, previous_minor), "--name-only")
-    log_result = []
-    for log in logs.splitlines():
-        if 'releasenotes/notes/' in log:
-            log_result.append(log)
+    reno_cmd = "reno report \
+                --ignore-cache \
+                --version {} \
+                --no-show-source".format(new_version)
 
-    if log_result:
-        repo.index.remove(log_result)  # make sure this applies --ignore-unmatch
+    if new_version_int[1] - 1 >= 0:
+        previous_minor = "%s.%s" % (new_version_int[0], new_version_int[1] - 1)
+        logs = repo.git.log("{}.0...remotes/origin/{}.x".format(previous_minor, previous_minor), "--name-only")
+        log_result = []
+        for log in logs.splitlines():
+            if 'releasenotes/notes/' in log:
+                log_result.append(log)
+
+        if log_result:
+            repo.index.remove(log_result)  # make sure this applies --ignore-unmatch
+
+        reno_cmd = "{reno_cmd} --earliest-version {minor}.0".format(reno_cmd=reno_cmd, minor=previous_minor)
 
     # generate the new changelog
-    ctx.run("reno report \
-            --ignore-cache \
-            --earliest-version {}.0 \
-            --version {} \
-            --no-show-source > /tmp/new_changelog.rst".format(previous_minor, new_version))
+    ctx.run("{reno_cmd} > /tmp/new_changelog.rst".format(reno_cmd=reno_cmd))
 
     # reseting git
     repo.head.reset(index=True, working_tree=True)  # git reset --hard

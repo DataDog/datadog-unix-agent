@@ -92,12 +92,16 @@ def update_changelog(ctx, new_version):
     changelog = None
     with open('/tmp/new_changelog.rst', 'r') as fp:
         changelog = fp.read().splitlines()
-    with open('CHANGELOG.rst', 'r+') as fp:
-        # remove the old header start 4 bytes in
-        changelog.append(changelog.read().splitlines()[4:])
-        fp.seek(0)
-        fp.write('\n'.join(changelog))
-        fp.truncate()
+    try:
+        with open('CHANGELOG.rst', 'r+') as fp:
+            # remove the old header start 4 bytes in
+            changelog.append(fp.read().splitlines()[4:])
+            fp.seek(0)
+            fp.write('\n'.join(changelog))
+            fp.truncate()
+    except FileNotFoundError:
+        with open('CHANGELOG.rst', 'w') as fp:
+            fp.write('\n'.join(changelog))
 
     # commit new CHANGELOG
     repo.index.add(['CHANGELOG.rst'])

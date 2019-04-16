@@ -6,17 +6,21 @@
 """
 Release helper tasks
 """
+import shutil
 import sys
 from datetime import date
 
 from invoke import task, Failure
 from invoke.exceptions import Exit
 
+from git import Repo
+
 
 @task
 def add_prelude(ctx, version):
     res = ctx.run("reno new prelude-release-{0}".format(version))
     new_releasenote = res.stdout.split(' ')[-1].strip() # get the new releasenote file path
+    repo = Repo('.')  # maybe this should be something else...
 
     with open(new_releasenote, "w") as f:
         f.write("""prelude:
@@ -27,8 +31,8 @@ def add_prelude(ctx, version):
 
     - Please refer to the `{0} tag on process-agent <https://github.com/DataDog/datadog-process-agent/releases/tag/{0}>`_ for the list of changes on the Process Agent.\n""".format(version, date.today(), version.replace('.', '')))
 
-    ctx.run("git add {}".format(new_releasenote))
-    ctx.run("git commit -m \"Add prelude for {} release\"".format(version))
+    repo.index.add([new_releasenote])
+    repo.index.commit("Add prelude for {} release".format(version))
 
 @task
 def update_changelog(ctx, new_version):
@@ -37,35 +41,38 @@ def update_changelog(ctx, new_version):
     version (linux only).
     """
     new_version_int = list(map(int, new_version.split(".")))
+    repo = Repo('.')  # maybe this should be something else...
 
     if len(new_version_int) != 3:
         print("Error: invalid version: {}".format(new_version_int))
         raise Exit(1)
 
     # let's avoid losing uncommitted change with 'git reset --hard'
-    try:
-        ctx.run("git diff --exit-code HEAD", hide="both")
-    except Failure as e:
+    diffs = repo.index.diff(None)
+    if diffs:
         print("Error: You have uncommitted change, please commit or stash before using update_changelog")
         return
 
     # make sure we are up to date
-    ctx.run("git fetch")
+    repo.remotes.origin.fetch()  # git fetch
 
     # let's check that the tag for the new version is present (needed by reno)
     try:
-        ctx.run("git tag --list | grep {}".format(new_version))
-    except Failure as e:
+        repo.tags[new_version]
+    except IndexError as e:
         print("Missing '{}' git tag: mandatory to use 'reno'".format(new_version))
         raise
 
     # removing releasenotes from bugfix on the old minor.
     previous_minor = "%s.%s" % (new_version_int[0], new_version_int[1] - 1)
-    log_result = ctx.run("git log {}.0...remotes/origin/{}.x --name-only | \
-            grep releasenotes/notes/ || true".format(previous_minor, previous_minor))
-    log_result = log_result.stdout.replace('\n', ' ').strip()
-    if len(log_result) > 0:
-        ctx.run("git rm --ignore-unmatch {}".format(log_result))
+    logs = repo.git.log("{}.0...remotes/origin/{}.x".format(previous_minor, previous_minor), "--name-only")
+    log_result = []
+    for log in logs.splitlines():
+        if 'releasenotes/notes/' in log:
+            log_result.append(log)
+
+    if log_result:
+        repo.index.remove(log_result)  # make sure this applies --ignore-unmatch
 
     # generate the new changelog
     ctx.run("reno report \
@@ -75,17 +82,19 @@ def update_changelog(ctx, new_version):
             --no-show-source > /tmp/new_changelog.rst".format(previous_minor, new_version))
 
     # reseting git
-    ctx.run("git reset --hard HEAD")
-
-    # remove the old header. Mac don't have the same sed CLI
-    if sys.platform == 'darwin':
-        ctx.run("sed -i '' -e '1,4d' CHANGELOG.rst")
-    else:
-        ctx.run("sed -i -e '1,4d' CHANGELOG.rst")
+    repo.head.reset(index=True, working_tree=True)  # git reset --hard
 
     # merging to CHANGELOG.rst
-    ctx.run("cat CHANGELOG.rst >> /tmp/new_changelog.rst && mv /tmp/new_changelog.rst CHANGELOG.rst")
+    changelog = None
+    with open('/tmp/new_changelog.rst', 'r') as fp:
+        changelog = fp.read().splitlines()
+    with open('CHANGELOG.rst', 'r+') as fp:
+        # remove the old header start 4 bytes in
+        changelog.append(changelog.read().splitlines()[4:])
+        fp.seek(0)
+        fp.write('\n'.join(changelog))
+        fp.truncate()
 
     # commit new CHANGELOG
-    ctx.run("git add CHANGELOG.rst \
-            && git commit -m \"Update CHANGELOG for {}\"".format(new_version))
+    repo.index.add(['CHANGELOG.rst'])
+    repo.index.commit("Update CHANGELOG for {}".format(new_version))

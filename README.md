@@ -34,7 +34,7 @@ The omnibus build has been build and tested on the target platforms at the time 
 - AIX 7.2 TL3 SP0
 
 Should you attempt to install and run the agent package on a lesser version your mileage will
-vary, you may or may not have all dependent symbols available. We are working to improve our
+vary, you may or may not have all required symbols available. We are working to improve our
 support across al target platforms.
 
 #### Omnibus Bootstrap

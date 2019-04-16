@@ -357,7 +357,7 @@ def main():
             logging.info('Start daemon')
             agent.start(foreground=foreground)
         else:
-            sys.stderr.write(CRED + 'Please use OS facilities to start the agenti!\n' + CEND)
+            sys.stderr.write(CRED + 'Please use OS facilities to start the agent!\n' + CEND)
             return 1
 
     elif 'stop' == command:

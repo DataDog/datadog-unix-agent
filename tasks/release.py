@@ -17,19 +17,19 @@ from git import Repo
 
 
 @task
-def add_prelude(ctx, version):
+def add_prelude(ctx, version, prelude_message=None):
     res = ctx.run("reno new prelude-release-{0}".format(version))
     new_releasenote = res.stdout.split(' ')[-1].strip() # get the new releasenote file path
     repo = Repo('.')  # maybe this should be something else...
 
     with open(new_releasenote, "w") as f:
-        f.write("""prelude:
+        msg = """prelude:
     |
-    Release on: {1}
+    Release on: {}\n""".format(date.today())
+        if prelude_message:
+            msg = "{header}\n    - {prelude_message}".format(header=msg, prelude_message=prelude_message)
 
-    - Please refer to the `{0} tag on integrations-core <https://github.com/DataDog/integrations-core/blob/master/AGENT_CHANGELOG.md#datadog-agent-version-{2}>`_ for the list of changes on the Core Checks.
-
-    - Please refer to the `{0} tag on process-agent <https://github.com/DataDog/datadog-process-agent/releases/tag/{0}>`_ for the list of changes on the Process Agent.\n""".format(version, date.today(), version.replace('.', '')))
+        f.write(msg)
 
     repo.index.add([new_releasenote])
     repo.index.commit("Add prelude for {} release".format(version))

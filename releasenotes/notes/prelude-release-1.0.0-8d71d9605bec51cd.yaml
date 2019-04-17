@@ -1,0 +1,5 @@
+prelude:
+    |
+    Release on: 2019-04-17
+
+    - This release presents the initial stable GA version for the Datadog Unix Agent. Please refer to the docs and reademe for more information.

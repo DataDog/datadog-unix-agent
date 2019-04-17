@@ -10,8 +10,6 @@ import os
 import json
 import mmap
 import re
-import operator
-import sys
 
 from termcolor import colored
 from json.decoder import JSONDecodeError
@@ -20,7 +18,10 @@ from pylint import epylint
 from invoke import task
 from invoke.exceptions import Exit
 
-from .utils import get_matching
+from .utils import (
+    get_repo_path,
+    get_matching,
+)
 
 # We use `basestring` in the code for compat with python2 unicode strings.
 # This makes the same code work in python3 as well.
@@ -32,30 +33,29 @@ except NameError:
 PROFILE_COV = "profile.cov"
 
 PYLINT_RC = ".pylintrc"
+FLAKE8_RC = ".flake8"
 
 LINT_SKIP_PATTERNS = [
-    ".*\/venv.*\/",
-    ".*\/.tox\/",
+    r".*\/venv.*\/",
+    r".*\/.tox\/",
 ]
 UNLICENSED_EXT_PATTERNS = [
-    'LICENSE$',
-    '\..*$',
-    '.*Gemfile(\.lock)?$',
-    '.*Berksfile(\.lock)?$',
-    '.*\.rb$',
-    '.*\.txt$',
-    '.*\.json$',
-    '.*\.patch$',
-    '.*\.yaml.*$',
-    '.*\.md$',
-    '.*\.ini$'
+    r"LICENSE$",
+    r"\..*$",
+    r".*Gemfile(\.lock)?$",
+    r".*Berksfile(\.lock)?$",
+    r".*\.rb$",
+    r".*\.txt$",
+    r".*\.json$",
+    r".*\.patch$",
+    r".*\.yaml.*$",
+    r".*\.md$",
+    r".*\.ini$"
 ]
-
-HERE = os.path.dirname(os.path.realpath(__file__))
 
 
 @task()
-def test(ctx, targets=None, coverage=False, cpus=0, timeout=120):
+def test(ctx, targets=None, timeout=120):
     """
     Run all the tools and tests on the given targets. If targets are not specified,
     the value from `invoke.yaml` will be used.
@@ -63,14 +63,32 @@ def test(ctx, targets=None, coverage=False, cpus=0, timeout=120):
     Example invokation:
         inv test --targets=./pkg/collector/check,./pkg/aggregator --race
     """
-    pass
+    if not targets:
+        print("\n--- Running unit tests on agent code:")
+        ctx.run("python -m pytest -v .", pty=True)
+        print("\n--- Running unit tests on bundled checks:")
+        test_wheels(ctx)
+    else:
+        for target in targets:
+            print("\n--- Running unit tests on agent code:")
+            ctx.run("python -m pytest -v {}".format(target), pty=True)
 
 
 @task
+def test_wheels(ctx):
+    wheels = set()
+    matches = get_matching(get_repo_path(), patterns=[r"^checks\/bundled\/.*\/tests\/.*\.py$"])
+
+    success = True
+    wheels = set([os.path.dirname(os.path.dirname(match)) for match in matches])
+    for wheel in wheels:
+        result = ctx.run('python -m pytest -v {}'.format(wheel), warn=True, pty=True)
+        success = (success and True) if result.ok else False
+
+@task
 def lint_py(ctx, targets=None):
-    args = "--rcfile={} --reports=y".format(os.path.abspath(os.path.join(HERE, "..", PYLINT_RC)))
-    files = get_matching(os.path.abspath(os.path.join(HERE, "..")),
-                         patterns=['.*\.py$'], exclude_patterns=LINT_SKIP_PATTERNS)
+    args = "--rcfile={} --reports=y".format(get_repo_path(PYLINT_RC))
+    files = get_matching(get_repo_path(), patterns=[r".*\.py$"], exclude_patterns=LINT_SKIP_PATTERNS)
 
     stdout, _ = epylint.py_run("{target} {args}".format(target=" ".join(files), args=args), return_std=True)
 
@@ -85,6 +103,27 @@ def lint_py(ctx, targets=None):
             print(colored("Nice! No lint errors!", "green"))
     except JSONDecodeError:
         print(colored("Whoopsie Daisy! There was an issue linting your code!", "red"))
+
+@task
+def flake8(ctx, targets=None, branch=None):
+    success = True
+
+    if not targets:
+        files = get_matching(get_repo_path(), patterns=[r".*\.py$"], reference=branch)
+        result = ctx.run("flake8 --config={rc_file} {targets}".format(
+            rc_file=get_repo_path(FLAKE8_RC),
+            targets=' '.join(files)), pty=True)
+        success = True if result.ok else False
+    else:
+        for target in targets.split(','):
+            print("Checking {}...".format(target))
+            result = ctx.run("flake8 --config={rc_file} {target}".format(
+                rc_file=get_repo_path(FLAKE8_RC),
+                target=target), pty=True)
+            success = (success and True) if result.ok else False
+
+    if success:
+        print(colored("Nice! No flakes errors!", "green"))
 
 @task
 def lint_milestone(ctx):
@@ -197,22 +236,19 @@ def lint_releasenote(ctx):
     ctx.run("reno lint")
 
 @task
-def lint_filenames(ctx):
+def lint_filenames(ctx, branch=None):
     """
     Scan files to ensure there are no filenames too long or containing illegal characters
     """
-    files = ctx.run("git ls-files -z", hide=True).stdout.split("\0")
+    files = get_matching(get_repo_path(), reference=branch)
     failure = False
 
-    if sys.platform == 'win32':
-        print("Running on windows, no need to check filenames for illegal characters")
-    else:
-        print("Checking filenames for illegal characters")
-        forbidden_chars = '<>:"\\|?*'
-        for file in files:
-            if any(char in file for char in forbidden_chars):
-                print("Error: Found illegal character in path {}".format(file))
-                failure = True
+    print("Checking filenames for illegal characters")
+    forbidden_chars = '<>:"\\|?*'
+    for file in files:
+        if any(char in file for char in forbidden_chars):
+            print("Error: Found illegal character in path {}".format(file))
+            failure = True
 
     print("Checking filename length")
     # Approximated length of the prefix of the repo during the windows release build
@@ -236,8 +272,7 @@ def lint_licenses(ctx, branch=None):
     unlicensed = []
     LICENSE_CUE = b"# Unless explicitly stated otherwise all files in this repository are licensed"
 
-    files = get_matching(os.path.abspath(os.path.join(HERE, "..")),
-                         exclude_patterns=UNLICENSED_EXT_PATTERNS, reference=branch)
+    files = get_matching(get_repo_path(), exclude_patterns=UNLICENSED_EXT_PATTERNS, reference=branch)
     for f in files:
         try:
             with open(f, 'rb', 0) as fp, mmap.mmap(fp.fileno(), 0, access=mmap.ACCESS_READ) as s:
@@ -254,30 +289,3 @@ def lint_licenses(ctx, branch=None):
         print(colored("File {} is missing a license header".format(f), "red"))
 
     raise Exit(code=1)
-
-
-class TestProfiler:
-    times = []
-    parser = re.compile("^ok\s+github.com\/DataDog\/datadog-unix-agent\/(\S+)\s+([0-9\.]+)s", re.MULTILINE)
-
-    def write(self, txt):
-        # Output to stdout
-        sys.stdout.write(txt)
-        # Extract the run time
-        for result in self.parser.finditer(txt):
-            self.times.append((result.group(1), float(result.group(2))))
-
-    def flush(self):
-        sys.stdout.flush()
-
-    def reset(self):
-        self.out_buffer = ""
-
-    def print_sorted(self, limit=0):
-        if self.times:
-            sorted_times = sorted(self.times, key=operator.itemgetter(1), reverse=True)
-
-            if limit:
-                sorted_times = sorted_times[:limit]
-            for pkg, time in sorted_times:
-                print("{}s\t{}".format(time, pkg))

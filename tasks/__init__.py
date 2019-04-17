@@ -18,7 +18,8 @@ from .test import (
     lint_releasenote,
     lint_milestone,
     lint_filenames,
-    lint_py
+    lint_py,
+    flake8
 )
 
 # the root namespace
@@ -26,6 +27,7 @@ ns = Collection()
 
 # add single tasks to the root
 ns.add_task(test)
+ns.add_task(flake8)
 ns.add_task(lint_py)
 ns.add_task(lint_licenses)
 ns.add_task(lint_teamassignment)

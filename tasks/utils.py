@@ -3,10 +3,20 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import os
 import re
 
 from git import Repo
 
+HERE = os.path.dirname(os.path.realpath(__file__))
+
+
+def get_repo_path(path=None):
+    repo_path = os.path.abspath(os.path.join(HERE, ".."))
+    if path:
+        return os.path.join(repo_path, path)
+
+    return repo_path
 
 def get_git_files(repo_path='.', reference=None):
     repo = Repo(repo_path)

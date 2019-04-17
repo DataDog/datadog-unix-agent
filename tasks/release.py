@@ -6,11 +6,9 @@
 """
 Release helper tasks
 """
-import shutil
-import sys
 from datetime import date
 
-from invoke import task, Failure
+from invoke import task
 from invoke.exceptions import Exit
 
 from git import Repo
@@ -59,7 +57,7 @@ def update_changelog(ctx, new_version):
     # let's check that the tag for the new version is present (needed by reno)
     try:
         repo.tags[new_version]
-    except IndexError as e:
+    except IndexError:
         print("Missing '{}' git tag: mandatory to use 'reno'".format(new_version))
         raise
 

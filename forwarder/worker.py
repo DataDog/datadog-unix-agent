@@ -43,7 +43,7 @@ class Worker(Thread):
                     self._stats.inc_stat('queue_full_errors', 1)
             else:
                 self._stats.inc_stat('transactions_success', 1)
-        except Exception as e:
+        except Exception:
             log.exception("unknown error processing transaction")
 
     def run(self):

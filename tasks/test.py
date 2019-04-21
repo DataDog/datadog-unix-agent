@@ -63,15 +63,16 @@ def test(ctx, targets=None, timeout=120):
     Example invokation:
         inv test --targets=./pkg/collector/check,./pkg/aggregator --race
     """
-    if not targets:
-        print("\n--- Running unit tests on agent code:")
-        ctx.run("python -m pytest -v .", pty=True)
-        print("\n--- Running unit tests on bundled checks:")
-        test_wheels(ctx)
-    else:
-        for target in targets:
+    with ctx.cd(get_repo_path()):
+        if not targets:
             print("\n--- Running unit tests on agent code:")
-            ctx.run("python -m pytest -v {}".format(target), pty=True)
+            ctx.run("python -m pytest -v .", pty=True)
+            print("\n--- Running unit tests on bundled checks:")
+            test_wheels(ctx)
+        else:
+            print("\n--- Running unit tests on defined targets:")
+            for target in targets.split(','):
+                ctx.run("python -m pytest -v {}".format(target), pty=True)
 
 
 @task

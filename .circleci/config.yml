@@ -1,0 +1,125 @@
+version: 2
+
+# This file uses YAML anchors to deduplicate steps
+# see https://circleci.com/blog/circleci-hacks-reuse-yaml-in-your-circleci-config-with-yaml/
+# and https://learnxinyminutes.com/docs/yaml/
+
+experimental:
+  notify:
+    branches:
+      only:
+        - master
+
+templates:
+  job_template: &job_template
+    docker:
+      - image: circleci/python:3.6.8
+    working_directory: ~/datadog-unix-agent
+  step_templates:
+    - restore_cache: &restore_deps
+        keys:
+          # The first match will be used. Doing that so new branches
+          # use master's cache but don't pollute it back.
+          #
+          # If incremental dep fails, increase the cache gen number
+          # in restore_deps AND save_deps
+          # See https://github.com/DataDog/datadog-agent/pull/2384
+          - gen0-deps-{{ .Branch }}-{{ .Revision }}
+          - gen0-deps-{{ .Branch }}-
+          - gen0-deps-master-
+    - save_cache: &save_deps
+        key: gen0-deps-{{ .Branch }}-{{ .Revision }}
+    - restore_cache: &restore_source
+        keys:
+          # Cache retrieval is faster than full git checkout
+          - v0-repo-{{ .Revision }}
+    - save_cache: &save_source
+        key: v0-repo-{{ .Revision }}
+    - run: &enter_venv
+        name: add virtualenv to bashrc
+        command: echo "source ~/datadog-unix-agent/venv/bin/activate" >> $BASH_ENV
+
+jobs:
+  checkout_code:
+    <<: *job_template
+    steps:
+      - checkout
+      - save_cache:
+          <<: *save_source
+          paths:
+            - ~/datadog-unix-agent
+
+  dependencies:
+    <<: *job_template
+    steps:
+      - restore_cache: *restore_source
+      - restore_cache: *restore_deps
+      - run:
+          name: setup virtual env
+          command: virtualenv ~/datadog-unix-agent/venv
+      - run: *enter_venv
+      - run:
+          name: setup python runtime deps
+          command: pip install -r requirements.txt
+      - run:
+          name: setup python developer deps
+          command: pip install -c requirements.txt -r requirements-dev.txt
+      - save_cache:
+          <<: *save_deps
+          paths:
+            - ~/datadog-unix-agent/venv
+            - /usr/local/lib/python3.6/dist-packages
+
+  unit_tests:
+    <<: *job_template
+    steps:
+      - restore_cache: *restore_source
+      - restore_cache: *restore_deps
+      - run: *enter_venv
+      - run:
+          name: run core tests
+          command: python -m pytest -v .
+      - run:
+          name: run integrations tests
+          command: for d in $(find checks/bundled -mindepth 1 -maxdepth 1 -not -name ".*" -not -name "datadog_checks_base" -type d); do python -m pytest -v $d; done
+
+  license_verification:
+    <<: *job_template
+    steps:
+      - restore_cache: *restore_source
+      - restore_cache: *restore_deps
+      - run: *enter_venv
+      - run:
+          name: checking license headers
+          command: if git grep -L '# Unless explicitly stated otherwise all files in this repository are licensed' -- -- './*' ':(exclude)./deps/*' | grep -e '.*\.py$'; then exit 1; else echo "all good"; fi
+
+  lint:
+    <<: *job_template
+    steps:
+      - restore_cache: *restore_source
+      - restore_cache: *restore_deps
+      - run: *enter_venv
+      - run:
+          name: flake8 project
+          command: flake8
+      - run:
+          name: pylint project
+          command: for py in $(find . -type f -name '*.py' ! -path "./venv*/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(pylint --exit-zero --rcfile=./.pylintrc --output-format=json $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}all good${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED
+
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - checkout_code
+      - dependencies:
+          requires:
+            - checkout_code
+      - lint:
+          requires:
+            - dependencies
+      - unit_tests:
+          requires:
+            - dependencies
+      - license_verification:
+          requires:
+            - dependencies

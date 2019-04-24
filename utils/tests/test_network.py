@@ -66,7 +66,7 @@ def test_get_proxy():
     from config import config
     config['proxy'] = None
 
-    with mock.patch('urllib.request.getproxies', return_value={}):
+    with mock.patch('utils.network.getproxies', return_value={}):
         proxy_settings = get_proxy()
         assert proxy_settings == {}
 
@@ -74,7 +74,7 @@ def test_get_proxy():
     del config['proxy']
     del config.defaults['proxy']
 
-    with mock.patch('urllib.request.getproxies', return_value={}):
+    with mock.patch('utils.network.getproxies', return_value={}):
         proxy_settings = get_proxy()
         assert proxy_settings == {}
 

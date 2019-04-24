@@ -1,5 +1,8 @@
 image: python:3-stretch
 
+default_projects_features:
+  builds: false
+
 test:
   before_script:
   - pip install -r requirements-dev.txt

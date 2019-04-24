@@ -3,6 +3,8 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import mock
+
 import os
 from urllib.parse import urlparse
 
@@ -64,15 +66,17 @@ def test_get_proxy():
     from config import config
     config['proxy'] = None
 
-    proxy_settings = get_proxy()
-    assert proxy_settings == {}
+    with mock.patch('utils.network.getproxies', return_value={}):
+        proxy_settings = get_proxy()
+        assert proxy_settings == {}
 
     # remove all config options
     del config['proxy']
     del config.defaults['proxy']
 
-    proxy_settings = get_proxy()
-    assert proxy_settings == {}
+    with mock.patch('utils.network.getproxies', return_value={}):
+        proxy_settings = get_proxy()
+        assert proxy_settings == {}
 
     # restore defaults
     config.defaults['proxy'] = {

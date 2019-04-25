@@ -77,11 +77,8 @@ jobs:
       - restore_cache: *restore_deps
       - run: *enter_venv
       - run:
-          name: run core tests
-          command: python -m pytest -v .
-      - run:
-          name: run integrations tests
-          command: for d in $(find checks/bundled -mindepth 1 -maxdepth 1 -not -name ".*" -not -name "datadog_checks_base" -type d); do python -m pytest -v $d; done
+          name: run tests
+          command: inv test
 
   license_verification:
     <<: *job_template
@@ -91,7 +88,7 @@ jobs:
       - run: *enter_venv
       - run:
           name: checking license headers
-          command: if git grep -L '# Unless explicitly stated otherwise all files in this repository are licensed' -- -- './*' ':(exclude)./deps/*' | grep -e '.*\.py$'; then exit 1; else echo "all good"; fi
+          command: inv lint-licenses
 
   lint:
     <<: *job_template
@@ -101,12 +98,12 @@ jobs:
       - run: *enter_venv
       - run:
           name: flake8 project
-          command: flake8
+          command: inv flake8
       - run:
           name: pylint project
           environment:
             TERM: rxvt
-          command: for py in $(find . -type f -name '*.py' ! -path "./venv*/*" ! -path "./*/.tox/*"); do echo -n "scanning $py..."; red=$(tput setaf 1); green=$(tput setaf 2); reset=$(tput sgr0); output=$(pylint --exit-zero --rcfile=./.pylintrc --output-format=json $py) ; first=$(echo $output | jq '.[0]') ; if [ "$first" = "null" ]; then echo -e "\t${green}all good${reset}"; else echo -e "\n${red}$(echo $output | jq .)${reset}"; FAILED=$((FAILED + 1)); fi ; done ; exit $FAILED
+          command: inv lint-py
 
 workflows:
   version: 2

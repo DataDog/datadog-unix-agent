@@ -70,7 +70,7 @@ class AgentRunner(Thread):
 
                 self._collector.run_checks()
                 self._serializer.serialize_and_push()
-            except Exception as e:
+            except Exception:
                 log.exception("Unexpected error in last collection run")
 
             time.sleep(self._config.get('min_collection_interval'))
@@ -223,8 +223,8 @@ class Agent(Daemon):
         aggregator = MetricsAggregator(
             hostname,
             interval=config.get('aggregator_interval'),
-            expiry_seconds=(config.get('min_collection_interval') +
-                            config.get('aggregator_expiry_seconds')),
+            expiry_seconds=(config.get('min_collection_interval')
+                            + config.get('aggregator_expiry_seconds')),
             recent_point_threshold=config.get('recent_point_threshold'),
             histogram_aggregates=config.get('histogram_aggregates'),
             histogram_percentiles=config.get('histogram_percentiles'),

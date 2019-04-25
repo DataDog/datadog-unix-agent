@@ -155,7 +155,7 @@ class Aggregator(object):
         return parsed_packets
 
     def _unescape_sc_content(self, string):
-        return string.replace('\\n', '\n').replace('m\:', 'm:')
+        return string.replace('\\n', '\n').replace(r'm\:', 'm:')
 
     def _unescape_event_text(self, string):
         return string.replace('\\n', '\n')

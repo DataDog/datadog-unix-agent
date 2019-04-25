@@ -750,7 +750,7 @@ class TestMetricsAggregator():
         stats.submit_packets('_sc|check.1|0|m:testing')
         stats.submit_packets('_sc|check.2|0|m:First line\\nSecond line')
         stats.submit_packets('_sc|check.3|0|m:♬ †øU †øU ¥ºu T0µ ♪')
-        stats.submit_packets('_sc|check.4|0|m:|t:|m\:|d:')
+        stats.submit_packets(r'_sc|check.4|0|m:|t:|m\:|d:')
 
         service_checks = self.sort_service_checks(stats.flush_service_checks())
 
@@ -797,7 +797,7 @@ class TestMetricsAggregator():
         stats = MetricsAggregator('myhost')
         stats.submit_packets('_sc|check.1|0|#keym:value')
         stats.submit_packets('_sc|check.2|0|#key2m:value|m:fakeout')
-        stats.submit_packets('_sc|check.3|0|#key:valuem:value2,key2:value2|m:fakeoutm\:|h:#5')
+        stats.submit_packets(r'_sc|check.3|0|#key:valuem:value2,key2:value2|m:fakeoutm\:|h:#5')
 
         service_checks = self.sort_service_checks(stats.flush_service_checks())
         assert len(service_checks) == 3

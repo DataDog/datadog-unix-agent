@@ -468,7 +468,7 @@ class HMC(AgentCheck):
         swap = swap.split(',')
         for stat in swap:
             val, metric = stat.split()
-            val = re.sub("\D", "", val)
+            val = re.sub(r"\D", "", val)
             self.gauge('hmc.system.memory.swap.{metric}'.format(metric=metric), float(val), tags=tags)
 
     def hmc_procstat(self, ssh_client, environment={}):

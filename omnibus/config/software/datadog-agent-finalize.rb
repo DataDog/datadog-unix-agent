@@ -62,7 +62,7 @@ build do
       # cleanup clutter
       delete "#{install_dir}/etc"
 
-      # whitelist stuff
+      # FIXME: temporarily whitelist libs until we figure out the deps that are actually safe and those we need to fix
       whitelist.each { |elem|
         whitelist_file elem
       }

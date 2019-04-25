@@ -8,8 +8,12 @@ import re
 
 from git import Repo
 
+DEFAULT_SHELL = '/bin/bash'
 HERE = os.path.dirname(os.path.realpath(__file__))
 
+
+def get_shell():
+    return os.environ.get('SHELL', DEFAULT_SHELL)
 
 def get_repo_path(path=None):
     repo_path = os.path.abspath(os.path.join(HERE, ".."))

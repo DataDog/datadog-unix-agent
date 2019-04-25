@@ -19,6 +19,7 @@ from invoke import task
 from invoke.exceptions import Exit
 
 from .utils import (
+    get_shell,
     get_repo_path,
     get_matching,
 )
@@ -66,13 +67,13 @@ def test(ctx, targets=None, timeout=120):
     with ctx.cd(get_repo_path()):
         if not targets:
             print("\n--- Running unit tests on agent code:")
-            ctx.run("python -m pytest -v .", pty=True)
+            ctx.run("python -m pytest -v .", pty=True, shell=get_shell())
             print("\n--- Running unit tests on bundled checks:")
             test_wheels(ctx)
         else:
             print("\n--- Running unit tests on defined targets:")
             for target in targets.split(','):
-                ctx.run("python -m pytest -v {}".format(target), pty=True)
+                ctx.run("python -m pytest -v {}".format(target), pty=True, shell=get_shell())
 
 
 @task
@@ -83,7 +84,7 @@ def test_wheels(ctx):
     success = True
     wheels = set([os.path.dirname(os.path.dirname(match)) for match in matches])
     for wheel in wheels:
-        result = ctx.run('python -m pytest -v {}'.format(wheel), warn=True, pty=True)
+        result = ctx.run('python -m pytest -v {}'.format(wheel), warn=True, pty=True, shell=get_shell())
         success = (success and True) if result.ok else False
 
 @task
@@ -113,14 +114,14 @@ def flake8(ctx, targets=None, branch=None):
         files = get_matching(get_repo_path(), patterns=[r".*\.py$"], reference=branch)
         result = ctx.run("flake8 --config={rc_file} {targets}".format(
             rc_file=get_repo_path(FLAKE8_RC),
-            targets=' '.join(files)), pty=True)
+            targets=' '.join(files)), pty=True, shell=get_shell())
         success = True if result.ok else False
     else:
         for target in targets.split(','):
             print("Checking {}...".format(target))
             result = ctx.run("flake8 --config={rc_file} {target}".format(
                 rc_file=get_repo_path(FLAKE8_RC),
-                target=target), pty=True)
+                target=target), pty=True, shell=get_shell())
             success = (success and True) if result.ok else False
 
     if success:
@@ -234,7 +235,7 @@ def lint_releasenote(ctx):
                         print("Error: No releasenote was found for this PR. Please add one using 'reno'.")
                         raise Exit(code=1)
 
-    ctx.run("reno lint")
+    ctx.run("reno lint", pty=True, shell=get_shell())
 
 @task
 def lint_filenames(ctx, branch=None):

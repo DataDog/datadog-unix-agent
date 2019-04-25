@@ -36,6 +36,16 @@ build do
 
     # Conf files
     if aix?
+      whitelist = [
+        "#{install_dir}/embedded/lib/libreadline.so.7",
+        "#{install_dir}/embedded/lib/libtinfo.so.5.9.0",
+        "#{install_dir}/embedded/lib/libtinfow.so.5.9.0",
+        "#{install_dir}/embedded/lib/python3.6/lib-dynload/fcntl.so",
+        "#{install_dir}/embedded/lib/python3.6/lib-dynload/nis.so",
+        "#{install_dir}/embedded/lib/python3.6/lib-dynload/readline.so",
+        "#{install_dir}/embedded/lib/python3.6/site-packages/psutil/_psutil_aix.so",
+      ]
+
       # Move checks and configuration files
       mkdir "#{etc_dir}"
       move "#{install_dir}#{etc_dir}/datadog.yaml.example", "#{etc_dir}"
@@ -48,8 +58,14 @@ build do
 
       project.extra_package_file("#{etc_dir}")
       project.extra_package_file("#{var_dir}")
+
       # cleanup clutter
       delete "#{install_dir}/etc"
+
+      # FIXME: temporarily whitelist libs until we figure out the deps that are actually safe and those we need to fix
+      whitelist.each { |elem|
+        whitelist_file elem
+      }
     end
   end
 end

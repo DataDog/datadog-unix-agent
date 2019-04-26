@@ -2,6 +2,37 @@
 Release Notes
 =============
 
+.. _Release Notes_1.0.1:
+
+1.0.1
+=====
+
+.. _Release Notes_1.0.1_Prelude:
+
+Prelude
+-------
+
+Release on: 2019-04-26
+
+
+.. _Release Notes_1.0.1_Upgrade Notes:
+
+Upgrade Notes
+-------------
+
+- Bumping urllib3 to 1.24.2.
+
+
+.. _Release Notes_1.0.1_Security Issues:
+
+Security Issues
+---------------
+
+- To address `CVE-2019-11324 <https://www.cvedetails.com/cve/CVE-2019-11324/>`_
+  urllib3 has been bumped to the latest version.
+
+
+
 .. _Release Notes_1.0.0:
 
 1.0.0

@@ -102,10 +102,7 @@ if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
     # installing compiler dependencies
     echo "installing compiler build dependencies..."
     yum install -y -q mpfr-$MPFR_VERSION mpfr-devel-$MPFR_VERSION
-    yum install -y -q libgcc-$GCC_VERSION
-    yum install -y -q libstdc++-$GCC_VERSION
-    yum install -y -q gcc-$GCC_VERSION
-    yum install -y -q gcc-c++-$GCC_VERSION
+    yum install -y -q libgcc-$GCC_VERSION libstdc++-$GCC_VERSION gcc-$GCC_VERSION gcc-c++-$GCC_VERSION
 fi
 
 # installing build dependencies

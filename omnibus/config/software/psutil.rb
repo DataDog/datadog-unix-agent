@@ -1,5 +1,5 @@
 name "psutil"
-default_version "5.6.3"
+default_version "5.6.5"
 
 python_version = ENV['PYTHON_VERSION']
 
@@ -12,8 +12,8 @@ end
 
 source :url => "https://github.com/giampaolo/psutil/archive/release-#{version}.tar.gz"
 
-version "5.6.3" do
-  source :sha256 => "55b86dc0a9fc4e258ae5d86d6edf317432a4e3dc45c7324b8a82838b07e74f4a"
+version "5.6.5" do
+  source :sha256 => "d57a81dd7cb0481819ea566c45fc5a60623ca263781a955d6d01f98d2258b964"
 end
 
 relative_path "psutil-release-#{version}"

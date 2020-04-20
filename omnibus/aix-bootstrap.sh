@@ -21,12 +21,13 @@ GNU_TAR="/opt/freeware/bin/tar"
 
 # version pins
 GCC_VERSION=${GCC_VERSION:-6.3.0-2}
-COREUTILS_VERSION=${GIT_VERSION:-8.29-3}
-CURL_VERSION=${GIT_VERSION:-7.64.0-1}
-LIBFFI_VERSION=${GIT_VERSION:-3.2.1-3}
-RUBY_VERSION=${GIT_VERSION:-2.5.1-1}
-SUDO_VERSION=${GIT_VERSION:-1.8.21p2-1}
-TAR_VERSION=${GIT_VERSION:-1.30-1}
+COREUTILS_VERSION=${COREUTILS_VERSION:-8.29-3}
+CURL_VERSION=${CURL_VERSION:-7.64.0-1}
+LIBFFI_VERSION=${LIBFFI_VERSION:-3.2.1-3}
+MPFR_VERSION=${MPFR_VERSION:-3.1.2-3}
+RUBY_VERSION=${RUBY_VERSION:-2.5.1-1}
+SUDO_VERSION=${SUDO_VERSION:-1.8.21p2-1}
+TAR_VERSION=${TAR_VERSION:-1.30-1}
 GIT_VERSION=${GIT_VERSION:-2.18.0-1}
 
 function is_sudo {
@@ -96,14 +97,12 @@ set -e
 if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
     # removing unneeded stuff...
     echo "removing unnecessary dependencies..."
-    yum remove -y -q gcc-locale gcc libgcc gcc-c++ libstdc++
+    yum remove -y -q mpfr mpfr-devel gcc-locale gcc libgcc gcc-c++ libstdc++
 
     # installing compiler dependencies
     echo "installing compiler build dependencies..."
-    yum install -y -q libgcc-$GCC_VERSION
-    yum install -y -q libstdc++-$GCC_VERSION
-    yum install -y -q gcc-$GCC_VERSION
-    yum install -y -q gcc-c++-$GCC_VERSION
+    yum install -y -q mpfr-$MPFR_VERSION mpfr-devel-$MPFR_VERSION
+    yum install -y -q libgcc-$GCC_VERSION libstdc++-$GCC_VERSION gcc-$GCC_VERSION gcc-c++-$GCC_VERSION
 fi
 
 # installing build dependencies
@@ -131,7 +130,7 @@ mkdir -p ./$YAJL_DIR
 $GNU_TAR xvzf $YAJL_TARBALL -C ./$YAJL_DIR --strip=1
 
 cd /tmp/$LIBYAJL_GEM_DIR
-bundle install
+bundle install --without development_extras
 bundle exec rake prep
 bundle exec rake compile
 bundle exec rake package

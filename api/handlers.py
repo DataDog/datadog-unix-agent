@@ -80,7 +80,7 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             log.debug("processing %s, %s", signature, values)
             check = signature[0]
             if check in processed:
-                processed['sources'][check]['merics'] += values
+                processed[check]['metrics'] += values
             else:
                 processed[check] = {'metrics': values}
 

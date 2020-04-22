@@ -1,0 +1,3 @@
+fixes:
+  - |
+    Fix HTTP 500 when calling the status command with multiple instances of a check defined.

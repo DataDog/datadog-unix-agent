@@ -1,5 +1,5 @@
 name "psutil"
-default_version "5.6.6"
+default_version "5.7.0"
 
 python_version = ENV['PYTHON_VERSION']
 
@@ -12,8 +12,8 @@ end
 
 source :url => "https://github.com/giampaolo/psutil/archive/release-#{version}.tar.gz"
 
-version "5.6.6" do
-  source :sha256 => "8da6fe2743132ba65e86fa7fb7b3a73d5f24ed2e8d794f3fa66484ab6dba98a7"
+version "5.7.0" do
+  source :sha256 => "0a53c5260a096aeefdb4060512bbc3cbdec83dd8c20c5114421790b019dc61ff"
 end
 
 relative_path "psutil-release-#{version}"
@@ -23,7 +23,7 @@ build do
   ship_license "https://raw.githubusercontent.com/giampaolo/psutil/master/LICENSE"
 
   if aix?
-    env = aix_env 
+    env = aix_env
   else
     env = with_standard_compiler_flags(with_embedded_path)
   end

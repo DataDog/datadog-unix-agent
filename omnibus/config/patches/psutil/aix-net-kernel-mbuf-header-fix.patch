@@ -1,8 +1,6 @@
-diff --git a/psutil/arch/aix/net_kernel_structs.h b/psutil/arch/aix/net_kernel_structs.h
-index 4e7a088c..fd3e8d8a 100644
---- a/psutil/arch/aix/net_kernel_structs.h
-+++ b/psutil/arch/aix/net_kernel_structs.h
-@@ -17,7 +17,7 @@
+--- a/psutil/arch/aix/net_kernel_structs.h	2020-04-22 14:17:50.000000000 +0200
++++ b/psutil/arch/aix/net_kernel_structs.h	2020-04-22 14:18:13.000000000 +0200
+@@ -17,8 +17,8 @@
  #include <sys/socketvar.h>
  #include <sys/protosw.h>
  #include <sys/unpcb.h>
@@ -11,10 +9,4 @@ index 4e7a088c..fd3e8d8a 100644
  #include <sys/mbuf_macro.h>
  #include <netinet/ip_var.h>
  #include <netinet/tcp.h>
-@@ -108,4 +108,4 @@ struct mbuf64
- 
- #define m_len               m_hdr.mh_len
- 
--#endif      /* __64BIT__ */
-\ No newline at end of file
-+#endif      /* __64BIT__ */
+ #include <netinet/tcpip.h>

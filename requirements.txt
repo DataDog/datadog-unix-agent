@@ -3,10 +3,10 @@ atomicwrites==1.1.5
 attrs==18.1.0
 backports-abc==0.5
 certifi==2018.4.16
-cffi==1.11.5
+cffi==1.14.4
 chardet==3.0.4
 configparser==3.5.0
-cryptography==3.2
+cryptography==3.3.2
 enum34==1.1.6
 funcsigs==1.0.2
 futures==3.2.0; python_version < '3.0'

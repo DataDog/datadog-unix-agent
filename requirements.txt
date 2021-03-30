@@ -6,7 +6,7 @@ certifi==2018.4.16
 cffi==1.14.4
 chardet==3.0.4
 configparser==3.5.0
-cryptography==3.3.2
+cryptography
 enum34==1.1.6
 funcsigs==1.0.2
 futures==3.2.0; python_version < '3.0'
@@ -23,7 +23,7 @@ git+git://github.com/ThePrez/psutil@ibmi-newmodule#egg=psutil
 py==1.5.3
 pyasn1==0.4.4
 pycparser==2.18
-PyNaCl==1.2.1
+PyNaCl
 PyYAML==5.1
 requests==2.21.0
 singledispatch==3.4.0.3

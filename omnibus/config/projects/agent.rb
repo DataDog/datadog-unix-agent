@@ -74,7 +74,6 @@ dependency 'datadog-agent'
 
 ## Additional software
 dependency 'datadog-agent-integrations'
-dependency 'jmxfetch'
 
 # version manifest file
 dependency 'version-manifest'

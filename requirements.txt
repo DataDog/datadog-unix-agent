@@ -24,7 +24,7 @@ py==1.5.3
 pyasn1==0.4.4
 pycparser==2.18
 PyNaCl==1.2.1
-PyYAML==5.1
+PyYAML==5.4
 requests==2.21.0
 singledispatch==3.4.0.3
 six==1.11.0

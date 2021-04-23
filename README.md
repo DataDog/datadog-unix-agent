@@ -374,6 +374,9 @@ Typically:
 JMXFETCH_VERSION="<version>" JMXFETCH_HASH="<hash>" PYTHON_VERSION="3" bundle exec omnibus build agent --log-level=info
 ```
 
+_Note:_ JMXFetch is included in the build but is not officially supported (the AIX Agent does not
+include the facilities to configure and start JMXFetch).
+
 #### Deprecated: Scripted Installer
 
 This build method has been deprecated in favor of the omnibus build. Keeping here

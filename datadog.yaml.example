@@ -4,9 +4,9 @@ api_key: <api_key_here>                # DD API key: required.
 #                                      #       - US (default): datadoghq.com
 #                                      #       - EU          : datadoghq.eu
 #
-# dd_url: https://app.datadoghq.com    # DD URL submission override. You shouldn't need to change this.
+# dd_url: https://unix.agent.datadoghq.com   # DD URL submission override. You shouldn't need to change this.
 #
-# log_level: info                      # Log level - available levels: critical, error, warning, info, debug
+# log_level: info                            # Log level - available levels: critical, error, warning, info, debug
 #
 # proxy:
 #   http: http://localhost:3128     # should you wish to setup a proxy for your agent, please do

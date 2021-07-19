@@ -1,22 +1,22 @@
 --- shlib/Makefile	2018-11-15 18:51:21.000000000 +0100
 +++ shlib/Makefile.fixed	2018-11-15 18:51:21.000000000 +0100
 @@ -66,7 +66,7 @@
- CFLAGS =  -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
- LOCAL_CFLAGS =  -DRL_LIBRARY_VERSION='"$(RL_LIBRARY_VERSION)"'
- CPPFLAGS = -P  -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
--LDFLAGS =  -L/opt/datadog-agent/embedded/lib -Wl,-blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -Wl,-brtl   -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
-+LDFLAGS =  -L/opt/datadog-agent/embedded/lib -blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -brtl   -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
- 
- DEFS = -DHAVE_CONFIG_H 
- LOCAL_DEFS = 
+  CFLAGS =  -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
+  LOCAL_CFLAGS =  -DRL_LIBRARY_VERSION='"$(RL_LIBRARY_VERSION)"'
+  CPPFLAGS = -P  -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
+- LDFLAGS =  -L/opt/datadog-agent/embedded/lib -Wl,-blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -Wl,-brtl   -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
++ LDFLAGS =  -L/opt/datadog-agent/embedded/lib -blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -brtl   -I/opt/datadog-agent/embedded/include -D_LARGE_FILES -O
+  
+  DEFS = -DHAVE_CONFIG_H 
+  LOCAL_DEFS = 
 @@ -85,8 +85,8 @@
- SHOBJ_XLDFLAGS = -G
- SHOBJ_LIBS = 
- 
--SHLIB_XLDFLAGS =  -L/opt/datadog-agent/embedded/lib -Wl,-blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -Wl,-brtl -bM:SRE
--SHLIB_LIBS = -lcurses -lc
-+SHLIB_XLDFLAGS =  -L/opt/datadog-agent/embedded/lib -blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -brtl -bM:SRE
-+SHLIB_LIBS = -lcurses -lc -ltinfo
- 
- SHLIB_DOT = .
- SHLIB_LIBPREF = lib
+  SHOBJ_XLDFLAGS = -G
+  SHOBJ_LIBS = 
+  
+- SHLIB_XLDFLAGS =  -L/opt/datadog-agent/embedded/lib -Wl,-blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -Wl,-brtl -bM:SRE
+- SHLIB_LIBS = -lcurses -lc
++ SHLIB_XLDFLAGS =  -L/opt/datadog-agent/embedded/lib -blibpath:/opt/datadog-agent/embedded/lib:/usr/lib:/lib -brtl -bM:SRE
++ SHLIB_LIBS = -lcurses -lc -ltinfo
+  
+  SHLIB_DOT = .
+  SHLIB_LIBPREF = lib

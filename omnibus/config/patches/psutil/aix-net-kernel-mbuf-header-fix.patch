@@ -3,18 +3,17 @@ index 4e7a088c..fd3e8d8a 100644
 --- a/psutil/arch/aix/net_kernel_structs.h
 +++ b/psutil/arch/aix/net_kernel_structs.h
 @@ -17,7 +17,7 @@
- #include <sys/socketvar.h>
- #include <sys/protosw.h>
- #include <sys/unpcb.h>
--#include <sys/mbuf_base.h>
-+#include <sys/mbuf.h>
- #include <sys/mbuf_macro.h>
- #include <netinet/ip_var.h>
- #include <netinet/tcp.h>
+  #include <sys/socketvar.h>
+  #include <sys/protosw.h>
+  #include <sys/unpcb.h>
+- #include <sys/mbuf_base.h>
++ #include <sys/mbuf.h>
+  #include <sys/mbuf_macro.h>
+  #include <netinet/ip_var.h>
+  #include <netinet/tcp.h>
 @@ -108,4 +108,4 @@ struct mbuf64
- 
- #define m_len               m_hdr.mh_len
- 
--#endif      /* __64BIT__ */
-\ No newline at end of file
-+#endif      /* __64BIT__ */
+  
+  #define m_len               m_hdr.mh_len
+  
+- #endif      /* __64BIT__ */
++ #endif      /* __64BIT__ */

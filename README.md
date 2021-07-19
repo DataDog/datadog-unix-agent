@@ -343,7 +343,7 @@ If you got here you're doing good and you're almost ready to go.
 
 - Make sure the ulimits are high enough if you receive out of memory errors:
   - check ulimits with `ulimit -a`
-  - set high enough ulimits for `stack size`, `data seg size` and `max memory size`
+  - set high enough ulimits for `stack size`, `data seg size` and `max memory size`. The `aix-bootstrap.sh` script should set these for you.
 - Make sure you have enough space in `/opt` for the requirements + build
 - Make sure you have enough space in `/var` for the omnibus build
 - Omnibus uses git, make sure you have configured git username, etc.

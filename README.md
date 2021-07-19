@@ -332,7 +332,7 @@ run these commands in a scratch directory somewhere):
 - `bundle install`
 - `rake prep`
 - `rake gem`
-- `gem install —local ./pkg/libyajl-1.2.0.gem`
+- `gem install --local ./pkg/libyajl-1.2.0.gem`
 
 Once these steps are complete, you may go back to `omnibus/` in the agent repo and run
 `bundle install` or `bundle update` once again.

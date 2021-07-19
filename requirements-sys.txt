@@ -1,4 +1,4 @@
-pip==18.0
+pip==19.2
 setuptools==40.2.0
 wheel==0.31.1
 virtualenv==16.0.0

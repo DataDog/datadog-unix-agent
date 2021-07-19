@@ -366,7 +366,7 @@ the `OMNIBUS_RUBY_VERSION` and `OMNIBUS_SOFTWARE_VERSION` respectively - followe
 #### Building
 
 Triggering a build is the easiest part, we just need to specify a few more env vars currently:
-- `JMXFETCH_VERSION`: JMXFetch version to bundle with the agent (otherwise the [default] (https://github.com/DataDog/datadog-unix-agent/blob/master/omnibus/config/software/jmxfetch.rb) is used).
+- `JMXFETCH_VERSION`: JMXFetch version to bundle with the agent (otherwise the [default](https://github.com/DataDog/datadog-unix-agent/blob/master/omnibus/config/software/jmxfetch.rb) is used).
 - `JMXFETCH_HASH`: SHA256 hash for the JMXFetch artifact (idem).
 - `PYTHON_VERSION`: 2 or 3 - defaults to 3. Version 2 will be deprecated.
 

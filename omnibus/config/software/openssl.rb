@@ -143,6 +143,11 @@ build do
   configure_args << env["CFLAGS"] << env["LDFLAGS"]
 
   configure_command = configure_args.unshift(configure_cmd).join(" ")
+  
+  if aix?
+    # HACK: make seems to fail if libz.a is there, trying to look for libz.so inside it.
+    command "sudo mv /opt/datadog-agent/embedded/lib/libz.a /opt/datadog-agent/embedded/lib/libz.bak"
+  end
 
   command configure_command, env: env, in_msys_bash: true
   make "depend", env: env
@@ -158,5 +163,11 @@ build do
     # Bug Ref: http://rt.openssl.org/Ticket/Display.html?id=2986&user=guest&pass=guest
     command "sudo /usr/sbin/slibclean", env: env
   end
+  
   make "install", env: env
+  
+  if aix?
+    # Undo hack
+    command "sudo mv /opt/datadog-agent/embedded/lib/libz.bak /opt/datadog-agent/embedded/lib/libz.a"
+  end
 end

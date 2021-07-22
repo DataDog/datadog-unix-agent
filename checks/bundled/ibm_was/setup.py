@@ -1,7 +1,6 @@
 # (C) Datadog, Inc. 2018-present
 # All rights reserved
 # Licensed under a 3-clause BSD style license (see LICENSE)
-from codecs import open  # To use a consistent encoding
 from os import path
 
 from setuptools import setup
@@ -18,16 +17,7 @@ with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 
-def get_dependencies():
-    dep_file = path.join(HERE, 'requirements.in')
-    if not path.isfile(dep_file):
-        return []
-
-    with open(dep_file, encoding='utf-8') as f:
-        return f.readlines()
-
-
-CHECKS_BASE_REQ = 'datadog-checks-base>=11.2.0'
+CHECKS_BASE_REQ = 'datadog_checks_base'
 
 
 setup(
@@ -36,9 +26,9 @@ setup(
     description='The IBM WAS check',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    keywords='datadog agent ibm_was check',
+    keywords='datadog agent aix ibm_was check',
     # The project's main homepage.
-    url='https://github.com/DataDog/integrations-core',
+    url='https://github.com/DataDog/datadog-unix-agent',
     # Author details
     author='Datadog',
     author_email='packages@datadoghq.com',
@@ -51,14 +41,12 @@ setup(
         'Intended Audience :: System Administrators',
         'Topic :: System :: Monitoring',
         'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.8',
     ],
     # The package we're going to ship
     packages=['datadog_checks.ibm_was'],
     # Run-time dependencies
     install_requires=[CHECKS_BASE_REQ],
-    extras_require={'deps': get_dependencies()},
     # Extra files to ship with the wheel package
     include_package_data=True,
 )

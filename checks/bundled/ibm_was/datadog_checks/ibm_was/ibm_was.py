@@ -5,9 +5,10 @@ from xml.etree.ElementTree import ParseError
 
 import requests
 from lxml import etree
-from six import iteritems
+from six import ensure_text
 
-from datadog_checks.base import AgentCheck, ConfigurationError, ensure_unicode, is_affirmative
+from checks import AgentCheck
+from utils.util import _is_affirmative
 
 from . import metrics, validation
 
@@ -17,8 +18,10 @@ class IbmWasCheck(AgentCheck):
     SERVICE_CHECK_CONNECT = "ibm_was.can_connect"
     METRIC_PREFIX = 'ibm_was'
 
-    def __init__(self, name, init_config, instances):
-        super(IbmWasCheck, self).__init__(name, init_config, instances)
+    def __init__(self, name, init_config, instance, aggregator=None):
+        super(IbmWasCheck, self).__init__(name, init_config, instance, aggregator)
+        self.instance = instance
+
         self.metric_type_mapping = {
             'AverageStatistic': self.gauge,
             'BoundedRangeStatistic': self.gauge,
@@ -36,20 +39,17 @@ class IbmWasCheck(AgentCheck):
         self.custom_stats = set(self.nested_tags)
         self.service_check_tags = self.custom_tags + ['url:{}'.format(self.url)]
 
-        self.check_initializations.append(self._validate_config)
-
-    def _validate_config(self):
-        if not self.instance.get('servlet_url'):
-            raise ConfigurationError("Please specify a servlet_url in the configuration file")
-
     def check(self, _):
+        if not self.url:
+            raise ValueError("Please specify a servlet_url in the configuration file")
+
         data = self.make_request()
 
         try:
             server_data_xml = etree.fromstring(data)
         except ParseError as e:
             self.submit_service_checks(AgentCheck.CRITICAL)
-            self.log.Error("Unable to parse the XML response: {}".format(e))
+            self.log.error("Unable to parse the XML response: {}".format(e))
             return
 
         node_list = self.get_node_from_root(server_data_xml, "Node")
@@ -63,7 +63,7 @@ class IbmWasCheck(AgentCheck):
                 server_tags = ['server:{}'.format(server.get('name'))]
                 server_tags.extend(node_tags)
 
-                for category, prefix in iteritems(self.metric_categories):
+                for category, prefix in self.metric_categories.items():
                     self.log.debug("Collecting %s stats", category)
                     if self.collect_stats.get(category):
                         stats = self.get_node_from_name(server, category)
@@ -102,7 +102,7 @@ class IbmWasCheck(AgentCheck):
     def submit_metrics(self, child, prefix, tags):
         value = child.get(metrics.METRIC_VALUE_FIELDS[child.tag])
         metric_name = self.normalize(
-            ensure_unicode(child.get('name')), prefix='{}.{}'.format(self.METRIC_PREFIX, prefix), fix_case=True
+            ensure_text(child.get('name')), prefix='{}.{}'.format(self.METRIC_PREFIX, prefix), fix_case=True
         )
 
         tag = child.tag
@@ -151,7 +151,7 @@ class IbmWasCheck(AgentCheck):
 
     def setup_configured_stats(self):
         collect_stats = {}
-        for category, prefix in iteritems(metrics.METRIC_CATEGORIES):
-            if is_affirmative(self.instance.get('collect_{}_stats'.format(prefix), True)):
+        for category, prefix in metrics.METRIC_CATEGORIES.items():
+            if _is_affirmative(self.instance.get('collect_{}_stats'.format(prefix), True)):
                 collect_stats[category] = True
         return collect_stats

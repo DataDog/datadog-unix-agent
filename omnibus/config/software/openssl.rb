@@ -24,12 +24,13 @@ dependency "zlib"
 dependency "cacerts"
 dependency "makedepend" unless aix? || windows?
 
-default_version "1.0.2t"
+default_version "1.1.1k"
 
 # OpenSSL source ships with broken symlinks which windows doesn't allow.
 # Skip error checking.
 source url: "https://www.openssl.org/source/openssl-#{version}.tar.gz", extract: :lax_tar
 
+version("1.1.1k") { source sha256: "892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5" }
 version("1.0.2t") { source sha256: "14cb464efe7ac6b54799b34456bd69558a749a4931ecfd9cf9f71d7881cac7bc" }
 version("1.0.2o") { source sha256: "ec3f5c9714ba0fd45cb4e087301eb1336c317e0d20b575a125050470e8089e4d" }
 version("1.0.2k") { source sha256: "6b3977c61f2aedf0f96367dcfb5c6e578cf37e7b8d913b4ecb6643c3cb88d8c0" }
@@ -120,19 +121,6 @@ build do
       "#{prefix} disable-gost"
     end
 
-  if aix?
-
-    # This enables omnibus to use 'makedepend'
-    # from fileset 'X11.adt.imake' (AIX install media)
-    env["PATH"] = "/usr/lpp/X11/bin:#{ENV["PATH"]}"
-
-    patch_env = env.dup
-    patch_env["PATH"] = "/opt/freeware/bin:#{env['PATH']}"
-    patch source: "openssl-1.0.1f-do-not-build-docs.patch", env: patch_env
-  else
-    patch source: "openssl-1.0.1f-do-not-build-docs.patch", env: env
-  end
-
   if windows?
     # Patch Makefile.org to update the compiler flags/options table for mingw.
     patch source: "openssl-1.0.1q-fix-compiler-flags-table-for-msys.patch", env: env
@@ -145,6 +133,13 @@ build do
   configure_command = configure_args.unshift(configure_cmd).join(" ")
 
   command configure_command, env: env, in_msys_bash: true
+
+  if aix?
+    # This enables omnibus to use 'makedepend'
+    # from fileset 'X11.adt.imake' (AIX install media)
+    env["PATH"] = "/usr/lpp/X11/bin:#{ENV["PATH"]}"
+  end
+
   make "depend", env: env
   # make -j N on openssl is not reliable
   make env: env
@@ -158,5 +153,6 @@ build do
     # Bug Ref: http://rt.openssl.org/Ticket/Display.html?id=2986&user=guest&pass=guest
     command "sudo /usr/sbin/slibclean", env: env
   end
-  make "install", env: env
+  # This is equivalent to 'install' except it excludes the docs
+  make "install_sw install_ssldirs", env: env
 end

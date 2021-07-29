@@ -25,6 +25,10 @@ dependency 'psutil'
 # relative_path 'integrations-core'
 # whitelist_file "embedded/lib/python2.7"
 
+# lxml native dependencies
+dependency "libxml2"
+dependency "libxslt"
+
 source path: '..'
 
 requirements_file = 'requirements.txt'
@@ -53,7 +57,6 @@ build do
   end
 
   ## NOTE: we might have to wrap ALL this remaining code in a `block do...end`
-
   pip "install --no-cache-dir -r #{project_dir}/#{requirements_file}", :env => env
 
 end

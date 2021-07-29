@@ -61,5 +61,5 @@ build do
 
   link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
   link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"
-  pip "install --upgrade pip==21.1.3" # Update pip since the version 21.1.1 shipped with python 3.8.10 crashes
+  pip "install --upgrade pip==21.1.3", env: env # Update pip since the version 21.1.1 shipped with python 3.8.10 crashes
 end

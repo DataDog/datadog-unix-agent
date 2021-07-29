@@ -38,6 +38,6 @@ build do
     env["CXXFLAGS"] = "-fPIC #{env["CXXFLAGS"]}"
   end
 
-  pip "install wheel"
+  pip "install wheel", :env => env
   pip "install --no-cache-dir .", :env => env
 end

@@ -90,7 +90,7 @@ build do
   end
 
   if ohai["platform"] == "aix"
-    patch source: "patch-aix-configure", plevel: 0
+    patch source: "patch-aix-configure.patch", plevel: 0
   end
 
   if ohai["platform"] == "mac_os_x"

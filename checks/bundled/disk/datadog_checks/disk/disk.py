@@ -38,7 +38,16 @@ class Disk(AgentCheck):
             if self._exclude_partition(partition):
                 continue
 
-            disk_usage = psutil.disk_usage(partition.mountpoint)
+            try:
+                disk_usage = psutil.disk_usage(partition.mountpoint)
+            except Exception as e:
+                self.log.warning(
+                    u'Unable to get disk metrics for %s: %s. '
+                    u'You can exclude this mountpoint in the settings if it is invalid.',
+                    partition.mountpoint,
+                    e,
+                )
+                continue
             self._collect_metrics(partition, disk_usage)
 
         self._collect_io_metrics()

@@ -76,7 +76,7 @@ class IbmWasCheck(AgentCheck):
         if len(data):
             return data[0]
         else:
-            self.warning('Error finding %s stats in XML output.', path)
+            self.warning('Error finding {} stats in XML output.'.format(path))
             return []
 
     def get_node_from_root(self, xml_data, path):
@@ -126,7 +126,7 @@ class IbmWasCheck(AgentCheck):
             self.submit_service_checks(AgentCheck.OK)
         except (requests.HTTPError, requests.ConnectionError) as e:
             self.warning(
-                "Couldn't connect to URL: %s with exception: %s. Please verify the address is reachable", self.url, e
+                "Couldn't connect to URL: {} with exception: {}. Please verify the address is reachable".format(self.url, e)
             )
             self.submit_service_checks(AgentCheck.CRITICAL)
             raise e

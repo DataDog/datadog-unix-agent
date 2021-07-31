@@ -126,7 +126,7 @@ class IbmWasCheck(AgentCheck):
             self.submit_service_checks(AgentCheck.OK)
         except (requests.HTTPError, requests.ConnectionError) as e:
             self.warning(
-                "Couldn't connect to URL: %s with exception: %s. Please verify the address is reachable", self.url, e
+                "Couldn't connect to URL: {} with exception: {}. Please verify the address is reachable".format(self.url, e)
             )
             self.submit_service_checks(AgentCheck.CRITICAL)
             raise e

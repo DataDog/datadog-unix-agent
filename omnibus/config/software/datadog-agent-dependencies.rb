@@ -20,7 +20,6 @@ end
 # some deps we need to build manually with omnibus
 dependency 'libffi'  # required by cffi
 dependency 'pynacl'
-dependency 'psutil'
 
 # relative_path 'integrations-core'
 # whitelist_file "embedded/lib/python2.7"
@@ -28,6 +27,8 @@ dependency 'psutil'
 # lxml native dependencies
 dependency "libxml2"
 dependency "libxslt"
+
+dependency 'psutil'
 
 source path: '..'
 

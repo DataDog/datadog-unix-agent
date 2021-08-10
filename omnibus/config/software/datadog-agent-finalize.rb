@@ -37,13 +37,21 @@ build do
     # Conf files
     if aix?
       whitelist = [
+        "#{install_dir}/embedded/lib/libreadline.so",
         "#{install_dir}/embedded/lib/libreadline.so.7",
+        "#{install_dir}/embedded/lib/libtinfo.so",
+        "#{install_dir}/embedded/lib/libtinfo.so.5",
         "#{install_dir}/embedded/lib/libtinfo.so.5.9.0",
+        "#{install_dir}/embedded/lib/libtinfow.so",
+        "#{install_dir}/embedded/lib/libtinfow.so.5",
         "#{install_dir}/embedded/lib/libtinfow.so.5.9.0",
-        "#{install_dir}/embedded/lib/python3.6/lib-dynload/fcntl.so",
-        "#{install_dir}/embedded/lib/python3.6/lib-dynload/nis.so",
-        "#{install_dir}/embedded/lib/python3.6/lib-dynload/readline.so",
-        "#{install_dir}/embedded/lib/python3.6/site-packages/psutil/_psutil_aix.so",
+        "#{install_dir}/embedded/lib/python3.8/lib-dynload/fcntl.cpython-38.so",
+        "#{install_dir}/embedded/lib/python3.8/lib-dynload/nis.cpython-38.so",
+        "#{install_dir}/embedded/lib/python3.8/lib-dynload/readline.cpython-38.so",
+        "#{install_dir}/embedded/lib/python3.8/site-packages/psutil/_psutil_aix.cpython-38.so",
+        "#{install_dir}/embedded/bin/python",
+        "#{install_dir}/embedded/bin/python3",
+        "#{install_dir}/embedded/bin/python3.8",
       ]
 
       # Move checks and configuration files

@@ -42,6 +42,9 @@ if [ "$VERBOSE" -ne "0" ]; then
     set -x
 fi
 
+# Update bash and install autocompletion and vim to improve our quality of life
+yum install -y -q bash bash-completion vim
+
 if ! is_sudo; then
     echo "Please run this script with super-user powers."
     echo "Bailing out!"

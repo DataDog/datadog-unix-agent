@@ -126,12 +126,12 @@ bundle exec rake package
 gem install --local /tmp/$LIBYAJL_GEM_DIR/pkg/libyajl2-1.2.0.gem
 
 echo "setting git attributes (if available)..."
-if [ ! -z "$GIT_NAME" ]; then
-    git config --global user.name "$GIT_NAME"
+if [ -z "$(git config user.name)" ]; then
+    git config --global user.name "Datadog"
 fi
 
-if [ ! -z "$GIT_EMAIL" ]; then
-    git config --global user.email "$GIT_EMAIL"
+if [ -z "$(git config user.email)" ]; then
+    git config --global user.email "package@datadoghq.com"
 fi
 
 echo "pulling AIX agent project..."

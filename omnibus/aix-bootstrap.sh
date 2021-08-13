@@ -101,9 +101,9 @@ yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${L
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."
-ulimit -d 524288
-ulimit -s 524288
-ulimit -m 524288
+ulimit -d unlimited
+ulimit -s unlimited
+ulimit -m unlimited
 
 # installing ruby deps
 echo "installing ruby dependencies..."

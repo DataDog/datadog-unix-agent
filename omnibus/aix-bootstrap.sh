@@ -20,11 +20,11 @@ CURL_CMD="curl -s -L -o"
 GNU_TAR="/opt/freeware/bin/tar"
 
 # version pins
-GCC_VERSION=${GCC_VERSION:-6.3.0-2}
+GCC_VERSION=${GCC_VERSION:-6.3.0-2} # unsued
 COREUTILS_VERSION=${COREUTILS_VERSION:-8.29-3}
 CURL_VERSION=${CURL_VERSION:-7.64.0-1}
 LIBFFI_VERSION=${LIBFFI_VERSION:-3.2.1-3}
-MPFR_VERSION=${MPFR_VERSION:-3.1.2-3}
+MPFR_VERSION=${MPFR_VERSION:-3.1.2-3} # unsued
 RUBY_VERSION=${RUBY_VERSION:-2.5.1-1}
 SUDO_VERSION=${SUDO_VERSION:-1.8.21p2-1}
 TAR_VERSION=${TAR_VERSION:-1.30-1}
@@ -90,20 +90,9 @@ then
    exit 1
 fi
 
-set +e
-GCC_VERSION_INSTALLED=$(yum list installed gcc | tail -n 1 | awk '{print $2}')
-set -e
-
-if [ "$GCC_VERSION" != "$GCC_VERSION_INSTALLED" ]; then
-    # removing unneeded stuff...
-    echo "removing unnecessary dependencies..."
-    yum remove -y -q mpfr mpfr-devel gcc-locale gcc libgcc gcc-c++ libstdc++
-
-    # installing compiler dependencies
-    echo "installing compiler build dependencies..."
-    yum install -y -q mpfr-$MPFR_VERSION mpfr-devel-$MPFR_VERSION
-    yum install -y -q libgcc-$GCC_VERSION libstdc++-$GCC_VERSION gcc-$GCC_VERSION gcc-c++-$GCC_VERSION
-fi
+echo "installing compiler build dependencies..."
+yum install -y -q mpfr mpfr-devel
+yum install -y -q libgcc libstdc++ gcc gcc-c++
 
 # installing build dependencies
 echo "installing additional build dependencies..."

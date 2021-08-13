@@ -201,15 +201,10 @@ class Process(AgentCheck):
             meminfo = self.psutil_wrapper(p, 'memory_info', ['rss', 'vms'])
             st['rss'].append(meminfo.get('rss'))
             st['vms'].append(meminfo.get('vms'))
+            st['real'].append(None)
 
             mem_percent = self.psutil_wrapper(p, 'memory_percent', None)
             st['mem_pct'].append(mem_percent)
-
-            shared_mem = self.psutil_wrapper(p, 'memory_info', ['shared']).get('shared')
-            if shared_mem is not None and meminfo.get('rss') is not None:
-                st['real'].append(meminfo['rss'] - shared_mem)
-            else:
-                st['real'].append(None)
 
             ctxinfo = self.psutil_wrapper(p, 'num_ctx_switches', ['voluntary', 'involuntary'])
             st['ctx_swtch_vol'].append(ctxinfo.get('voluntary'))

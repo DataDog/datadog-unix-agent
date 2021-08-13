@@ -97,7 +97,7 @@ yum install -y -q libgcc libstdc++ gcc gcc-c++
 # installing build dependencies
 echo "installing additional build dependencies..."
 yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${LIBFFI_VERSION} libffi-devel-${LIBFFI_VERSION} \
-    ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION}
+    ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION} patch
 
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."

@@ -30,7 +30,7 @@ build do
 
   if aix?
     patch source: "aix-net-kernel-mbuf-header-fix.patch", plevel: 1
-
+    patch source: "ignore-proc-status-not-readable.patch", plevel: 1
     env["M4"] = "/opt/freeware/bin/m4"
   end
 

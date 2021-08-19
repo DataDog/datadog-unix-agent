@@ -41,6 +41,7 @@ elsif aix?
 end
 
 python_configure.push("--with-dbmliborder=")
+python_configure.push("--disable-ipv6")
 
 build do
   ship_license "PSFL"
@@ -54,10 +55,12 @@ build do
             "LDFLAGS" => "-Wl,-rpath,#{install_dir}/embedded/lib -L#{install_dir}/embedded/lib",
           }
         end
+  patch source: "no-libintl.patch", plevel:1
+
   command python_configure.join(" "), :env => env
   command "make", :env => env
   command "make install", :env => env
-  # delete "#{install_dir}/embedded/lib/python2.7/test"
+  delete "#{install_dir}/embedded/lib/python3.8/test"
 
   link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
   link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"

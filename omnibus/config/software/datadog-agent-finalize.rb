@@ -49,9 +49,6 @@ build do
         "#{install_dir}/embedded/lib/python3.8/lib-dynload/nis.cpython-38.so",
         "#{install_dir}/embedded/lib/python3.8/lib-dynload/readline.cpython-38.so",
         "#{install_dir}/embedded/lib/python3.8/site-packages/psutil/_psutil_aix.cpython-38.so",
-        "#{install_dir}/embedded/bin/python",
-        "#{install_dir}/embedded/bin/python3",
-        "#{install_dir}/embedded/bin/python3.8",
       ]
 
       # Move checks and configuration files

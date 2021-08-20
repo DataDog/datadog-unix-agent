@@ -1,12 +1,12 @@
 --- Python-3.8.10/configure.bak	2021-08-19 09:23:40.000000000 -0500
 +++ Python-3.8.10/configure	2021-08-19 09:24:18.000000000 -0500
 @@ -9987,9 +9987,6 @@
-  $as_echo "$ac_cv_lib_intl_textdomain" >&6; }
-  if test "x$ac_cv_lib_intl_textdomain" = xyes; then :
-  
-- $as_echo "#define WITH_LIBINTL 1" >>confdefs.h
-- 
--         LIBS="-lintl $LIBS"
-  fi
+ $as_echo "$ac_cv_lib_intl_textdomain" >&6; }
+ if test "x$ac_cv_lib_intl_textdomain" = xyes; then :
+ 
+-$as_echo "#define WITH_LIBINTL 1" >>confdefs.h
+-
+-        LIBS="-lintl $LIBS"
+ fi
   
   

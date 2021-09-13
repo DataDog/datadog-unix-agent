@@ -61,7 +61,7 @@ See [service_checks.json][10] for a list of service checks provided by this inte
 Need help? Contact [Datadog support][9].
 
 [1]: https://www.ibm.com/cloud/websphere-application-platform
-[3]: https://github.com/DataDog/integrations-core/blob/master/ibm_was/datadog_checks/ibm_was/data/conf.yaml.example
+[3]: https://github.com/DataDog/datadog-unix-agent/blob/master/checks/bundled/ibm_was/datadog_checks/ibm_was/data/conf.yaml.example
 [4]: https://app.datadoghq.com/account/settings#agent
 [5]: https://docs.datadoghq.com/agent/guide/agent-commands/#start-stop-and-restart-the-agent
 [7]: https://docs.datadoghq.com/agent/guide/agent-commands/#agent-status-and-information

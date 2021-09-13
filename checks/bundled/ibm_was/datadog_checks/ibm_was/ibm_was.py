@@ -39,6 +39,36 @@ class IbmWasCheck(AgentCheck):
         self.custom_stats = set(self.nested_tags)
         self.service_check_tags = self.custom_tags + ['url:{}'.format(self.url)]
 
+        # parse HTTP options
+        username = self.instance.get('username')
+        password = self.instance.get('password')
+        tls_verify = _is_affirmative(self.instance.get('tls_verify', True))
+        tls_cert = self.instance.get('tls_cert')
+        tls_private_key = self.instance.get('tls_private_key')
+        tls_ca_cert = self.instance.get('tls_ca_cert')
+
+        # http://docs.python-requests.org/en/master/user/authentication/
+        auth = None
+        if username and password:
+            auth = (username, password)
+
+        # http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
+        verify = True
+        if isinstance(tls_ca_cert, str):
+            verify = tls_ca_cert
+        elif not tls_verify:
+            verify = False
+
+        # http://docs.python-requests.org/en/master/user/advanced/#client-side-certificates
+        cert = None
+        if isinstance(tls_cert, str):
+            if isinstance(tls_private_key, str):
+                cert = (tls_cert, tls_private_key)
+            else:
+                cert = tls_cert
+
+        self.http_options = {'auth': auth, 'cert': cert, 'verify': verify}
+
     def check(self, _):
         if not self.url:
             raise ValueError("Please specify a servlet_url in the configuration file")
@@ -121,7 +151,7 @@ class IbmWasCheck(AgentCheck):
 
     def make_request(self):
         try:
-            resp = requests.get(self.url)
+            resp = requests.get(self.url, **self.http_options)
             resp.raise_for_status()
             self.submit_service_checks(AgentCheck.OK)
         except (requests.HTTPError, requests.ConnectionError) as e:

@@ -13,7 +13,7 @@ experimental:
 templates:
   job_template: &job_template
     docker:
-      - image: circleci/python:3.6.8
+      - image: cimg/python:3.8.10
     working_directory: ~/datadog-unix-agent
   step_templates:
     - restore_cache: &restore_deps

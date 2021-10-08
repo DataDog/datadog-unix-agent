@@ -80,7 +80,7 @@ class IOStat(AgentCheck):
 
             tags = []
             metrics = {}
-            if mode.lower() is not 'physical':  # odd one out
+            if mode.lower() != 'physical':  # odd one out
                 device = fields[0]
                 tags = ["{mode}:{device}".format(mode=mode.lower(), device=device.lower())]
 

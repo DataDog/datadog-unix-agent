@@ -10,13 +10,26 @@ The LPARstats check lets you:
 ## Setup
 
 ### Installation
-TODO
+
+The lparstats check is included in the Agent package, so you don't need to install anything else on your server.
 
 ### Configuration
-TODO
+
+* Create /etc/datadog-agent/conf.d/lparstats.d/conf.yaml with the contents:
+```
+init_config:
+instances:
+  - name: lparstats
+    sudo: true
+```
+* Edit /etc/sudoers and add this at the end:
+```
+dd-agent ALL=(ALL) NOPASSWD: /usr/bin/lparstat
+```
 
 ### Validation
-TODO
+
+Run the Agent's status subcommand and look for `lparstats` under the Checks section.
 
 ## Data Collected
 ### Metrics

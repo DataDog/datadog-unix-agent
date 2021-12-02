@@ -249,7 +249,7 @@ class Agent(Daemon):
         dsd_server = None
         dsdconf = config['dogstatsd']
         # 'enable' was a typo, kept for backwards compatibility
-        dsd_enable = dsdconf.get('enabled', False) || dsdconf.get('enable', False)
+        dsd_enable = dsdconf.get('enabled', False) or dsdconf.get('enable', False)
         if dsd_enable:
             reporter, dsd_server, _ = init_dogstatsd(config, forwarder=forwarder)
             dsd = DogstatsdRunner(dsd_server)

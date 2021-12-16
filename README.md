@@ -365,35 +365,10 @@ the `OMNIBUS_RUBY_VERSION` and `OMNIBUS_SOFTWARE_VERSION` respectively - followe
 
 #### Building
 
-Triggering a build is the easiest part, we just need to specify a few more env vars currently:
-- `JMXFETCH_VERSION`: JMXFetch version to bundle with the agent (otherwise the [default](https://github.com/DataDog/datadog-unix-agent/blob/master/omnibus/config/software/jmxfetch.rb) is used).
-- `JMXFETCH_HASH`: SHA256 hash for the JMXFetch artifact (idem).
-- `PYTHON_VERSION`: 2 or 3 - defaults to 3. Version 2 will be deprecated.
-
-Typically:
+Triggering a build is the easiest part, typically:
 ```
-JMXFETCH_VERSION="<version>" JMXFETCH_HASH="<hash>" PYTHON_VERSION="3" bundle exec omnibus build agent --log-level=info
+bundle exec omnibus build agent --log-level=info
 ```
-
-_Note:_ JMXFetch is included in the build but is not officially supported (the AIX Agent does not
-include the facilities to configure and start JMXFetch).
-
-#### Deprecated: Scripted Installer
-
-This build method has been deprecated in favor of the omnibus build. Keeping here
-for historical reasons.
-
-We provide a script in packaging named `./packaging/builder` that will allow you
-to build a self-extractable installer. You may use it as follows:
-
-```bash
-./builder -b {github_branch} -v {version}
-```
-
-Where `github_branch` would be a _remote_ branch in your repository and `version`
-the version for the agent release. This will result in a `ksx` self-extractable
-installer that should just work across supported AIX environments.
-
 
 ### Integrations
 
@@ -430,6 +405,9 @@ checks/bundled/foo/requirements-dev.txt                         # (optional) any
 
 Please take a look at any of the bundled checks [here](https://github.com/DataDog/datadog-unix-agent/tree/master/checks/bundled)
 for inspiration.
+
+_Note:_ JMXFetch is included in the build but is not officially supported (the AIX Agent does not
+include the facilities to configure and start JMXFetch).
 
 ### AIX
 If you wish to develop directly on an AIX rig, we recommend the following development

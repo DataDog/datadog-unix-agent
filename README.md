@@ -409,30 +409,3 @@ for inspiration.
 _Note:_ JMXFetch is included in the build but is not officially supported (the AIX Agent does not
 include the facilities to configure and start JMXFetch).
 
-### AIX
-If you wish to develop directly on an AIX rig, we recommend the following development
-requirements be met. We will assume these conditions are met when we discuss AIX
-development workflows:
- - yum (use script here: https://ftp.software.ibm.com/aix/freeSoftware/aixtoolbox/ezinstall/ppc/yum.sh)
- - python3.6+ _(should be installed with the yum script)_
- - python-tools _(should be installed with the yum script)_
- - gcc _(install with yum)_
- - virtualenv _(recommended)_
-
-
-Should you need to build a binary wheel, you would typically build and compile it as follows:
-
-```bash
-CC="gcc -lgcc"  LDSHARED="/opt/freeware/lib/python3.6/config/ld_so_aix gcc -bI:/opt/freeware/lib/python2.7/config/python.exp" CFLAGS="-fno-strict-aliasing -Wall  -Wstrict-prototypes -fPIC -O2" python setup.py bdist_wheel
-```
-
-The command above is a blueprint, but might require some tweaking as far as the include (`-I`) and
-lib (`-L`) directives may go.
-
-If the command succeeds you'll typically find the compiled wheel in the python-package `dist/`
-directory.
-
-
-Please let us know if you have any questions or issues!
-
-Happy DataDoggin'!

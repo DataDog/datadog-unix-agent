@@ -13,7 +13,7 @@ futures==3.2.0; python_version < '3.0'
 idna==2.7
 ipaddress==1.0.22
 Jinja2==2.11.3
-lxml==4.6.3
+lxml==4.6.5
 meld3==1.0.2
 mock==2.0.0
 more-itertools==4.2.0

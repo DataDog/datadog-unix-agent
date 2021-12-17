@@ -133,6 +133,12 @@ if [ -z "$(git config user.email)" ]; then
     git config --global user.email "package@datadoghq.com"
 fi
 
+# Workaround bug in OpenSSL 1.0.2 with expired cert used by LetsEncrypt
+# https://www.openssl.org/blog/blog/2021/09/13/LetsEncryptRootCertExpire/
+if [ -f /opt/freeware/etc/ssl/certs/DST_Root_CA_X3.crt ]; then
+    rm /opt/freeware/etc/ssl/certs/DST_Root_CA_X3.crt
+fi
+
 echo "pulling AIX agent project..."
 cd $PROJECT_TARGET_DIR
 if [ "$USE_GIT" -eq "0" ]; then

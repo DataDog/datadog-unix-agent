@@ -53,11 +53,9 @@ class IbmWasCheck(AgentCheck):
             auth = (username, password)
 
         # http://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
-        verify = True
-        if isinstance(tls_ca_cert, str):
+        verify = tls_verify
+        if verify and isinstance(tls_ca_cert, str):
             verify = tls_ca_cert
-        elif not tls_verify:
-            verify = False
 
         # http://docs.python-requests.org/en/master/user/advanced/#client-side-certificates
         cert = None

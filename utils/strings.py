@@ -4,7 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 def skip_blank_lines(f):
-    for l in f:
-        line = l.rstrip()
+    for ln in f:
+        line = ln.rstrip()
         if line:
             yield line

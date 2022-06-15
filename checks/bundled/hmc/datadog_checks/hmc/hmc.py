@@ -301,7 +301,7 @@ class HMC(AgentCheck):
         except Exception:
             raise
 
-        lines = [l for l in stdout.read().splitlines() if re.search('DS |RM ', l)]
+        lines = [ln for ln in stdout.read().splitlines() if re.search('DS |RM ', ln)]
         if not lines:
             return None
 

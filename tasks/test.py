@@ -190,7 +190,7 @@ def lint_releasenote(ctx):
         # first check 'changelog/no-changelog' label
         res = requests.get("https://api.github.com/repos/DataDog/datadog-unix-agent/issues/{}".format(pr_id))
         issue = res.json()
-        if any([l['name'] == 'changelog/no-changelog' for l in issue.get('labels', {})]):
+        if any([label['name'] == 'changelog/no-changelog' for label in issue.get('labels', {})]):
             print("'changelog/no-changelog' label found on the PR: skipping linting")
             return
 

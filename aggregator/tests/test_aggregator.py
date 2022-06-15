@@ -661,7 +661,7 @@ class TestMetricsAggregator():
         try:
             first['tags']
         except Exception:
-                assert True
+            assert True
         else:
             assert False, "event['tags'] shouldn't be defined when no tags aren't explicited in the packet"
         assert first['msg_title'] == 'title1'

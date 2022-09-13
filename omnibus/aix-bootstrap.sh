@@ -102,6 +102,17 @@ echo "installing additional build dependencies..."
 yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${LIBFFI_VERSION} libffi-devel-${LIBFFI_VERSION} \
     ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION} patch
 
+# on some SiteOx machines, bundler has problems running, raising errors like:
+# HTTP GET https://index.rubygems.org/versions
+# Net::OpenTimeout: execution expired
+# The fix is apparently to modify the http.rb file by adding
+# require 'resolv-replace'
+echo "patching Ruby to work around SiteOx DNS issues..."
+httprb=$(rpm -ql ruby | grep lib64 | grep "net/http.rb")
+echo "saving $httprb as $httprb.orig first..."
+cp $httprb $httprb.orig
+echo "require 'resolv-replace'" >> $httprb
+
 echo "installing additional bootstrap dependencies..."
 echo "setting better ulimits..."
 ulimit -d unlimited

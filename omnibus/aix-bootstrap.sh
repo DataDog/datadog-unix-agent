@@ -21,11 +21,11 @@ GNU_TAR="/opt/freeware/bin/tar"
 
 # version pins
 GCC_VERSION=${GCC_VERSION:-6.3.0-2} # unsued
-COREUTILS_VERSION=${COREUTILS_VERSION:-8.29-3}
+COREUTILS_VERSION=${COREUTILS_VERSION:-9.0-1}
 CURL_VERSION=${CURL_VERSION:-7.64.0-1}
 LIBFFI_VERSION=${LIBFFI_VERSION:-3.2.1-3}
 MPFR_VERSION=${MPFR_VERSION:-3.1.2-3} # unsued
-RUBY_VERSION=${RUBY_VERSION:-2.5.1-1}
+RUBY_VERSION=${RUBY_VERSION:-2.6.3-2}
 SUDO_VERSION=${SUDO_VERSION:-1.8.21p2-1}
 TAR_VERSION=${TAR_VERSION:-1.30-1}
 GIT_VERSION=${GIT_VERSION:-2.18.0-1}
@@ -101,6 +101,9 @@ yum install -y -q libgcc libstdc++ gcc gcc-c++
 echo "installing additional build dependencies..."
 yum install -y -q coreutils-${COREUTILS_VERSION} sudo-${SUDO_VERSION} libffi-${LIBFFI_VERSION} libffi-devel-${LIBFFI_VERSION} \
     ruby-${RUBY_VERSION} ruby-devel-${RUBY_VERSION} tar-${TAR_VERSION} curl-${CURL_VERSION} git-${GIT_VERSION} patch
+
+# Install latest certificates
+curl https://curl.se/ca/cacert.pem > /opt/freeware/etc/ssl/certs/extracted/pem/tls-ca-bundle.pem
 
 # on some SiteOx machines, bundler has problems running, raising errors like:
 # HTTP GET https://index.rubygems.org/versions

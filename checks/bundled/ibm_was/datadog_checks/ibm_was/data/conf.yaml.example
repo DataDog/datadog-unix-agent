@@ -58,6 +58,24 @@ instances:
     #     stat: Thread Pools Custom
     #     tag_keys:
     #     - threadKey
+    #
+    # If you have a trouble with a Japanese XML response, you can try the following config.
+    # custom_queries:
+    # - metric_prefix: jvm
+    #   stat: 'JVM ランタイム'
+    # - metric_prefix: jdbc
+    #   stat: 'JDBC 接続プール'
+    #   tag_keys:
+    #   - provider
+    #   - dataSource
+    # - metric_prefix: servlet_session
+    #   stat: 'サーブレット・セッション・マネージャー'
+    #   tag_keys:
+    #   - web_application
+    # - metric_prefix: thread_pools
+    #   stat: 'スレッド・プール'
+    #   tag_keys:
+    #   - thread_pool
 
     ## @param custom_queries_units_gauge - list of strings - optional
     ## List of unit names used to map CountStatistic to gauge in custom queries.

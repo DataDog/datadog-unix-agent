@@ -139,7 +139,7 @@ class Flare(object):
                 if proxies:
                     requests_options['proxies'] = proxies
 
-                resp = requests.post(url, **requests_options)
+                resp = requests.post(url, **requests_options, verify=(not config.get('skip_ssl_validation', False)))
             except requests.exceptions.Timeout:
                 log.error("Connection timout to: %s", url)
                 return False, None

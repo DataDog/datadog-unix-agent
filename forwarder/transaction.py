@@ -43,11 +43,11 @@ class Transaction(object):
         except requests.exceptions.Timeout:
             log.error("Connection timout to: %s", log_url)
             return False
-        except requests.exceptions.ProxyError:
-            log.error("unable to connect through proxy: %s", log_url)
+        except requests.exceptions.ProxyError as e:
+            print("unable to connect to %s through proxy: \n%s\n%s", log_url, proxies, e)
             return False
-        except requests.exceptions.ConnectionError:
-            log.error("unable to submit payload, possible network issue: %s", log_url)
+        except requests.exceptions.ConnectionError as e:
+            print("unable to submit payload to %s, possible network issue: %s", log_url, e)
             return False
 
         if resp.status_code in (400, 404, 413):

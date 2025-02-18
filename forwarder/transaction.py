@@ -40,14 +40,14 @@ class Transaction(object):
         log_url = self.domain + self.get_endpoint()
         try:
             resp = requests.post(url, self.payload, headers=self.headers, timeout=self.timeout, proxies=self.proxies)
-        except requests.exceptions.Timeout:
-            log.error("Connection timout to: %s", log_url)
+        except requests.exceptions.Timeout as e:
+            log.error("Connection timout to: %s\n%s", log_url, e)
             return False
-        except requests.exceptions.ProxyError:
-            log.error("unable to connect through proxy: %s", log_url)
+        except requests.exceptions.ProxyError as e:
+            log.error("unable to connect to %s through proxy: %s\n%s", log_url, self.proxies, e)
             return False
-        except requests.exceptions.ConnectionError:
-            log.error("unable to submit payload, possible network issue: %s", log_url)
+        except requests.exceptions.ConnectionError as e:
+            log.error("unable to submit payload to %s, possible network issue: %s", log_url, e)
             return False
 
         if resp.status_code in (400, 404, 413):

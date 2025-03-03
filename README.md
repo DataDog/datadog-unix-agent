@@ -32,6 +32,7 @@ The omnibus build has been build and tested on the target platforms at the time 
 - AIX 6.1 TL9 SP6
 - AIX 7.1 TL5 SP3
 - AIX 7.2 TL3 SP0
+- AIX 7.3 TL3 SP0
 
 Should you attempt to install and run the agent package on a lesser version your mileage will
 vary, you may or may not have all required symbols available. We are working to improve our
@@ -307,6 +308,7 @@ You will need a build machine that matches the target platform, thus:
 - AIX 6.1
 - AIX 7.1
 - AIX 7.2
+- AIX 7.3
 
 ##### Omnibus Requirements
 To setup omnibus on the target machine you will need:

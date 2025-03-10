@@ -39,7 +39,7 @@ class Transaction(object):
         url = self.domain + self.endpoint
         log_url = self.domain + self.get_endpoint()
         try:
-            resp = requests.post(url, self.payload, headers=self.headers, timeout=self.timeout, proxies=self.proxies)
+            resp = requests.post(url, self.payload, headers=self.headers, timeout=self.timeout, proxies=self.proxies, verify=(not config.get('skip_ssl_validation', False)))
         except requests.exceptions.Timeout:
             log.error("Connection timout to: %s", log_url)
             return False

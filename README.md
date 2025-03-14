@@ -361,9 +361,8 @@ before attempting the upgrade if `gcc` is already installed on your system..
 branch on AIX. That will probably be merged to `master`, but currently is required. No need
 for the developer to do anything as that specific branch is the current default for AIX builds.
 
-*Note*: You can override `omnibus-ruby` and `omnibus-software` gem versions if necessary with
-the `OMNIBUS_RUBY_VERSION` and `OMNIBUS_SOFTWARE_VERSION` respectively - followed by a
-`bundle update`.
+*Note*: You can override `omnibus-ruby` gem version if necessary with
+the `OMNIBUS_RUBY_VERSION` variable - followed by a `bundle update`.
 
 #### Building
 

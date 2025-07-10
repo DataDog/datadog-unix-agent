@@ -1,1 +1,11 @@
+# The ownership model in this repository is a bit more complex. We follow this document: https://docs.google.com/document/d/19kX7uXqaud5uGYFYcSqUtiebs1uC07_lB81AQH0L5ZM/edit?tab=t.0
+# Some (unexhaustive) representative examples of ownership:
+#   Agent Metrics Pipelines: metrics pipeline
+#   Agent Logs Pipelines: logs pipeline
+#   Agent Runtimes: language runtimes & communication with the backend
+#   Agent Integrations: capabilities/functionality of integrations in those flavors 
+#   Agent Delivery: release systems
+#   Agent Build: build systems
+#   Etc, etc
+
 *   @DataDog/agent-delivery

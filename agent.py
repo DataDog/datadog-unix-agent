@@ -137,7 +137,7 @@ class Agent(Daemon):
 
         target = 'http://{host}:{port}/status'.format(host=api_addr, port=api_port)
         try:
-            r = requests.get(target, timeout=cls.STATUS_TIMEOUT)
+            r = requests.get(target, timeout=cls.STATUS_TIMEOUT, verify=(not config.get('skip_ssl_validation', False)))
             r.raise_for_status()
 
             status = r.json()

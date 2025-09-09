@@ -67,7 +67,6 @@ class HMC(AgentCheck):
         ('password', False, None, str),
         ('private_key_file', False, None, str),
         ('private_key_type', False, 'rsa', str),
-        ('add_missing_keys', False, False, bool),
     ]
 
     Config = namedtuple('Config', [
@@ -77,7 +76,6 @@ class HMC(AgentCheck):
         'password',
         'private_key_file',
         'private_key_type',
-        'add_missing_keys',
     ])
 
     # HMC environments
@@ -208,8 +206,7 @@ class HMC(AgentCheck):
                 self.warning("Private key file is invalid")
 
         client = paramiko.SSHClient()
-        if conf.add_missing_keys:
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.set_missing_host_key_policy(paramiko.RejectPolicy())
         client.load_system_host_keys()
 
         exception_message = "No errors occured"

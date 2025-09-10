@@ -28,7 +28,6 @@ def get_config_stubs():
             'password': None,
             'private_key_file': 'id_rsa',
             'private_key_type': 'rsa',
-            'add_missing_keys': [],
         }
     }]
 

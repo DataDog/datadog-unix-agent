@@ -23,12 +23,22 @@ def get_log_date_format():
 
 def initialize_logging(logger_name):
     try:
-        logging.basicConfig(
-            format=LOG_FORMAT % logger_name,
-            level=config.get('log_level', 'INFO').upper(),
-        )
-
         log_settings = config.get('logging', {})
+        
+        # Setup console logging unless disabled (handle both boolean and string values from env vars)
+        disable_console = log_settings.get('disable_console_logging', False)
+        if isinstance(disable_console, str):
+            disable_console = disable_console.lower() in ('true', '1', 'yes')
+        if not disable_console:
+            logging.basicConfig(
+                format=LOG_FORMAT % logger_name,
+                level=config.get('log_level', 'INFO').upper(),
+            )
+        else:
+            # If console logging is disabled, we still need to configure the root logger
+            # but without any handlers (file handler will be added below if configured)
+            root_logger = logging.getLogger()
+            root_logger.setLevel(config.get('log_level', 'INFO').upper())
 
         log_file = log_settings.get('%s_log_file' % logger_name)
         if log_file is not None and not log_settings.get('disable_file_logging', False):

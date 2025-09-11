@@ -26,6 +26,7 @@ DEFAULT_DOGSTATSD_PORT = 8125
 DEFAULT_BIND_HOST = 'localhost'
 DEFAULT_LOGGING_CONFIG = {
     'disable_file_logging': False,
+    'disable_console_logging': False,
     'agent_log_file': os.path.join(DEFAULT_LOG_PATH, 'agent.log'),
     'dogstatsd_log_file': os.path.join(DEFAULT_LOG_PATH, 'dogstatsd.log'),
 }

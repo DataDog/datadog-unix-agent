@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Introduced `RequestsWrapper` to unify HTTP session handling across the agent,
+    replacing direct `requests` calls in Flare, Forwarder, and API key validation.
+    Ensures consistent configuration for timeouts, proxy settings, and SSL validation.

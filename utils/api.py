@@ -7,8 +7,8 @@ import logging
 
 import requests
 
-from utils.network import get_proxy, get_site_url
-
+from utils.network import get_site_url
+from utils.http import get_shared_requests
 
 log = logging.getLogger(__name__)
 
@@ -17,14 +17,13 @@ INVALID_API_KEY_MSG = "[ERROR] API Key is invalid"
 REQUEST_ERROR_MSG = "[ERROR] Unable to validate API Key. Please try again later"
 OTHER_ERROR_MSG = "[ERROR] Unable to validate API Key (unexpected error). Please try again later"
 
-def validate_api_key(config):
-    try:
-        proxy = get_proxy()
 
+def validate_api_key(config):
+    shared_requests = get_shared_requests()
+    try:
         base_uri = get_site_url(config.get('dd_url'), site=config.get('site'))
-        r = requests.get("{}/api/v1/validate".format(base_uri.rstrip('/')),
-            params={'api_key': config.get('api_key')}, proxies=proxy,
-            timeout=3, verify=(not config.get('skip_ssl_validation', False)))
+        r = shared_requests.get("{}/api/v1/validate".format(base_uri.rstrip('/')),
+                                timeout=3, headers={'DD-API-KEY': config.get('api_key')})
 
         if r.status_code == 403:
             return INVALID_API_KEY_MSG

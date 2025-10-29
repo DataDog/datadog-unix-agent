@@ -15,6 +15,9 @@ from collections import (
 
 from .providers import ConfigProvider
 
+# CONSTANTS
+AGENT_VERSION = "1.1.6"
+
 
 log = logging.getLogger(__name__)
 

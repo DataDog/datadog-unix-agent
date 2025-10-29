@@ -20,6 +20,7 @@ from jinja2 import Environment, FileSystemLoader
 from config import config
 from config.providers import FileConfigProvider
 from config.default import DEFAULT_PATH
+from config.config import AGENT_VERSION
 
 from utils.logs import initialize_logging
 from utils.hostname import HostnameException, get_hostname
@@ -43,7 +44,6 @@ from dogstatsd.helpers import (
 
 
 # Globals
-AGENT_VERSION = '1.1.6'
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')
@@ -120,6 +120,7 @@ class Agent(Daemon):
         'restart': False,
         'status': False,
         'flare': False,
+        'version': False,
     }
 
     STATUS_TIMEOUT = 5
@@ -200,6 +201,7 @@ class Agent(Daemon):
         logging.info("Starting the Forwarder")
         api_key = config.get('api_key')
         dd_url = config.get('dd_url')
+        forwarder_timeout = config.get("forwarder_timeout")
         if not dd_url:
             logging.error('No Datadog URL configured - cannot continue')
             sys.exit(1)
@@ -207,15 +209,11 @@ class Agent(Daemon):
             logging.error('No API key configured - cannot continue')
             sys.exit(1)
 
-        # get proxy settings
-        proxies = get_proxy()
-        logging.debug('Proxy configuration used: %s', proxies)
-
         # get site url
         forwarder = Forwarder(
             api_key,
             get_site_url(dd_url, site=config.get('site')),
-            proxies=proxies,
+            forwarder_timeout=forwarder_timeout,
         )
         forwarder.start()
 

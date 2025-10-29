@@ -10,6 +10,7 @@ import signal
 import sys
 import time
 import logging
+import platform
 from optparse import OptionParser
 from threading import Thread, Event
 
@@ -29,6 +30,7 @@ from utils.signals import SignalHandler
 from utils.pidfile import PidFile
 from utils.network import get_proxy, get_site_url
 from utils.flare import Flare
+from utils.platform import get_os
 from metadata import get_metadata
 
 from collector import Collector
@@ -374,6 +376,12 @@ def main():
 
     elif 'status' == command:
         agent.status(config)
+
+    elif 'version' == command:
+        os_name = get_os()
+        os_release = platform.release()
+        py_version = sys.version.split()[0]
+        print(f"Datadog Unix Agent: {AGENT_VERSION} - Python: {py_version} - OS: {os_name} {os_release}")
 
     elif 'flare' == command:
         case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()

@@ -35,8 +35,8 @@ def test_worker_process_transactions(m):
     retry_queue = queue.Queue(2)
     w = Worker(input_queue, retry_queue, stats)
 
-    t_success = Transaction("data", "https://datadog.com", "/success", None)
-    t_error = Transaction("data", "https://datadog.com", "/error", None)
+    t_success = Transaction("data", "https://datadog.com", "/success")
+    t_error = Transaction("data", "https://datadog.com", "/error")
     m.post("https://datadog.com/success", status_code=200)
     m.post("https://datadog.com/error", status_code=402)
 
@@ -74,11 +74,11 @@ def test_retry_worker_flush():
     retry_queue = queue.Queue(1)
     w = RetryWorker(input_queue, retry_queue, stats)
 
-    t_ready = Transaction("data", "https://datadog.com", "/success", None)
+    t_ready = Transaction("data", "https://datadog.com", "/success")
     t_ready.next_flush = time.time() - 10
     w.transactions.append(t_ready)
 
-    t_not_ready = Transaction("data", "https://datadog.com", "/success", None)
+    t_not_ready = Transaction("data", "https://datadog.com", "/success")
     t_not_ready.next_flush = time.time() + 1000
     w.transactions.append(t_not_ready)
 
@@ -101,7 +101,7 @@ def test_retry_worker_process_transaction():
     w = RetryWorker(input_queue, retry_queue, stats, flush_interval=1)
 
     # test pulling 1 transaction without flushing
-    t1 = Transaction("data", "https://datadog.com", "/success", None)
+    t1 = Transaction("data", "https://datadog.com", "/success")
     t1.next_flush = time.time()
     retry_queue.put(t1)
 

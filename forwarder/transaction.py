@@ -6,7 +6,6 @@
 import time
 import logging
 import re
-import traceback
 import requests
 
 from utils.http import get_shared_requests

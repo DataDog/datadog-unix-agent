@@ -60,7 +60,7 @@ def test_instance(check, ntp_client, instance):
         c.return_value = ntp_client
         check.check(instance)
         args, kwargs = ntp_client.request.call_args
-        assert 'foo.com' in kwargs.get('host', '')
+        assert kwargs.get('host', '') == 'foo.com'
         assert kwargs.get('port') == 123
         assert kwargs.get('timeout') == 13.37
         assert kwargs.get('version') == 42

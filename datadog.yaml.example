@@ -17,3 +17,4 @@ api_key: <api_key_here>                # DD API key: required.
 #   bind_host: localhost            # address we'll be binding to
 #   port: 8125                      # dogstatsd UDP listening port
 #   non_local_traffic: false        # listen to non-local traffic
+# skip_ssl_validation: false                # Skip SSL certificate verification (insecure)

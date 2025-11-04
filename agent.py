@@ -10,6 +10,7 @@ import signal
 import sys
 import time
 import logging
+import platform
 from optparse import OptionParser
 from threading import Thread, Event
 
@@ -20,6 +21,7 @@ from jinja2 import Environment, FileSystemLoader
 from config import config
 from config.providers import FileConfigProvider
 from config.default import DEFAULT_PATH
+from config.config import AGENT_VERSION
 
 from utils.logs import initialize_logging
 from utils.hostname import HostnameException, get_hostname
@@ -28,6 +30,7 @@ from utils.signals import SignalHandler
 from utils.pidfile import PidFile
 from utils.network import get_proxy, get_site_url
 from utils.flare import Flare
+from utils.platform import get_os
 from metadata import get_metadata
 
 from collector import Collector
@@ -43,7 +46,6 @@ from dogstatsd.helpers import (
 
 
 # Globals
-AGENT_VERSION = '1.1.6'
 PID_NAME = 'datadog-unix-agent'
 
 log = logging.getLogger('agent')
@@ -120,6 +122,7 @@ class Agent(Daemon):
         'restart': False,
         'status': False,
         'flare': False,
+        'version': False,
     }
 
     STATUS_TIMEOUT = 5
@@ -200,6 +203,7 @@ class Agent(Daemon):
         logging.info("Starting the Forwarder")
         api_key = config.get('api_key')
         dd_url = config.get('dd_url')
+        forwarder_timeout = config.get("forwarder_timeout")
         if not dd_url:
             logging.error('No Datadog URL configured - cannot continue')
             sys.exit(1)
@@ -207,15 +211,11 @@ class Agent(Daemon):
             logging.error('No API key configured - cannot continue')
             sys.exit(1)
 
-        # get proxy settings
-        proxies = get_proxy()
-        logging.debug('Proxy configuration used: %s', proxies)
-
         # get site url
         forwarder = Forwarder(
             api_key,
             get_site_url(dd_url, site=config.get('site')),
-            proxies=proxies,
+            forwarder_timeout=forwarder_timeout,
         )
         forwarder.start()
 
@@ -376,6 +376,12 @@ def main():
 
     elif 'status' == command:
         agent.status(config)
+
+    elif 'version' == command:
+        os_name = get_os()
+        os_release = platform.release()
+        py_version = sys.version.split()[0]
+        print(f"Datadog Unix Agent: {AGENT_VERSION} - Python: {py_version} - OS: {os_name} {os_release}")
 
     elif 'flare' == command:
         case_id = input('Do you have a support case id? Please enter it here (otherwise just hit enter): ').lower()

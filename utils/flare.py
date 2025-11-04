@@ -18,6 +18,7 @@ from .hostname import get_hostname
 from .strip import Replacer
 from .platform import get_os
 from config import config
+from utils.http import get_shared_requests
 
 log = logging.getLogger(__name__)
 
@@ -108,7 +109,6 @@ class Flare(object):
             endpoint = urllib.parse.urljoin(endpoint, str(self._case_id))
 
         base_uri = get_site_url(config.get('dd_url'), site=config.get('site'))
-        endpoint = urllib.parse.urljoin(endpoint, "?api_key={}".format(config.get('api_key')))
         url = urllib.parse.urljoin(base_uri, endpoint)
 
         flare_path = self.get_archive_path()
@@ -122,6 +122,8 @@ class Flare(object):
 
         log.info("Uploading %s to Datadog Support", flare_path)
         with open(flare_path, 'rb') as flare_file:
+
+            shared_requests = get_shared_requests()
             try:
                 requests_options = {
                     'data': {
@@ -132,14 +134,11 @@ class Flare(object):
                         'platform': get_os(),
                     },
                     'files': {'flare_file': flare_file},
-                    'timeout': self.TIMEOUT
+                    'timeout': self.TIMEOUT,
+                    'headers': {'DD-API-KEY': config.get('api_key')},
                 }
 
-                proxies = get_proxy()
-                if proxies:
-                    requests_options['proxies'] = proxies
-
-                resp = requests.post(url, **requests_options)
+                resp = shared_requests.post(url, **requests_options)
             except requests.exceptions.Timeout:
                 log.error("Connection timout to: %s", url)
                 return False, None
@@ -152,7 +151,8 @@ class Flare(object):
             elif resp.status_code == 403:
                 log.error("API Key invalid, cannot submit flare")
             elif resp.status_code >= 400:
-                log.error("error %d while sending flare to %s, try again later", resp.status_code, url)
+                log.error("error %d while sending flare to %s, try again later.\nResponse: %s",
+                          resp.status_code, url, resp.text)
             else:
                 log.debug("Successfully posted payload to %s: %s", url, resp.text)
                 success = True

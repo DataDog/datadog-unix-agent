@@ -22,6 +22,7 @@ CONTENTS = {
 
 CASE_NO = 12345
 
+
 @pytest.fixture
 def requests_ok():
     resp = requests.Response()
@@ -29,17 +30,20 @@ def requests_ok():
     resp.status_code = 200
     return resp
 
+
 @pytest.fixture
 def requests_ok_no_case():
     resp = requests.Response()
     resp.status_code = 200
     return resp
 
+
 @pytest.fixture
 def requests_nok():
     resp = requests.Response()
     resp.status_code = 400
     return resp
+
 
 @pytest.fixture(scope="module")
 def zip_contents():
@@ -72,12 +76,22 @@ def test_flare_basic(zip_contents, requests_ok, requests_ok_no_case):
             assert os.path.basename(content.filename) in CONTENTS
             assert content.compress_type == zipfile.ZIP_DEFLATED
 
-    with mock.patch('requests.post', return_value=requests_ok):
+    # --- First test: request returns case_id ---
+    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        mock_session = mock.Mock()
+        mock_session.post.return_value = requests_ok
+        mock_get_session.return_value = mock_session
+
         success, case = my_flare.submit()
         assert success
         assert case == CASE_NO
 
-    with mock.patch('requests.post', return_value=requests_ok_no_case):
+    # --- Second test: request returns no case_id ---
+    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        mock_session = mock.Mock()
+        mock_session.post.return_value = requests_ok_no_case
+        mock_get_session.return_value = mock_session
+
         success, case = my_flare.submit()
         assert success
         assert case is None
@@ -85,30 +99,41 @@ def test_flare_basic(zip_contents, requests_ok, requests_ok_no_case):
     my_flare.cleanup()
     assert not os.path.exists(flare_path)
 
+
 def test_flare_400(zip_contents, requests_nok):
     my_flare = Flare(paths=[zip_contents])
     my_flare.create_archive()
 
-    with mock.patch('requests.post', return_value=requests_nok):
+    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        mock_session = mock.Mock()
+        mock_session.post.return_value = requests_nok
+        mock_get_session.return_value = mock_session
+
         success, case = my_flare.submit()
         assert not success
         assert case is None
 
     my_flare.cleanup()
     assert not os.path.exists(my_flare.get_archive_path())
+
 
 def test_flare_proxy_timeout(zip_contents):
     my_flare = Flare(paths=[zip_contents])
     my_flare.create_archive()
 
-    with mock.patch('requests.post') as requests_mock:
-        requests_mock.side_effect = requests.exceptions.Timeout('fake proxy timeout')
+    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        mock_session = mock.Mock()
+        mock_session.post.side_effect = requests.exceptions.Timeout(
+            "fake proxy timeout")
+        mock_get_session.return_value = mock_session
+
         success, case = my_flare.submit()
         assert not success
         assert case is None
 
     my_flare.cleanup()
     assert not os.path.exists(my_flare.get_archive_path())
+
 
 def test_flare_too_large(zip_contents):
     my_flare = Flare(paths=[zip_contents])
@@ -116,7 +141,11 @@ def test_flare_too_large(zip_contents):
     my_flare.create_archive()
 
     assert not my_flare._validate_size()
-    with mock.patch('requests.post', return_value=requests_ok):
+    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        mock_session = mock.Mock()
+        mock_session.post.return_value = requests_ok
+        mock_get_session.return_value = mock_session
+
         success, case = my_flare.submit()
         assert not success
         assert case is None

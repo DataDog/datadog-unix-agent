@@ -9,13 +9,22 @@ from forwarder.transaction import Transaction
 
 def test_transaction_creation():
     start = time.time()
-    t = Transaction("data", "https://datadog.com", "/v1/series", {"DD": "true", "Content-Type": "application/json"})
+
+    t = Transaction(
+        "data",
+        "https://datadog.com",
+        "/v1/series",
+        options={
+            "headers": {"DD": "true", "Content-Type": "application/json"},
+            "timeout": 20,
+        },
+    )
     assert t.payload == "data"
     assert t.domain == "https://datadog.com"
     assert t.endpoint == "/v1/series"
-    assert t.headers == {"DD": "true", "Content-Type": "application/json"}
     assert t.nb_try == 0
-    assert t.timeout == 20 # default value from config
+    assert t.options["headers"] == {"DD": "true", "Content-Type": "application/json"}
+    assert t.options["timeout"] == 20
 
     # test created_at value
     assert t.created_at >= start
@@ -73,7 +82,7 @@ def test_process_success(m):
     assert t.nb_try == 1
 
 def test_process_error(m):
-    t = Transaction("data", "https://datadog.com", "/v1/series", {"test": "21"})
+    t = Transaction("data", "https://datadog.com", "/v1/series", options={"headers": {"test": "21"}})
     headers = {"test": "21"}
 
     nb_try = 1

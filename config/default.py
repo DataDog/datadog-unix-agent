@@ -63,6 +63,7 @@ def init(config):
         'aggregator_interval': DEFAULT_AGGREGATOR_INTERVAL,
         'aggregator_expiry_seconds': DEFAULT_AGGREGATOR_EXPIRY_SECS,
         'recent_point_threshold': DEFAULT_RECENT_POINT_THRESHOLD,
+        'skip_ssl_validation': False,
         'proxy': {
             'http': None,
             'https': None,

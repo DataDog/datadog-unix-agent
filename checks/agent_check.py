@@ -69,12 +69,12 @@ class AgentCheck(object):
     def historate(self, name, value, tags=None):
         self._submit_metric(TextualMetricTypes.HISTORATE, name, value, tags=tags)
 
-    def service_check(self, name, status, tags=None, message=None):
+    def service_check(self, name, status, tags=None, message=None, timestamp=None):
         tags = self._normalize_tags_type(tags)
         if message is None:
             message = ""
 
-        self.aggregator.service_check(name, status, tags, message=message)
+        self.aggregator.service_check(name, status, tags, message=message, timestamp=timestamp)
 
     def event(self, event):
         # Enforce types of some fields, considerably facilitates handling in go bindings downstream

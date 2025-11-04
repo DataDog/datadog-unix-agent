@@ -1,0 +1,18 @@
+# This file is overwritten upon Agent upgrade.
+# To make modifications to the check configuration, please copy this file
+# to `ntp.yaml` and make your changes on that file.
+
+init_config:
+  min_collection_interval: 900
+
+instances:
+  - offset_threshold: 60
+
+    # Optional params:
+    #
+    # host: pool.ntp.org
+    # port: ntp
+    # version: 3
+    # timeout: 5
+    # tags:
+    #   - optional:tag1

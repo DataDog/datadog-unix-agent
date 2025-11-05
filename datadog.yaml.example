@@ -1,20 +1,114 @@
-api_key: <api_key_here>                # DD API key: required.
+# Datadog Unix Agent Configuration File
+# =====================================
+# This file controls agent runtime settings such as endpoints, logging,
+# metadata collection, and DogStatsD behavior.
+
+# ---------------------------------------------------------------------------
+# Core configuration
+# ---------------------------------------------------------------------------
+
+api_key: <api_key_here>                     # Datadog API key (required)
+
+# site: datadoghq.com                       # Datadog site to send data to.
+#                                           #
+#                                           # See all available sites here:
+#                                           # https://docs.datadoghq.com/getting_started/site/#access-the-datadog-site
+#                                           #
+#                                           # Common options include:
+#                                           #   - datadoghq.com        (US1 - default)
+#                                           #   - us3.datadoghq.com    (US3)
+#                                           #   - us5.datadoghq.com    (US5)
+#                                           #   - datadoghq.eu         (EU)
+#                                           #   - ap1.datadoghq.com    (AP1)
+#                                           #   - ddog-gov.com         (US1-FED)
+#                                           #   - us1.ddog-gov.com     (US1 GovCloud legacy)
 #
-# site: datadoghq.com                  # DD Site you wish to submit to: US(datadoghq.com)[default] or EU(datadoghq.eu)
-#                                      #       - US (default): datadoghq.com
-#                                      #       - EU          : datadoghq.eu
+# dd_url: https://unix.agent.datadoghq.com  # Override the default submission URL.
+#                                           # (You normally shouldn't need to change this.)
+
+# hostname: <custom_hostname>               # Override auto-detected hostname.
+
+# tags:                                     # Global host tags (must be a list of strings)
+#   - "env:prod"
+#   - "region:us-east-1"
+#   - "service:web"
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+# log_level: debug                    # Log verbosity level
+#                                     # Options: critical, error, warning, info, debug
 #
-# dd_url: https://unix.agent.datadoghq.com   # DD URL submission override. You shouldn't need to change this.
-#
-# log_level: info                            # Log level - available levels: critical, error, warning, info, debug
-#
-# proxy:
-#   http: http://localhost:3128     # should you wish to setup a proxy for your agent, please do
-#   https: http://localhost:3128    # do so here.
-#
-# dogstatsd:                        # Dogstatsd configuration options
-#   enabled: false                  # disabled by default
-#   bind_host: localhost            # address we'll be binding to
-#   port: 8125                      # dogstatsd UDP listening port
-#   non_local_traffic: false        # listen to non-local traffic
-# skip_ssl_validation: false                # Skip SSL certificate verification (insecure)
+# logging:                            # Logging options
+#   disable_file_logging: false       # If true, disables file-based logging
+#   disable_console_logging: false    # If true, disables console logging
+#   agent_log_file: /var/log/datadog/agent.log
+#   dogstatsd_log_file: /var/log/datadog/dogstatsd.log
+
+# ---------------------------------------------------------------------------
+# SSL and proxy configuration
+# ---------------------------------------------------------------------------
+
+# skip_ssl_validation: false          # Skip SSL certificate verification (insecure)
+
+# proxy:                              # Configure proxy if needed
+#   http: http://localhost:3128       # HTTP proxy.
+#                                     # If not set, uses system defaults (HTTP_PROXY env var).
+#   https: http://localhost:3128      # HTTPS proxy.
+#                                     # If not set, uses system defaults (HTTPS_PROXY env var).
+#   no_proxy: datadoghq.com,localhost,127.0.0.1,169.254.169.254
+#                                     # Comma-separated list of hosts that bypass the proxy.
+#                                     # Defaults to:
+#                                     #   - 127.0.0.1
+#                                     #   - localhost
+#                                     #   - 169.254.169.254
+
+# ---------------------------------------------------------------------------
+# DogStatsD configuration
+# ---------------------------------------------------------------------------
+
+# dogstatsd:
+#   enabled: false                    # Enable DogStatsD listener
+#   bind_host: localhost              # Host address to bind
+#   port: 8125                        # UDP port to listen on
+#   non_local_traffic: false          # Accept packets from non-local hosts
+#   forward_host: null                # Forward DogStatsD packets to another host
+#   forward_port: null                # Forward DogStatsD packets to another port
+#   so_rcvbuf: null                   # Optional socket receive buffer size
+#   metric_namespace: null            # Optional metric namespace prefix
+#   utf8_decoding: true               # Decode metrics payloads as UTF-8
+
+# ---------------------------------------------------------------------------
+# Forwarder behavior
+# ---------------------------------------------------------------------------
+
+# forwarder_timeout: 20               # HTTP request timeout (seconds)
+# forwarder_retry_queue_max_size: 30  # Max number of payloads to retry on failure
+
+# ---------------------------------------------------------------------------
+# Metadata and collection intervals
+# ---------------------------------------------------------------------------
+
+# host_metadata_interval: 600         # How often to collect host metadata (seconds)
+# external_host_tags_interval: 300    # How often to collect external host tags (seconds)
+# min_collection_interval: 15         # Global minimum check collection interval (seconds)
+# aggregator_interval: 1.0            # How often to flush metrics from the aggregator
+# aggregator_expiry_seconds: 300      # How long metrics remain in aggregator before expiring
+# recent_point_threshold: 3600        # Discard points older than this many seconds
+
+# ---------------------------------------------------------------------------
+# Agent API (control interface)
+# ---------------------------------------------------------------------------
+
+# api:
+#   bind_host: localhost              # API bind host for control or introspection
+#   port: 8050                        # API listening port
+
+# ---------------------------------------------------------------------------
+# Paths and directories
+# ---------------------------------------------------------------------------
+
+# conf_path: /etc/datadog-agent                    # Path to configuration directory
+# run_path: /opt/datadog-agent/run                 # Runtime directory for PID/sockets
+# additional_checksd: /etc/datadog-agent/checks.d  # Extra check modules directory

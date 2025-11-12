@@ -106,7 +106,7 @@ class Flare(object):
     def submit(self):
         endpoint = self.DATADOG_SUPPORT_URL
         if self._case_id:
-            endpoint = urllib.parse.urljoin(endpoint, str(self._case_id))
+            endpoint = urllib.parse.urljoin(endpoint + '/', str(self._case_id))
 
         base_uri = get_site_url(config.get('dd_url'), site=config.get('site'))
         url = urllib.parse.urljoin(base_uri, endpoint)

@@ -152,3 +152,62 @@ def test_flare_too_large(zip_contents):
 
     my_flare.cleanup()
     assert not os.path.exists(my_flare.get_archive_path())
+
+
+def test_flare_endpoint_with_case_id(zip_contents):
+    """When case_id is set, the endpoint should include it."""
+    my_flare = Flare(paths=[zip_contents])
+    my_flare._case_id = 1234
+    my_flare.create_archive()
+
+    # Mock the session returned by get_shared_requests()
+    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        mock_session = mock.Mock()
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp._content = b'{"case_id": 1234}'
+
+        mock_session.post.return_value = mock_resp
+        mock_get_session.return_value = mock_session
+
+        success, case = my_flare.submit()
+        assert success
+        assert case == 1234
+
+        # Grab the actual URL used in the call
+        called_url = mock_session.post.call_args[0][0]
+        assert called_url.endswith(
+            '/support/flare/1234'), f"unexpected endpoint: {called_url}"
+
+    my_flare.cleanup()
+    assert not os.path.exists(my_flare.get_archive_path())
+
+
+def test_flare_includes_dd_api_key_header(zip_contents):
+    """Ensure the DD-API-KEY header is included in the upload request when no case_id is set."""
+    my_flare = Flare(paths=[zip_contents])
+    my_flare.create_archive()  # no case_id set
+
+    # Patch config.get so api_key returns a known value
+    with mock.patch('utils.flare.config.get', side_effect=lambda key, **kwargs: 'test-api-key' if key == 'api_key' else None):
+        with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+            mock_session = mock.Mock()
+            mock_resp = requests.Response()
+            mock_resp.status_code = 200
+
+            mock_session.post.return_value = mock_resp
+            mock_get_session.return_value = mock_session
+
+            success, case = my_flare.submit()
+            assert success
+
+            _, kwargs = mock_session.post.call_args
+            headers = kwargs.get('headers', {})
+
+            # Validate that DD-API-KEY header exists and has correct value
+            assert 'DD-API-KEY' in headers, f"Missing DD-API-KEY header: {headers}"
+            assert headers[
+                'DD-API-KEY'] == 'test-api-key', f"Incorrect DD-API-KEY value: {headers}"
+
+    my_flare.cleanup()
+    assert not os.path.exists(my_flare.get_archive_path())

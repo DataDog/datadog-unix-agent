@@ -37,6 +37,7 @@ def test_request_calls_session(monkeypatch):
         mock_request.assert_called_once_with(
             "GET",
             "https://example.com",
+            data=None,
             headers=wrapper.options["headers"],
             proxies=wrapper.options["proxies"],
             timeout=wrapper.options["timeout"],

@@ -195,7 +195,8 @@ class RequestsWrapper:
                     data_bytes, self._compress_func, self._compression_level, endpoint
                 )
 
-                headers["Content-Encoding"] = encoding
+                if encoding:
+                    headers["Content-Encoding"] = encoding
                 headers["Content-Type"] = "application/json"
                 merged["data"] = compressed
 

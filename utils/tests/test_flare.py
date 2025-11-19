@@ -77,7 +77,7 @@ def test_flare_basic(zip_contents, requests_ok, requests_ok_no_case):
             assert content.compress_type == zipfile.ZIP_DEFLATED
 
     # --- First test: request returns case_id ---
-    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+    with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
         mock_session = mock.Mock()
         mock_session.post.return_value = requests_ok
         mock_get_session.return_value = mock_session
@@ -87,7 +87,7 @@ def test_flare_basic(zip_contents, requests_ok, requests_ok_no_case):
         assert case == CASE_NO
 
     # --- Second test: request returns no case_id ---
-    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+    with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
         mock_session = mock.Mock()
         mock_session.post.return_value = requests_ok_no_case
         mock_get_session.return_value = mock_session
@@ -104,7 +104,7 @@ def test_flare_400(zip_contents, requests_nok):
     my_flare = Flare(paths=[zip_contents])
     my_flare.create_archive()
 
-    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+    with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
         mock_session = mock.Mock()
         mock_session.post.return_value = requests_nok
         mock_get_session.return_value = mock_session
@@ -121,7 +121,7 @@ def test_flare_proxy_timeout(zip_contents):
     my_flare = Flare(paths=[zip_contents])
     my_flare.create_archive()
 
-    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+    with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
         mock_session = mock.Mock()
         mock_session.post.side_effect = requests.exceptions.Timeout(
             "fake proxy timeout")
@@ -141,7 +141,7 @@ def test_flare_too_large(zip_contents):
     my_flare.create_archive()
 
     assert not my_flare._validate_size()
-    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+    with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
         mock_session = mock.Mock()
         mock_session.post.return_value = requests_ok
         mock_get_session.return_value = mock_session
@@ -161,7 +161,7 @@ def test_flare_endpoint_with_case_id(zip_contents):
     my_flare.create_archive()
 
     # Mock the session returned by get_shared_requests()
-    with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+    with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
         mock_session = mock.Mock()
         mock_resp = requests.Response()
         mock_resp.status_code = 200
@@ -190,7 +190,7 @@ def test_flare_includes_dd_api_key_header(zip_contents):
 
     # Patch config.get so api_key returns a known value
     with mock.patch('utils.flare.config.get', side_effect=lambda key, **kwargs: 'test-api-key' if key == 'api_key' else None):
-        with mock.patch('utils.flare.get_shared_requests') as mock_get_session:
+        with mock.patch('utils.flare.get_flare_requests') as mock_get_session:
             mock_session = mock.Mock()
             mock_resp = requests.Response()
             mock_resp.status_code = 200

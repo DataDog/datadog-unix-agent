@@ -86,7 +86,7 @@ def init(config):
             'bind_host': DEFAULT_BIND_HOST,
             'port': DEFAULT_API_PORT,
         },
-        'compression': {
+        'forwarder': {
             'use_compression': DEFAULT_COMPRESSION_USE,
             'compression_kind': DEFAULT_COMPRESSION_KIND,
             'compression_level': DEFAULT_COMPRESSION_LEVEL,

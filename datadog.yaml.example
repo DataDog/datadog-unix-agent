@@ -85,12 +85,7 @@ api_key: <api_key_here>                     # Datadog API key (required)
 
 # forwarder_timeout: 20               # HTTP request timeout (seconds)
 # forwarder_retry_queue_max_size: 30  # Max number of payloads to retry on failure
-
-# ---------------------------------------------------------------------------
-# Payload compression
-# ---------------------------------------------------------------------------
-
-# compression:
+# forwarder:
 #   use_compression: true             # Enable HTTP payload compression globally
 #   compression_kind: zstd            # Compression algorithm: 'zstd' (preferred) or 'zlib'
 #   compression_level: 1              # Compression level (only applies to zstd)

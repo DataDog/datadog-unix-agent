@@ -164,6 +164,15 @@ class Agent(Daemon):
 
     @classmethod
     def flare(cls, config, case_id):
+        # Note:
+        #   Flare is executed as a standalone CLI command, not inside the running
+        #   agent daemon. Its logs do NOT appear in the main agent log file unless
+        #   explicitly enabled. To see detailed flare logs (including HTTP request
+        #   debug logs), run:
+        #
+        #       datadog-agent flare -l
+        #
+        #   This corresponds to the --force-logging flag handled in main().
         email = input('Please enter your contact email address: ').lower()
         case_id = int(case_id) if case_id else None
         myflare = Flare(version=AGENT_VERSION, case_id=case_id, email=email)

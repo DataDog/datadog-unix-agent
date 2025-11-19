@@ -84,15 +84,57 @@ def _compress_payload(
 
 
 class RequestsWrapper:
+    """
+    Lightweight HTTP wrapper for integrations and the forwarder.
+
+    Integrations MUST create their own instance of RequestsWrapper.
+    The forwarder uses get_shared_requests() with compression enabled.
+
+    Parameters:
+        use_compression (bool): Enable payload compression (default: False).
+        compression_kind (str): "zstd" (preferred) or "zlib".
+        compression_level (int): zstd compression level (ignored for zlib).
+        default_content_type (str|None): If set, overrides the request Content-Type
+                                         when compression is applied. Integrations
+                                         should usually leave this as None and
+                                         provide their own Content-Type via config.
+
+    Integration example:
+
+        comp_cfg = self.instance.get("compression", {}) or {}
+        hdrs = self.instance.get("headers", {}) or {}
+
+        wrapper = RequestsWrapper(
+            use_compression=comp_cfg.get("use_compression", False),
+            compression_kind=comp_cfg.get("compression_kind", "zstd"),
+            compression_level=comp_cfg.get("compression_level", 1),
+            default_content_type=None,   # integration manages Content-Type
+        )
+
+        resp = wrapper.post(
+            self.instance.get("url"),
+            data=payload,
+            headers=hdrs,
+        )
+    """
     __slots__ = (
         '_session',
         'options',
+        '_use_compression',
         '_compress_func',
         '_compression_level',
+        '_default_content_type',
     )
 
-    def __init__(self):
+    def __init__(
+        self,
+        use_compression: bool = False,
+        compression_kind: str = "zstd",
+        compression_level: int = 1,
+        default_content_type=None,
+    ):
         self._session = requests.Session()
+        self._default_content_type = default_content_type
 
         proxies = get_proxy()
         verify = not config.get('skip_ssl_validation')
@@ -110,22 +152,17 @@ class RequestsWrapper:
             "verify": verify,
         }
 
-        compression_cfg = config.get("compression", {})
-        if not isinstance(compression_cfg, dict):
-            compression_cfg = {"use_compression": compression_cfg}
-        use_compression = _is_affirmative(
-            compression_cfg.get("use_compression", True))
-        compression_kind = compression_cfg.get(
-            "compression_kind", "zstd").lower()
-
-        self._compression_level = None  # default for all cases
+        # ----- Compression config -----
+        self._use_compression = bool(use_compression)
         self._compress_func = None
+        self._compression_level = None
 
-        if use_compression:
-            if HAS_ZSTD and compression_kind != "zlib":
+        if self._use_compression:
+            kind = (compression_kind or "zstd").lower()
+
+            if HAS_ZSTD and kind != "zlib":
                 self._compress_func = _compress_with_zstd
-                self._compression_level = compression_cfg.get(
-                    "compression_level", 1)
+                self._compression_level = compression_level
                 log.debug(
                     "[HTTP] Compression initialized with zstd (level=%s)",
                     self._compression_level,
@@ -181,7 +218,7 @@ class RequestsWrapper:
 
         if self._compress_func and method in ("POST", "PUT"):
             try:
-                # Always operate on bytes
+                # Convert to bytes
                 if isinstance(data, (dict, list, tuple)):
                     data_bytes = json.dumps(data).encode("utf-8")
                 elif isinstance(data, str):
@@ -197,7 +234,11 @@ class RequestsWrapper:
 
                 if encoding:
                     headers["Content-Encoding"] = encoding
-                headers["Content-Type"] = "application/json"
+
+                # Use forwarder-configured type OR preserve caller type
+                if self._default_content_type:
+                    headers["Content-Type"] = self._default_content_type
+
                 merged["data"] = compressed
 
             except Exception as e:
@@ -250,10 +291,39 @@ _shared_requests = None
 
 def get_shared_requests():
     """
-    Return a shared RequestsWrapper instance.
-    Lazily creates it on first use to ensure config is fully loaded.
+    Return the shared RequestsWrapper used exclusively by the forwarder.
+
+    This wrapper is initialized once and configured using the `forwarder`
+    section of the main agent config. The forwarder always sends JSON
+    payloads, so compression is enabled by default and the Content-Type
+    is fixed to "application/json".
+
+    Note:
+        Integrations MUST NOT use this shared instance. They should
+        create their own RequestsWrapper with integration-specific
+        compression and header settings.
+
+    Lazily creates the instance on first use to ensure config is loaded.
     """
     global _shared_requests
     if _shared_requests is None:
-        _shared_requests = RequestsWrapper()
+        fwd = config.get("forwarder", {}) or {}
+        _shared_requests = RequestsWrapper(
+            use_compression=_is_affirmative(fwd.get("use_compression", True)),
+            compression_kind=fwd.get("compression_kind", "zstd"),
+            compression_level=fwd.get("compression_level", 1),
+            default_content_type="application/json",
+        )
     return _shared_requests
+
+
+def get_flare_requests():
+    """
+    Return a fresh RequestsWrapper instance suitable for flare uploads.
+
+    Flare submits multipart/form-data with a binary archive, so:
+      * compression must always be disabled
+      * Content-Type must NOT be overridden (requests will set multipart
+        boundaries automatically)
+    """
+    return RequestsWrapper(use_compression=False)

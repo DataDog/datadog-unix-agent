@@ -30,6 +30,9 @@ DEFAULT_LOGGING_CONFIG = {
     'agent_log_file': os.path.join(DEFAULT_LOG_PATH, 'agent.log'),
     'dogstatsd_log_file': os.path.join(DEFAULT_LOG_PATH, 'dogstatsd.log'),
 }
+DEFAULT_COMPRESSION_USE = True
+DEFAULT_COMPRESSION_KIND = "zstd"
+DEFAULT_COMPRESSION_LEVEL = 1
 
 # This is used to ensure that metrics with a timestamp older than
 # RECENT_POINT_THRESHOLD_DEFAULT seconds (or the value passed in to
@@ -82,6 +85,11 @@ def init(config):
         'api': {
             'bind_host': DEFAULT_BIND_HOST,
             'port': DEFAULT_API_PORT,
+        },
+        'forwarder': {
+            'use_compression': DEFAULT_COMPRESSION_USE,
+            'compression_kind': DEFAULT_COMPRESSION_KIND,
+            'compression_level': DEFAULT_COMPRESSION_LEVEL,
         },
     }
 

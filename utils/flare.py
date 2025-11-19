@@ -18,7 +18,7 @@ from .hostname import get_hostname
 from .strip import Replacer
 from .platform import get_os
 from config import config
-from utils.http import get_shared_requests
+from utils.http import get_flare_requests
 
 log = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ class Flare(object):
         log.info("Uploading %s to Datadog Support", flare_path)
         with open(flare_path, 'rb') as flare_file:
 
-            shared_requests = get_shared_requests()
+            flare_requests = get_flare_requests()
             try:
                 requests_options = {
                     'data': {
@@ -138,7 +138,7 @@ class Flare(object):
                     'headers': {'DD-API-KEY': config.get('api_key')},
                 }
 
-                resp = shared_requests.post(url, **requests_options)
+                resp = flare_requests.post(url, **requests_options)
             except requests.exceptions.Timeout:
                 log.error("Connection timout to: %s", url)
                 return False, None

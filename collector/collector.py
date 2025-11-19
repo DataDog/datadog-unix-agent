@@ -3,6 +3,7 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
+import time
 from collections import defaultdict
 from copy import copy, deepcopy
 import logging
@@ -96,6 +97,8 @@ class Collector(object):
         self._status.set_info('loader_errors', deepcopy(self._check_classes_errors))
 
     def instantiate_checks(self):
+        global_min_interval = int(self._config.get('min_collection_interval', 15))
+
         for source, check_configs in self._config.get_check_configs().items():
             for check_name, configs in check_configs.items():
                 log.debug('Trying to instantiate: %s', check_name)
@@ -106,6 +109,8 @@ class Collector(object):
                         if init_config is None:
                             init_config = {}
                         instances = config.get('instances')  # should be single instance
+                        # Convert any None values to empty dicts
+                        instances = [i if isinstance(i, dict) else {} for i in instances]
                         for instance in instances:
                             signature = (check_name, init_config, instance)
                             signature_hash = AgentCheck.signature_hash(*signature)
@@ -115,6 +120,58 @@ class Collector(object):
 
                             try:
                                 check_instance = check_class(check_name, init_config, instance, self._aggregator)
+
+                                # Determine min_collection_interval
+                                interval = (
+                                    instance.get('min_collection_interval')
+                                    or init_config.get('min_collection_interval')
+                                    or getattr(check_class, 'DEFAULT_MIN_COLLECTION_INTERVAL', 15)
+                                )
+
+                                # Type safety + fallback
+                                try:
+                                    interval = int(float(interval))
+                                except (TypeError, ValueError):
+                                    log.warning(
+                                        "Invalid min_collection_interval=%r for %s; falling back to init_config/class/global default",
+                                        interval, check_name
+                                    )
+
+                                    # Retry with init_config
+                                    fallback = init_config.get('min_collection_interval')
+                                    try:
+                                        interval = int(float(fallback))
+                                    except (TypeError, ValueError):
+                                        # Retry with class default
+                                        fallback = getattr(check_class, 'DEFAULT_MIN_COLLECTION_INTERVAL', 15)
+                                        try:
+                                            interval = int(float(fallback))
+                                        except (TypeError, ValueError):
+                                            # Final fallback to global
+                                            interval = global_min_interval
+
+                                # Clamp interval between 1s and the global minimum
+                                clamped_interval = max(interval, 1, global_min_interval)
+
+                                if clamped_interval != interval:
+                                    if interval < 1:
+                                        log.warning(
+                                            "min_collection_interval=%r too low for %s; clamped to global minimum=%ss",
+                                            interval, check_name, global_min_interval
+                                        )
+                                    elif interval < global_min_interval:
+                                        log.debug(
+                                            "%s min_collection_interval=%s raised to global minimum=%s",
+                                            check_name, interval, global_min_interval
+                                        )
+                                    interval = clamped_interval
+
+                                check_instance.min_collection_interval = interval
+
+                                # Initialize runtime tracking
+                                check_instance._last_run_time = 0
+
+                                # Register instance
                                 self._check_instances[check_name].append(check_instance)
                                 self._check_instance_signatures[signature_hash] = signature
                             except Exception as e:
@@ -141,8 +198,21 @@ class Collector(object):
         for name, checks in self._check_instances.items():
             log.info('running check %s...', name)
             for check in checks:
+                now = time.monotonic()
+
+                # If the check has a collection interval defined, enforce it
+                if hasattr(check, 'min_collection_interval'):
+                    elapsed = now - getattr(check, '_last_run_time', 0)
+                    if elapsed < check.min_collection_interval:
+                        log.info(
+                            'Skipping %s: only %.2fs elapsed (interval %.2fs)',
+                            name, elapsed, check.min_collection_interval
+                        )
+                        continue  # skip execution
+
                 try:
                     result = check.run()
+                    check._last_run_time = now  # update after successful run
                 except Exception:
                     log.exception("error for instance: %s", str(check.instance))
 

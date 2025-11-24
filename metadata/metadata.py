@@ -11,12 +11,30 @@ import sys
 import time
 
 from utils.platform import Platform, get_os
+from metadata.gohai import build_gohai_string
 from config import config
+from config.config import AGENT_VERSION
+
+
+def mask_api_key(value):
+    if not isinstance(value, str):
+        return value
+
+    if len(value) < 5:
+        return '*' * len(value)
+
+    if len(value) == 32 and value.isalnum():
+        return '*' * 27 + value[-5:]
+
+    return '*' * max(0, len(value) - 5) + value[-5:]
 
 
 def get_common(hostname):
+    api_key = config.get("api_key")
+    masked = mask_api_key(api_key)
+
     return {
-        "apiKey": config.get("api_key"),
+        "apiKey": masked,
         "uuid": uuid.uuid5(uuid.NAMESPACE_DNS, platform.node() + str(uuid.getnode())).hex,
         "internalHostname": hostname,
     }
@@ -52,13 +70,18 @@ def get_host_tags():
     }
 
 def get_host_metadata(hostname):
-    return {
+    metadata = {
         "os": get_os(),
         "python": sys.version,
         "systemStats": get_system_stats(),
         "meta": get_meta(hostname),
         "host-tags": get_host_tags(),
     }
+
+    if config.get("enable_gohai", True):
+        metadata["gohai"] = build_gohai_string()
+
+    return metadata
 
 def get_resources(hostname):
 
@@ -79,11 +102,10 @@ def get_metadata(hostname, agent_version, start_event=False):
         # Also post an event in the newsfeed
         metadata['events'].update({
             'System': [{
-                'api_key': config.get('api_key'),
                 'host': hostname,
                 'timestamp': time.time(),
                 'event_type':'Agent Startup',
-                'msg_text': 'Version {}'.format('0.99.99')  # implement get_version()
+                'msg_text': 'Version {}'.format(AGENT_VERSION)
             }]
         })
     return metadata

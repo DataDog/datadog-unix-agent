@@ -11,6 +11,7 @@ import sys
 import time
 import logging
 import platform
+import json
 from optparse import OptionParser
 from threading import Thread, Event
 
@@ -67,6 +68,7 @@ class AgentRunner(Thread):
 
                 if self._meta_ts is None or (current_ts - self._meta_ts) >= self._config.get('host_metadata_interval'):
                     metadata = get_metadata(get_hostname(), AGENT_VERSION, start_event=(self._meta_ts is None))
+                    log.debug("metadata payload: %s", json.dumps(metadata))
                     self._serializer.submit_metadata(metadata)
                     self._meta_ts = current_ts
 

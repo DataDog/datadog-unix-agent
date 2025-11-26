@@ -11,30 +11,15 @@ import sys
 import time
 
 from utils.platform import Platform, get_os
+from utils.strip import mask_api_key_value
 from metadata.gohai import build_gohai_string
 from config import config
 from config.config import AGENT_VERSION
 
 
-def mask_api_key(value):
-    if not isinstance(value, str):
-        return value
-
-    if len(value) < 5:
-        return '*' * len(value)
-
-    if len(value) == 32 and value.isalnum():
-        return '*' * 27 + value[-5:]
-
-    return '*' * max(0, len(value) - 5) + value[-5:]
-
-
 def get_common(hostname):
-    api_key = config.get("api_key")
-    masked = mask_api_key(api_key)
-
     return {
-        "apiKey": masked,
+        "apiKey": mask_api_key_value(config.get("api_key")),
         "uuid": uuid.uuid5(uuid.NAMESPACE_DNS, platform.node() + str(uuid.getnode())).hex,
         "internalHostname": hostname,
     }

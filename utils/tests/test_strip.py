@@ -3,7 +3,7 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-from utils.strip import Replacer
+from utils.strip import Replacer, mask_api_key_value, MIN_MASK_LEN
 
 
 def test_strip_basic():
@@ -40,3 +40,47 @@ def test_key_matcher():
 
     assert passwd not in redacted_yaml
     assert redacted_yaml.endswith('password: ********')
+
+def test_mask_api_key_value_long_key():
+    """
+    Keys >= 6 characters: mask with fixed MIN_MASK_LEN stars + last 5 chars.
+    """
+    key = "my_super_secret_api_key_12345"
+    masked = mask_api_key_value(key)
+
+    assert masked.startswith('*' * MIN_MASK_LEN)
+    assert masked.endswith(key[-5:])
+    assert len(masked) == MIN_MASK_LEN + 5
+
+def test_mask_api_key_value_short_key():
+    """
+    Keys 2–5 chars: mask with fixed MIN_MASK_LEN stars + last 1 char.
+    """
+    key = "abcd"
+    masked = mask_api_key_value(key)
+
+    assert masked.startswith('*' * MIN_MASK_LEN)
+    assert masked.endswith("d")
+    assert len(masked) == MIN_MASK_LEN + 1
+
+def test_mask_api_key_value_one_char():
+    """
+    Keys of length 1: still mask with MIN_MASK_LEN stars + last char as required.
+    """
+    key = "A"
+    masked = mask_api_key_value(key)
+
+    assert masked == ('*' * MIN_MASK_LEN) + "A"
+
+def test_mask_api_key_value_empty():
+    """
+    Empty strings should be returned unchanged.
+    """
+    assert mask_api_key_value("") == ""
+
+def test_mask_api_key_value_non_string():
+    """
+    Non-string values should be returned unchanged.
+    """
+    assert mask_api_key_value(None) is None
+    assert mask_api_key_value(12345) == 12345

@@ -34,8 +34,8 @@ from metadata import metadata
 @mock.patch('metadata.metadata.get_os', return_value='test_os')
 def test_get_metadata(get_os, is_freebsd, is_linux, config_get, time_time, uuid_getnode, platform_node):
     # api_key masking logic for 'my_api_key':
-    # len("my_api_key") == 10 -> '*' * (10 - 5) + last 5 chars => "*****i_key"
-    masked_api_key = '*****i_key'
+    # masked_api_key = '*' * 27 + last 5 chars
+    masked_api_key = '***************************i_key'
     res = {
         'agentVersion': AGENT_VERSION,
         'apiKey': masked_api_key,

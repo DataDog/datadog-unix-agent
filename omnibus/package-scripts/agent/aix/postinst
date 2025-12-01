@@ -62,24 +62,63 @@ create_datadog_user_group()
 
 create_system_services()
 {
+    # Stop subsystem if running
     set +e
-    lssrc -s ${SERVICE_NAME} > /dev/null
+    lssrc -s ${SERVICE_NAME} >/dev/null 2>&1
     RC=$?
     set -e
-    if [ "${RC}" == "0" ]; then
-        rmssys -s datadog-agent
+    if [ "${RC}" = "0" ]; then
+        stopsrc -s ${SERVICE_NAME} >/dev/null 2>&1 || true
+        rmssys -s ${SERVICE_NAME}
     fi
-    mkssys -s ${SERVICE_NAME} -p "${INSTALL_DIR}/agent/agent.py" -a "-m start" -u ${DATADOG_USER} -S -n 15 -f 9 > /dev/null
 
-    # adding inittab entry if non-existant
+    # Remove old inittab entry
     set +e
-    lsitab ${SERVICE_NAME} > /dev/null
+    lsitab ${SERVICE_NAME} >/dev/null 2>&1
     RC=$?
     set -e
-    if [ "${RC}" != "0" ]; then
-        mkitab "${SERVICE_NAME}:2:respawn:/usr/bin/startsrc -s ${SERVICE_NAME}"
+    if [ "${RC}" = "0" ]; then
+        rmitab ${SERVICE_NAME}
     fi
+
+    # Remove stale ODM subsystem definition
+    odmdelete -o SRCsubsys -q "subsysname='${SERVICE_NAME}'" >/dev/null 2>&1
+
+    # Ensure all agent processes have fully exited
+    while true; do
+        AGENT_PIDS=$(ps -eo pid,args | grep "${INSTALL_DIR}/embedded/bin/python" | grep "${INSTALL_DIR}/agent/agent.py -m start" | grep -v grep | awk '{print $1}')
+        if [ -z "${AGENT_PIDS}" ]; then
+            break
+        fi
+        sleep 1
+    done
+
+    # Create the AIX SRC subsystem for the Datadog Agent.
+    #
+    #   -p : Python interpreter used to run the Agent
+    #   -a : Agent entrypoint (agent.py -m start)
+    #   -u : Run as dd-agent user
+    #   -S : Standard SRC subsystem
+    #   -R : Restart automatically on abnormal exit
+    #   -n : Normal stop signal (SIGTERM)
+    #   -f : Forced stop signal (SIGKILL)
+    #
+    # Note: ODM cleanup is required beforehand to prevent stale definitions.
+    mkssys \
+      -s ${SERVICE_NAME} \
+      -p "${INSTALL_DIR}/embedded/bin/python" \
+      -a "${INSTALL_DIR}/agent/agent.py -m start" \
+      -u ${DATADOG_USER} \
+      -R \
+      -S \
+      -n 15 \
+      -f 9 \
+      >/dev/null
+
+    # Start subsystem
+    startsrc -s ${SERVICE_NAME} >/dev/null
 }
+
 
 create_datadog_user_group
 create_system_services

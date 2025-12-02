@@ -68,8 +68,8 @@ create_system_services()
     RC=$?
     set -e
     if [ "${RC}" -eq 0 ] ; then
-        stopsrc -s ${SERVICE_NAME} >/dev/null 2>&1 || true
-        rmssys -s ${SERVICE_NAME}
+        stopsrc -s ${SERVICE_NAME} >/dev/null || true
+        rmssys -s ${SERVICE_NAME} >/dev/null
     fi
 
     # Remove old inittab entry
@@ -78,11 +78,11 @@ create_system_services()
     RC=$?
     set -e
     if [ "${RC}" -eq 0 ] ; then
-        rmitab ${SERVICE_NAME}
+        rmitab ${SERVICE_NAME} >/dev/null
     fi
 
     # Remove stale ODM subsystem definition
-    odmdelete -o SRCsubsys -q "subsysname='${SERVICE_NAME}'" >/dev/null 2>&1
+    odmdelete -o SRCsubsys -q "subsysname='${SERVICE_NAME}'" >/dev/null
 
     # Ensure all agent processes have fully exited
     ATTEMPT=0
@@ -100,10 +100,10 @@ create_system_services()
 
         if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
             echo "-- Agent still running (PIDs: ${AGENT_PIDS}), sending SIGTERM (attempt $ATTEMPT/$MAX_ATTEMPTS)"
-            echo "${AGENT_PIDS}" | xargs -n1 kill >/dev/null 2>&1 || true
+            echo "${AGENT_PIDS}" | xargs -n1 kill >/dev/null || true
         else
             echo "-- Agent still running after $((MAX_ATTEMPTS-1)) attempts, sending SIGKILL (kill -9)"
-            echo "${AGENT_PIDS}" | xargs -n1 kill -9 >/dev/null 2>&1 || true
+            echo "${AGENT_PIDS}" | xargs -n1 kill -9 >/dev/null || true
         fi
 
         sleep 5

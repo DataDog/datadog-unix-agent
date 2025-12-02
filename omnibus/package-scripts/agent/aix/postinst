@@ -67,7 +67,7 @@ create_system_services()
     lssrc -s ${SERVICE_NAME} >/dev/null 2>&1
     RC=$?
     set -e
-    if [ "${RC}" = "0" ]; then
+    if [ "${RC}" -eq 0 ] ; then
         stopsrc -s ${SERVICE_NAME} >/dev/null 2>&1 || true
         rmssys -s ${SERVICE_NAME}
     fi
@@ -77,7 +77,7 @@ create_system_services()
     lsitab ${SERVICE_NAME} >/dev/null 2>&1
     RC=$?
     set -e
-    if [ "${RC}" = "0" ]; then
+    if [ "${RC}" -eq 0 ] ; then
         rmitab ${SERVICE_NAME}
     fi
 
@@ -85,12 +85,28 @@ create_system_services()
     odmdelete -o SRCsubsys -q "subsysname='${SERVICE_NAME}'" >/dev/null 2>&1
 
     # Ensure all agent processes have fully exited
+    ATTEMPT=0
+    MAX_ATTEMPTS=5
+
     while true; do
         AGENT_PIDS=$(ps -eo pid,args | grep "${INSTALL_DIR}/embedded/bin/python" | grep "${INSTALL_DIR}/agent/agent.py -m start" | grep -v grep | awk '{print $1}')
+
+        # Exit if no processes remain
         if [ -z "${AGENT_PIDS}" ]; then
             break
         fi
-        sleep 1
+
+        ATTEMPT=$((ATTEMPT+1))
+
+        if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+            echo "-- Agent still running (PIDs: ${AGENT_PIDS}), sending SIGTERM (attempt $ATTEMPT/$MAX_ATTEMPTS)"
+            echo "${AGENT_PIDS}" | xargs -n1 kill >/dev/null 2>&1 || true
+        else
+            echo "-- Agent still running after $((MAX_ATTEMPTS-1)) attempts, sending SIGKILL (kill -9)"
+            echo "${AGENT_PIDS}" | xargs -n1 kill -9 >/dev/null 2>&1 || true
+        fi
+
+        sleep 5
     done
 
     # Create the AIX SRC subsystem for the Datadog Agent.

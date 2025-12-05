@@ -5,6 +5,7 @@
 
 import os
 import platform
+import subprocess
 import sys
 import uuid
 
@@ -23,6 +24,45 @@ def get_os():
         return 'aix'
     else:
         return OS_PLATFORM
+
+
+def get_aix_oslevel():
+    """
+    Return the full AIX OS level (example: 7200-04-02-2027).
+    Uses oslevel -s and ignores rpmdb errors printed to stderr.
+    If not on AIX, return empty string.
+    """
+    if not OS_PLATFORM.startswith("aix"):
+        return ""
+
+    try:
+        out = subprocess.check_output(
+            ["oslevel", "-s"],
+            text=True,
+            stderr=subprocess.DEVNULL
+        )
+        for line in reversed(out.splitlines()):
+            line = line.strip()
+            # Expected format ####-##-##-####
+            if "-" in line and len(line) >= 10:
+                return line
+    except Exception:
+        pass
+
+    return ""
+
+
+def get_os_release():
+    """
+    Return OS release suitable for display.
+    On AIX: oslevel -s (full OS/TL/SP/build).
+    On Linux: platform.release().
+    """
+    if OS_PLATFORM.startswith("aix"):
+        lvl = get_aix_oslevel()
+        return lvl or platform.release()
+
+    return platform.release()
 
 
 def get_uuid():
@@ -59,4 +99,4 @@ class Platform(object):
 
     @staticmethod
     def is_aix():
-        return OS_PLATFORM.starswith('aix')
+        return OS_PLATFORM.startswith('aix')

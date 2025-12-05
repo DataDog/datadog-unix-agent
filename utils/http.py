@@ -10,6 +10,7 @@ from typing import Optional
 from urllib.parse import urlparse
 from utils.network import get_proxy
 from utils.util import _is_affirmative
+from utils.strip import mask_api_key_value
 
 try:
     import zstandard as zstd
@@ -196,13 +197,7 @@ class RequestsWrapper:
         # Mask API key for logging
         safe_headers = dict(headers)
         if "DD-API-KEY" in safe_headers:
-            api_key = safe_headers["DD-API-KEY"]
-            if isinstance(api_key, str) and len(api_key) >= 5:
-                if len(api_key) == 32 and api_key.isalnum():
-                    safe_headers["DD-API-KEY"] = '*' * 27 + api_key[-5:]
-                else:
-                    safe_headers["DD-API-KEY"] = '*' * \
-                        max(0, len(api_key) - 5) + api_key[-5:]
+            safe_headers["DD-API-KEY"] = mask_api_key_value(safe_headers["DD-API-KEY"])
 
         # Debug request configuration
         log.debug(

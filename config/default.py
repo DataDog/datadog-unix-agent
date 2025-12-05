@@ -61,6 +61,7 @@ def init(config):
         'run_path': DEFAULT_RUN_PATH,
         'additional_checksd': DEFAULT_ADDITIONAL_CHECKSD,
         'host_metadata_interval': DEFAULT_HOST_METADATA_INTERVAL,
+        'enable_gohai': True,
         'external_host_tags_interval': DEFAULT_EXT_HOST_TAGS_INTERVAL,
         'min_collection_interval': DEFAULT_MIN_COLLECTION_INTERVAL,
         'aggregator_interval': DEFAULT_AGGREGATOR_INTERVAL,

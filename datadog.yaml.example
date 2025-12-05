@@ -105,6 +105,17 @@ api_key: <api_key_here>                     # Datadog API key (required)
 # aggregator_interval: 1.0            # How often to flush metrics from the aggregator
 # aggregator_expiry_seconds: 300      # How long metrics remain in aggregator before expiring
 # recent_point_threshold: 3600        # Discard points older than this many seconds
+#
+# enable_gohai: true                  # Enable gohai-style hardware metadata collection.
+#                                     # When enabled, the agent gathers CPU, memory,
+#                                     # filesystem, network, and platform information
+#                                     # and includes it in the host metadata payload.
+#                                     # Disable this if you want to avoid hardware-level
+#                                     # system details in the metadata submission.
+#                                     #
+#                                     # Default: true
+
+
 
 # ---------------------------------------------------------------------------
 # Agent API (control interface)

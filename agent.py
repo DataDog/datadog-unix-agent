@@ -31,7 +31,7 @@ from utils.signals import SignalHandler
 from utils.pidfile import PidFile
 from utils.network import get_proxy, get_site_url
 from utils.flare import Flare
-from utils.platform import get_os
+from utils.platform import get_os, get_os_release
 from metadata import get_metadata
 
 from collector import Collector
@@ -390,7 +390,7 @@ def main():
 
     elif 'version' == command:
         os_name = get_os()
-        os_release = platform.release()
+        os_release = get_os_release()
         py_version = sys.version.split()[0]
         print(f"Datadog Unix Agent: {AGENT_VERSION} - Python: {py_version} - OS: {os_name} {os_release}")
 

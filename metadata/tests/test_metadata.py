@@ -77,3 +77,18 @@ def test_get_metadata(get_os, is_freebsd, is_linux, config_get, time_time, uuid_
         ]
     })
     assert res == metadata.get_metadata('test', AGENT_VERSION, start_event=True)
+
+
+@mock.patch(
+    'config.config.get',
+    side_effect=lambda key, default=None: False if key == 'enable_gohai' else default
+)
+def test_get_metadata_gohai_disabled(config_get):
+    """
+    Validate that get_metadata() does NOT include gohai
+    when enable_gohai=False.
+    """
+    result = metadata.get_metadata("test-host", AGENT_VERSION)
+
+    assert "gohai" not in result, \
+        "gohai must not be included when enable_gohai=False"

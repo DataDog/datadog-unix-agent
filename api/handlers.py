@@ -13,6 +13,7 @@ import tornado
 
 from utils.hostname import get_hostname, HostnameException
 from utils.api import validate_api_key
+from utils.strip import mask_api_key_value
 from collector import CheckLoader, WheelLoader
 
 log = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             status['hostname'] = '' if 'hostname' not in status else status['hostname']
             status['hostname_native'] = ''
 
-        status['redacted_api'] = '*'*20 + self._config.get('api_key')[-5:]
+        status['redacted_api'] = mask_api_key_value(self._config.get('api_key'))
         status['api_status'] = validate_api_key(self._config)
 
         try:

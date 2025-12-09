@@ -11,6 +11,7 @@ import sys
 import time
 import logging
 import platform
+import json
 from optparse import OptionParser
 from threading import Thread, Event
 
@@ -30,7 +31,7 @@ from utils.signals import SignalHandler
 from utils.pidfile import PidFile
 from utils.network import get_proxy, get_site_url
 from utils.flare import Flare
-from utils.platform import get_os
+from utils.platform import get_os, get_os_release
 from metadata import get_metadata
 
 from collector import Collector
@@ -67,6 +68,7 @@ class AgentRunner(Thread):
 
                 if self._meta_ts is None or (current_ts - self._meta_ts) >= self._config.get('host_metadata_interval'):
                     metadata = get_metadata(get_hostname(), AGENT_VERSION, start_event=(self._meta_ts is None))
+                    log.debug("metadata payload: %s", json.dumps(metadata))
                     self._serializer.submit_metadata(metadata)
                     self._meta_ts = current_ts
 
@@ -388,7 +390,7 @@ def main():
 
     elif 'version' == command:
         os_name = get_os()
-        os_release = platform.release()
+        os_release = get_os_release()
         py_version = sys.version.split()[0]
         print(f"Datadog Unix Agent: {AGENT_VERSION} - Python: {py_version} - OS: {os_name} {os_release}")
 

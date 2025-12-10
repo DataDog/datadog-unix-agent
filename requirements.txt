@@ -18,6 +18,7 @@ MarkupSafe==2.0.1
 meld3==1.0.2
 mock==2.0.0
 more-itertools==4.2.0
+ntplib==0.4.0
 paramiko==2.1.6
 pbr==4.0.4
 pluggy==0.6.0

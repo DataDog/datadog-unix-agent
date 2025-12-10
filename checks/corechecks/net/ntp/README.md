@@ -51,7 +51,11 @@ Configuration Options:
 
 ## Data Collected
 ### Metrics
-See [metadata.csv][6] for a list of metrics provided by this check.
+
+| metric_name | metric_type | unit_name | description |
+|-------------|-------------|-----------|-------------|
+| ntp.offset  | gauge       |           | Time offset from the reference NTP server (in seconds). |
+
 
 ### Events
 The NTP check does not include any events.

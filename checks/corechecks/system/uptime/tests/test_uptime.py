@@ -1,16 +1,14 @@
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
-# This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2018 Datadog, Inc.
 
 import mock
 
-from checks.corechecks.system import uptime_check
 from aggregator import MetricsAggregator
+from checks.corechecks.system.uptime.uptime import UptimeCheck
 
 
 @mock.patch("uptime.uptime", return_value=21)
-def test_uptime_check(uptime):
+def test_uptime_check(mock_uptime):
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -20,13 +18,13 @@ def test_uptime_check(uptime):
         histogram_percentiles=None,
     )
 
-    u = uptime_check.UptimeCheck("uptime", {}, {}, aggregator)
+    u = UptimeCheck("uptime", {}, {}, aggregator)
     u.check({})
 
     expected_metrics = {
         'system.uptime': ('gauge', 21),
     }
-    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+    metrics = u.aggregator.flush()[:-1]
 
     assert len(metrics) != 0
     for metric in metrics:
@@ -38,8 +36,9 @@ def test_uptime_check(uptime):
 
 
 @mock.patch("uptime.uptime", return_value=None)
-@mock.patch("checks.corechecks.system.uptime_check.get_subprocess_output", return_value=(' 8-00:56:09', None, None))
-def test_uptime_check_subprocess(uptime, subprocess):
+@mock.patch("checks.corechecks.system.uptime.uptime.get_subprocess_output",
+            return_value=(' 8-00:56:09', None, None))
+def test_uptime_check_subprocess(mock_subprocess, mock_uptime):
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -49,13 +48,18 @@ def test_uptime_check_subprocess(uptime, subprocess):
         histogram_percentiles=None,
     )
 
-    u = uptime_check.UptimeCheck("uptime", {}, {}, aggregator)
+    u = UptimeCheck("uptime", {}, {}, aggregator)
     u.check({})
 
+    # 8 days = 8*86400 = 691200
+    # 56 minutes = 3360
+    # 9 sec
+    expected_total = 691200 + 3360 + 9  # 694569
+
     expected_metrics = {
-        'system.uptime': ('gauge', 694569.0),
+        'system.uptime': ('gauge', expected_total),
     }
-    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+    metrics = u.aggregator.flush()[:-1]
 
     assert len(metrics) != 0
     for metric in metrics:
@@ -67,8 +71,9 @@ def test_uptime_check_subprocess(uptime, subprocess):
 
 
 @mock.patch("uptime.uptime", return_value=None)
-@mock.patch("checks.corechecks.system.uptime_check.get_subprocess_output", return_value=('   00:56:09', None, None))
-def test_uptime_check_subprocess_nodays(uptime, subprocess):
+@mock.patch("checks.corechecks.system.uptime.uptime.get_subprocess_output",
+            return_value=('   00:56:09', None, None))
+def test_uptime_check_subprocess_nodays(mock_subprocess, mock_uptime):
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -78,13 +83,17 @@ def test_uptime_check_subprocess_nodays(uptime, subprocess):
         histogram_percentiles=None,
     )
 
-    u = uptime_check.UptimeCheck("uptime", {}, {}, aggregator)
+    u = UptimeCheck("uptime", {}, {}, aggregator)
     u.check({})
 
+    # 56 min = 3360 sec
+    # 9 sec
+    expected_total = 3360 + 9  # 3369
+
     expected_metrics = {
-        'system.uptime': ('gauge', 3369.0),
+        'system.uptime': ('gauge', expected_total),
     }
-    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+    metrics = u.aggregator.flush()[:-1]
 
     assert len(metrics) != 0
     for metric in metrics:

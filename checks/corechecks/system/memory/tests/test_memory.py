@@ -1,12 +1,12 @@
+# checks/corechecks/system/memory/tests/test_memory.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
-# This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2018 Datadog, Inc.
 
 import mock
 from collections import namedtuple
 
 from aggregator import MetricsAggregator
+from checks.corechecks.system.memory.memory import MemoryCheck
 
 
 GAUGE = 'gauge'
@@ -15,11 +15,15 @@ GAUGE = 'gauge'
 @mock.patch("psutil.virtual_memory")
 @mock.patch("psutil.swap_memory")
 def test_memory_linux(swap_memory, virtual_memory):
-    from checks.corechecks.system import memory
-
-    svmem = namedtuple("svmem", ["total", "available", "percent", "used", "free",
-                                 "active", "inactive", "buffers", "cached", "shared"])
-    sswap = namedtuple("sswap", ["total", "used", "free", "percent", "sin", "sout"])
+    svmem = namedtuple(
+        "svmem",
+        ["total", "available", "percent", "used", "free",
+         "active", "inactive", "buffers", "cached", "shared"]
+    )
+    sswap = namedtuple(
+        "sswap",
+        ["total", "used", "free", "percent", "sin", "sout"]
+    )
 
     virtual_memory.return_value = svmem(
         total=9177399296,
@@ -31,14 +35,16 @@ def test_memory_linux(swap_memory, virtual_memory):
         inactive=1062944768,
         buffers=68628480,
         cached=1308991488,
-        shared=500330496)
+        shared=500330496,
+    )
     swap_memory.return_value = sswap(
         total=10485755904,
         used=1024,
         free=10485754880,
         percent=1.0,
         sin=0,
-        sout=0)
+        sout=0,
+    )
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -48,10 +54,10 @@ def test_memory_linux(swap_memory, virtual_memory):
         histogram_percentiles=None,
     )
 
-    c = memory.Memory("memory", {}, {}, aggregator)
+    c = MemoryCheck("memory", {}, {}, aggregator)
     c.check({})
 
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+    metrics = c.aggregator.flush()[:-1]  # remove agent.running metric
 
     expected_metrics = {
         'system.mem.total': (GAUGE, 8752),

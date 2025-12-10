@@ -1,16 +1,13 @@
-# Unless explicitly stated otherwise all files in this repository are licensed
-# under the Apache License Version 2.0.
-# This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2018 Datadog, Inc.
+# checks/corechecks/system/iostat/tests/test_iostat.py
 
 import mock
 import pytest
 
-from checks.corechecks.system import iostat
 from aggregator import MetricsAggregator
-
+from checks.corechecks.system.iostat.iostat import IOStatCheck
 
 GAUGE = 'gauge'
+
 AIX_MOCK_IOSTAT = '''
 System configuration: lcpu=4 drives=2 paths=2 vdisks=1 tapes=0
 
@@ -33,7 +30,11 @@ hdisk1                 0.0   0.0    0.0   0.0    0.0    0.0   0.0    0.0    0.0 
 hdisk0                 0.0   0.0    0.0   0.0    0.0    0.0   0.0    0.0    0.0     0    0   0.0   0.0    0.0    0.0     0    0   0.0    0.0    0.0    0.0   0.0   0.0
 '''
 
-@mock.patch("checks.corechecks.system.iostat.get_subprocess_output", return_value=(AIX_MOCK_IOSTAT, None, None))
+
+@mock.patch(
+    "checks.corechecks.system.iostat.iostat.get_subprocess_output",
+    return_value=(AIX_MOCK_IOSTAT, None, None)
+)
 def test_iostat_aix(get_subprocess_output):
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -43,11 +44,14 @@ def test_iostat_aix(get_subprocess_output):
         histogram_percentiles=None,
     )
 
-    c = iostat.IOStat("iostat", {}, {}, aggregator)
+    c = IOStatCheck("iostat", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+
+    metrics = c.aggregator.flush()[:-1]
 
     expected_metrics = {
+        # Only test for keys and gauge type
+        # Values come from extract_with_unit or parsing logic
         'system.iostat.physical.kbps': GAUGE,
         'system.iostat.physical.tps': GAUGE,
         'system.iostat.physical.kb.read': GAUGE,
@@ -95,13 +99,11 @@ def test_iostat_aix(get_subprocess_output):
         'system.iostat.disks.queue.serv.qfull': GAUGE,
     }
 
-    # we subtract two - one for /proc, and one for the heading
-    # assert len(metrics) == len(expected_metrics) * (len(filter(None, AIX_MOCK_IOSTAT.splitlines())) - 2)
     for metric in metrics:
         assert metric['metric'] in expected_metrics
+        assert metric['type'] == expected_metrics[metric['metric']]
         assert len(metric['points']) == 1
         assert metric['host'] == hostname
-        assert metric['type'] == expected_metrics[metric['metric']]
 
 
 def test_iostat_value_extract():
@@ -121,15 +123,15 @@ def test_iostat_value_extract():
     }
 
     for value, expected in valid_unit_set.items():
-        assert iostat.IOStat.extract_with_unit(value) == expected
+        assert IOStatCheck.extract_with_unit(value) == expected
 
     invalid_unit_set = [
         '100000P',
         '100000H',
         'NaN',
-        '912931.1231923.13213'
+        '912931.1231923.13213',
     ]
 
     for bad_unit in invalid_unit_set:
         with pytest.raises(ValueError):
-            assert iostat.IOStat.extract_with_unit(bad_unit)
+            IOStatCheck.extract_with_unit(bad_unit)

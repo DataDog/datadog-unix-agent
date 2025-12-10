@@ -1,12 +1,11 @@
+# checks/corechecks/system/filesystem/tests/test_filesystem.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
-# This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2018 Datadog, Inc.
 
 import mock
 
-from checks.corechecks.system import filesystem
 from aggregator import MetricsAggregator
+from checks.corechecks.system.filesystem.filesystem import FilesystemCheck
 
 GAUGE = 'gauge'
 
@@ -30,8 +29,11 @@ Filesystem    MB blocks      Used Available Capacity Mounted on
 '''
 
 
-@mock.patch("checks.corechecks.system.filesystem.get_subprocess_output", return_value=(AIX_MOCK_FS, None, None))
-def test_load_aix(get_subprocess_output):
+@mock.patch(
+    "checks.corechecks.system.filesystem.filesystem.get_subprocess_output",
+    return_value=(AIX_MOCK_FS, None, None)
+)
+def test_load_aix(mock_subproc):
 
     hostname = 'foo'
     aggregator = MetricsAggregator(
@@ -41,9 +43,10 @@ def test_load_aix(get_subprocess_output):
         histogram_percentiles=None,
     )
 
-    c = filesystem.Filesystem("fs", {}, {}, aggregator)
+    c = FilesystemCheck("fs", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
+
+    metrics = c.aggregator.flush()[:-1]  # remove agent.running metric
 
     expected_metrics = {
         'system.fs.total': GAUGE,
@@ -52,10 +55,12 @@ def test_load_aix(get_subprocess_output):
         'system.fs.available.pct': GAUGE,
     }
 
-    # we subtract two - one for /proc, and one for the heading
-    assert len(metrics) == len(expected_metrics) * (len([_f for _f in AIX_MOCK_FS.splitlines() if _f]) - 2)
+    # subtract two lines: header + /proc
+    non_empty_lines = [l for l in AIX_MOCK_FS.splitlines() if l]
+    assert len(metrics) == len(expected_metrics) * (len(non_empty_lines) - 2)
+
     for metric in metrics:
         assert metric['metric'] in expected_metrics
+        assert metric['type'] == expected_metrics[metric['metric']]
         assert len(metric['points']) == 1
         assert metric['host'] == hostname
-        assert metric['type'] == expected_metrics[metric['metric']]

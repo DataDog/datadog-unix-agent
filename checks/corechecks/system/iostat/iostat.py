@@ -1,14 +1,20 @@
+# checks/corechecks/system/iostat/iostat.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
-# This product includes software developed at Datadog (https://www.datadoghq.com/).
-# Copyright 2018 Datadog, Inc.
 
 import math
 
 from utils.process import get_subprocess_output
 from checks import AgentCheck
 
-class IOStat(AgentCheck):
+
+class IOStatCheck(AgentCheck):
+    """
+    Core IOStat check for AIX. Parses iostat -Dsal output using static schema.
+    """
+
+    __slots__ = tuple()
+
     SCHEMA = {
         'Physical': {
             'sections': ['physical'],
@@ -35,7 +41,10 @@ class IOStat(AgentCheck):
                 'cols': ['wps', 'serv.avg', 'serv.min', 'serv.max'],
             },
             'queue': {
-                'cols': ['time.avg', 'time.min', 'time.max', 'wqsz.avg', 'sqsz.avg', 'serv.qfull'],
+                'cols': [
+                    'time.avg', 'time.min', 'time.max',
+                    'wqsz.avg', 'sqsz.avg', 'serv.qfull'
+                ],
             },
         },
         'Disks': {
@@ -50,61 +59,70 @@ class IOStat(AgentCheck):
                 'cols': ['wps', 'serv.avg', 'serv.min', 'serv.max', 'timeouts', 'fail'],
             },
             'queue': {
-                'cols': ['time.avg', 'time.min', 'time.max', 'wqsz.avg', 'sqsz.avg', 'serv.qfull'],
+                'cols': [
+                    'time.avg', 'time.min', 'time.max',
+                    'wqsz.avg', 'sqsz.avg', 'serv.qfull'
+                ],
             },
-        }
+        },
     }
+
     TABLE_SEP = '--------------------'
 
     def check(self, instance):
         output, _, _ = get_subprocess_output(['iostat', '-Dsal', '1', '1'], self.log)
-        stats = [_f for _f in output.splitlines() if _f]
+        stats = [line for line in output.splitlines() if line]
         mode = ''
-        for line in stats[4:]:
+
+        for line in stats[4:]:  # skip header lines
             if line.startswith(self.TABLE_SEP):
                 continue
 
+            # Detect mode (Physical, Adapter, Vadapter, Disks)
             for m in self.SCHEMA:
                 if line.startswith(m):
                     mode = m
-                    expected_fields_no = 0
-                    for section in self.SCHEMA[mode]['sections']:
-                        expected_fields_no += len(self.SCHEMA[mode][section]['cols'])
-                    expected_fields_no += 1  # the device
+                    expected_fields = 1  # device column
+                    for section in self.SCHEMA[m]['sections']:
+                        expected_fields += len(self.SCHEMA[m][section]['cols'])
                     continue
 
-            fields = line.split(' ')
-            fields = [_f for _f in fields if _f]
-            if len(fields) != expected_fields_no:
+            fields = [f for f in line.split(' ') if f]
+            if len(fields) != expected_fields:
                 continue
 
             tags = []
             metrics = {}
-            if mode.lower() != 'physical':  # odd one out
+
+            # Physical is odd one out and does not include device name before fields
+            if mode.lower() != 'physical':
                 device = fields[0]
-                tags = ["{mode}:{device}".format(mode=mode.lower(), device=device.lower())]
+                tags.append(f"{mode.lower()}:{device.lower()}")
 
-            section_idx = 1  # we start after the device
+            section_idx = 1
             for section in self.SCHEMA[mode]['sections']:
-                for idx, colname in enumerate(self.SCHEMA[mode][section]['cols']):
-                    try:
-                        section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
-                        if colname in section_tag_cols:
-                            tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
-                        else:
-                            metrics["{mode}.{section}.{name}".format(mode=mode.lower(), section=section, name=colname)] = \
-                                self.extract_with_unit(fields[section_idx+idx])
-                    except ValueError as e:
-                        self.log.debug("unexpected value parsing metric %s", e)
+                cols = self.SCHEMA[mode][section]['cols']
+                tag_cols = self.SCHEMA[mode][section].get('tags', [])
 
-                section_idx += len(self.SCHEMA[mode][section]['cols'])
+                for idx, colname in enumerate(cols):
+                    value = fields[section_idx + idx]
+                    if colname in tag_cols:
+                        tags.append(f"{colname}:{value}")
+                    else:
+                        full_name = f"{mode.lower()}.{section}.{colname}"
+                        try:
+                            metrics[full_name] = self.extract_with_unit(value)
+                        except ValueError as e:
+                            self.log.debug("unexpected value parsing metric %s", e)
 
+                section_idx += len(cols)
+
+            # Emit metrics
             for name, value in metrics.items():
-                self.gauge("system.iostat.{}".format(name), value, tags=tags)
+                self.gauge(f"system.iostat.{name}", value, tags=tags)
 
     @classmethod
     def extract_with_unit(cls, value):
-
         unit_map = {
             'K': 1000,
             'M': 1000000,
@@ -112,7 +130,6 @@ class IOStat(AgentCheck):
             'T': 1000000000000,
         }
 
-        converted = None
         try:
             converted = float(value)
         except ValueError:

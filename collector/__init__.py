@@ -5,6 +5,7 @@
 
 from .check_loader import CheckLoader
 from .wheel_loader import WheelLoader
+from .core_loader import CoreCheckLoader
 from .collector import Collector
 
 
@@ -12,4 +13,5 @@ __all__ = [
     'Collector',
     'CheckLoader',
     'WheelLoader',
+    'CoreCheckLoader',
 ]

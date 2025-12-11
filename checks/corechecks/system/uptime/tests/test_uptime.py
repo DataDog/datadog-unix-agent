@@ -7,7 +7,7 @@
 import mock
 
 from aggregator import MetricsAggregator
-from checks.corechecks.system.uptime.uptime import UptimeCheck
+from checks.corechecks.system.uptime import UptimeCheck
 
 
 @mock.patch("uptime.uptime", return_value=21)

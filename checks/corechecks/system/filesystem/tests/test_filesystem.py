@@ -7,7 +7,7 @@
 import mock
 
 from aggregator import MetricsAggregator
-from checks.corechecks.system.filesystem.filesystem import FilesystemCheck
+from checks.corechecks.system.filesystem import FilesystemCheck
 
 GAUGE = 'gauge'
 

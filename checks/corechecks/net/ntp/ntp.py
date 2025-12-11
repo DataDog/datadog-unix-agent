@@ -19,7 +19,7 @@ DEFAULT_PORT = 'ntp'
 DEFAULT_PORT_NUM = 123
 
 
-class NTPCheck(AgentCheck):
+class NtpCheck(AgentCheck):
 
     DEFAULT_MIN_COLLECTION_INTERVAL = 900  # in seconds
 

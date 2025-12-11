@@ -24,16 +24,16 @@ If you want to configure the check with custom options, edit the `network.d/conf
 
 ### Metrics
 
-| metric_name                     | metric_type | unit_name | description |
-|--------------------------------|-------------|-----------|-------------|
-| system.net.bytes_sent          | gauge       |           | Number of bytes sent. |
-| system.net.bytes_rcvd          | gauge       |           | Number of bytes received. |
-| system.net.packets_in.count    | gauge       |           | Incoming packets. |
-| system.net.packets_out.count   | gauge       |           | Outgoing packets. |
-| system.net.packets_in.error    | gauge       |           | Incoming packet errors. |
-| system.net.packets_out.error   | gauge       |           | Outgoing packet errors. |
-| system.net.packets_in.drop     | gauge       |           | Incoming dropped packets. |
-| system.net.packets_out.drop    | gauge       |           | Outgoing dropped packets. |
+| metric_name                  | metric_type | unit_name | description                  |
+| ---------------------------- | ----------- | --------- | ---------------------------- |
+| system.net.bytes_sent        | gauge       |           | Number of bytes sent.        |
+| system.net.bytes_rcvd        | gauge       |           | Number of bytes received.    |
+| system.net.packets_in.count  | gauge       |           | Incoming packets.            |
+| system.net.packets_out.count | gauge       |           | Outgoing packets.            |
+| system.net.packets_in.error  | gauge       |           | Incoming packet errors.      |
+| system.net.packets_out.error | gauge       |           | Outgoing packet errors.      |
+| system.net.packets_in.drop   | gauge       |           | Incoming dropped packets.    |
+| system.net.packets_out.drop  | gauge       |           | Outgoing dropped packets.    |
 
 ### Events
 

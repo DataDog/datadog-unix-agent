@@ -9,7 +9,7 @@ import mock
 import pytest
 
 # Updated import path for corecheck
-from checks.corechecks.net.ntp.ntp import NTPCheck
+from checks.corechecks.net.ntp import NtpCheck
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def check():
     AgentCheck api so we mock it.
     (Kept from original test for maximum fidelity)
     """
-    c = NTPCheck('ntp', {}, {})
+    c = NtpCheck('ntp', {}, {})
     c.gauge = mock.MagicMock()
     c.service_check = mock.MagicMock()
     return c

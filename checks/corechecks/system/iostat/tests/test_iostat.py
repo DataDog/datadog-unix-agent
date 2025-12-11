@@ -8,7 +8,7 @@ import mock
 import pytest
 
 from aggregator import MetricsAggregator
-from checks.corechecks.system.iostat.iostat import IOStatCheck
+from checks.corechecks.system.iostat import IOStatCheck
 
 GAUGE = 'gauge'
 

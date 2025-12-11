@@ -8,7 +8,7 @@ import mock
 from collections import namedtuple
 
 from aggregator import MetricsAggregator
-from checks.corechecks.system.memory.memory import MemoryCheck
+from checks.corechecks.system.memory import MemoryCheck
 
 
 GAUGE = 'gauge'

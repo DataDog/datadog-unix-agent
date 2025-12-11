@@ -7,7 +7,7 @@
 import mock
 
 from aggregator import MetricsAggregator
-from checks.corechecks.system.load.load import LoadCheck
+from checks.corechecks.system.load import LoadCheck
 
 GAUGE = 'gauge'
 

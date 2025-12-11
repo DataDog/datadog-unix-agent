@@ -11,10 +11,6 @@ from checks import AgentCheck
 
 
 class NetworkCheck(AgentCheck):
-    """
-    Corecheck version of the bundled Network integration.
-    Behavior is identical to the original datadog_checks.network.Network.
-    """
 
     METRIC_NET = 'system.net.{}'
     ATTR_MAP = {

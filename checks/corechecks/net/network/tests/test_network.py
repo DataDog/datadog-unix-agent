@@ -9,7 +9,7 @@ from collections import namedtuple
 import mock
 
 from aggregator import MetricsAggregator
-from checks.corechecks.net.network.network import NetworkCheck
+from checks.corechecks.net.network import NetworkCheck
 
 
 HOSTNAME = 'foo'

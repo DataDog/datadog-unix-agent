@@ -8,7 +8,7 @@ import mock
 from collections import namedtuple
 
 from aggregator import MetricsAggregator
-from checks.corechecks.system.cpu.cpu import CpuCheck
+from checks.corechecks.system.cpu import CpuCheck
 
 
 GAUGE = 'gauge'

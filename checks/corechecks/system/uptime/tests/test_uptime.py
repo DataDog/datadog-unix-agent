@@ -1,5 +1,8 @@
+# checks/corechecks/system/uptime/tests/test_uptime.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import mock
 
@@ -24,7 +27,7 @@ def test_uptime_check(mock_uptime):
     expected_metrics = {
         'system.uptime': ('gauge', 21),
     }
-    metrics = u.aggregator.flush()[:-1]
+    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     assert len(metrics) != 0
     for metric in metrics:
@@ -59,7 +62,7 @@ def test_uptime_check_subprocess(mock_subprocess, mock_uptime):
     expected_metrics = {
         'system.uptime': ('gauge', expected_total),
     }
-    metrics = u.aggregator.flush()[:-1]
+    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     assert len(metrics) != 0
     for metric in metrics:
@@ -93,7 +96,7 @@ def test_uptime_check_subprocess_nodays(mock_subprocess, mock_uptime):
     expected_metrics = {
         'system.uptime': ('gauge', expected_total),
     }
-    metrics = u.aggregator.flush()[:-1]
+    metrics = u.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     assert len(metrics) != 0
     for metric in metrics:

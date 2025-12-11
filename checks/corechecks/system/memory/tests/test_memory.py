@@ -1,6 +1,8 @@
 # checks/corechecks/system/memory/tests/test_memory.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import mock
 from collections import namedtuple
@@ -15,15 +17,9 @@ GAUGE = 'gauge'
 @mock.patch("psutil.virtual_memory")
 @mock.patch("psutil.swap_memory")
 def test_memory_linux(swap_memory, virtual_memory):
-    svmem = namedtuple(
-        "svmem",
-        ["total", "available", "percent", "used", "free",
-         "active", "inactive", "buffers", "cached", "shared"]
-    )
-    sswap = namedtuple(
-        "sswap",
-        ["total", "used", "free", "percent", "sin", "sout"]
-    )
+    svmem = namedtuple("svmem", ["total", "available", "percent", "used", "free",
+                                 "active", "inactive", "buffers", "cached", "shared"])
+    sswap = namedtuple("sswap", ["total", "used", "free", "percent", "sin", "sout"])
 
     virtual_memory.return_value = svmem(
         total=9177399296,
@@ -57,7 +53,7 @@ def test_memory_linux(swap_memory, virtual_memory):
     c = MemoryCheck("memory", {}, {}, aggregator)
     c.check({})
 
-    metrics = c.aggregator.flush()[:-1]  # remove agent.running metric
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.mem.total': (GAUGE, 8752),

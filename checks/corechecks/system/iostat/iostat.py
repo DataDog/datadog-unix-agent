@@ -1,6 +1,8 @@
 # checks/corechecks/system/iostat/iostat.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import math
 
@@ -41,10 +43,7 @@ class IOStatCheck(AgentCheck):
                 'cols': ['wps', 'serv.avg', 'serv.min', 'serv.max'],
             },
             'queue': {
-                'cols': [
-                    'time.avg', 'time.min', 'time.max',
-                    'wqsz.avg', 'sqsz.avg', 'serv.qfull'
-                ],
+                'cols': ['time.avg', 'time.min', 'time.max', 'wqsz.avg', 'sqsz.avg', 'serv.qfull'],
             },
         },
         'Disks': {
@@ -59,10 +58,7 @@ class IOStatCheck(AgentCheck):
                 'cols': ['wps', 'serv.avg', 'serv.min', 'serv.max', 'timeouts', 'fail'],
             },
             'queue': {
-                'cols': [
-                    'time.avg', 'time.min', 'time.max',
-                    'wqsz.avg', 'sqsz.avg', 'serv.qfull'
-                ],
+                'cols': ['time.avg', 'time.min', 'time.max', 'wqsz.avg', 'sqsz.avg', 'serv.qfull'],
             },
         },
     }
@@ -71,7 +67,7 @@ class IOStatCheck(AgentCheck):
 
     def check(self, instance):
         output, _, _ = get_subprocess_output(['iostat', '-Dsal', '1', '1'], self.log)
-        stats = [line for line in output.splitlines() if line]
+        stats = [_f for _f in output.splitlines() if _f]
         mode = ''
 
         for line in stats[4:]:  # skip header lines
@@ -97,29 +93,25 @@ class IOStatCheck(AgentCheck):
             # Physical is odd one out and does not include device name before fields
             if mode.lower() != 'physical':
                 device = fields[0]
-                tags.append(f"{mode.lower()}:{device.lower()}")
+                tags = ["{mode}:{device}".format(mode=mode.lower(), device=device.lower())]
 
-            section_idx = 1
+            section_idx = 1  # we start after the device
             for section in self.SCHEMA[mode]['sections']:
-                cols = self.SCHEMA[mode][section]['cols']
-                tag_cols = self.SCHEMA[mode][section].get('tags', [])
+                for idx, colname in enumerate(self.SCHEMA[mode][section]['cols']):
+                    try:
+                        section_tag_cols = self.SCHEMA[mode][section].get('tags', [])
+                        if colname in section_tag_cols:
+                            tags.append("{tag}:{val}".format(tag=colname, val=fields[section_idx+idx]))
+                        else:
+                            metrics["{mode}.{section}.{name}".format(mode=mode.lower(), section=section, name=colname)] = \
+                                self.extract_with_unit(fields[section_idx+idx])
+                    except ValueError as e:
+                        self.log.debug("unexpected value parsing metric %s", e)
 
-                for idx, colname in enumerate(cols):
-                    value = fields[section_idx + idx]
-                    if colname in tag_cols:
-                        tags.append(f"{colname}:{value}")
-                    else:
-                        full_name = f"{mode.lower()}.{section}.{colname}"
-                        try:
-                            metrics[full_name] = self.extract_with_unit(value)
-                        except ValueError as e:
-                            self.log.debug("unexpected value parsing metric %s", e)
+                section_idx += len(self.SCHEMA[mode][section]['cols'])
 
-                section_idx += len(cols)
-
-            # Emit metrics
             for name, value in metrics.items():
-                self.gauge(f"system.iostat.{name}", value, tags=tags)
+                self.gauge("system.iostat.{}".format(name), value, tags=tags)
 
     @classmethod
     def extract_with_unit(cls, value):
@@ -130,6 +122,7 @@ class IOStatCheck(AgentCheck):
             'T': 1000000000000,
         }
 
+        converted = None
         try:
             converted = float(value)
         except ValueError:

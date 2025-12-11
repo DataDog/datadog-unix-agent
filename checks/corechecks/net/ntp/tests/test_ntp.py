@@ -1,6 +1,8 @@
-# (C) Datadog, Inc. 2018
-# All rights reserved
-# Licensed under Simplified BSD License (see LICENSE)
+# checks/corechecks/net/ntp/tests/test_ntp.py
+# Unless explicitly stated otherwise all files in this repository are licensed
+# under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import ntplib
 import mock

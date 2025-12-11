@@ -1,8 +1,8 @@
 # collector/core_loader.py
-
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import importlib
 import logging
@@ -118,6 +118,7 @@ class CoreCheckLoader(Loader):
                               check_name, module_full)
                     return check_class, None
 
+                log.debug('Unable to import check module %s.py from %s', check_name, module_base)
                 # The package existed, but no valid check class was found
                 return None, {
                     'error': Exception(f"No AgentCheck subclass found in {module_full}"),

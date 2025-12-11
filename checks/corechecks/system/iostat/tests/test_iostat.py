@@ -1,4 +1,8 @@
-# checks/corechecks/system/iostat/tests/test_iostat.py
+# checks/corechecks/system/iostat/tests/test_iostat.py 
+# Unless explicitly stated otherwise all files in this repository are licensed
+# under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import mock
 import pytest
@@ -47,11 +51,9 @@ def test_iostat_aix(get_subprocess_output):
     c = IOStatCheck("iostat", {}, {}, aggregator)
     c.check({})
 
-    metrics = c.aggregator.flush()[:-1]
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
-        # Only test for keys and gauge type
-        # Values come from extract_with_unit or parsing logic
         'system.iostat.physical.kbps': GAUGE,
         'system.iostat.physical.tps': GAUGE,
         'system.iostat.physical.kb.read': GAUGE,
@@ -134,4 +136,4 @@ def test_iostat_value_extract():
 
     for bad_unit in invalid_unit_set:
         with pytest.raises(ValueError):
-            IOStatCheck.extract_with_unit(bad_unit)
+            assert IOStatCheck.extract_with_unit(bad_unit)

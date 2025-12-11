@@ -1,6 +1,8 @@
 # checks/corechecks/system/filesystem/tests/test_filesystem.py
 # Unless explicitly stated otherwise all files in this repository are licensed
 # under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import mock
 
@@ -46,7 +48,7 @@ def test_load_aix(mock_subproc):
     c = FilesystemCheck("fs", {}, {}, aggregator)
     c.check({})
 
-    metrics = c.aggregator.flush()[:-1]  # remove agent.running metric
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.fs.total': GAUGE,
@@ -55,9 +57,8 @@ def test_load_aix(mock_subproc):
         'system.fs.available.pct': GAUGE,
     }
 
-    # subtract two lines: header + /proc
-    non_empty_lines = [l for l in AIX_MOCK_FS.splitlines() if l]
-    assert len(metrics) == len(expected_metrics) * (len(non_empty_lines) - 2)
+    # we subtract two - one for /proc, and one for the heading
+    assert len(metrics) == len(expected_metrics) * (len([_f for _f in AIX_MOCK_FS.splitlines() if _f]) - 2)
 
     for metric in metrics:
         assert metric['metric'] in expected_metrics

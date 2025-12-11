@@ -1,4 +1,8 @@
 # checks/corechecks/system/cpu/tests/test_cpu.py
+# Unless explicitly stated otherwise all files in this repository are licensed
+# under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import mock
 from collections import namedtuple
@@ -31,7 +35,7 @@ def test_cpu(mock_cpu_times):
     c = CpuCheck("cpu", {}, {}, aggregator)
     c.check({})
 
-    metrics = c.aggregator.flush()[:-1]
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.cpu.user': {
@@ -56,17 +60,14 @@ def test_cpu(mock_cpu_times):
         },
     }
 
-    assert len(metrics) == len(expected_metrics)*2
+    assert len(metrics) == len(expected_metrics)*2  # 2 values per metric
     for metric in metrics:
         assert metric['metric'] in expected_metrics
         assert len(metric['points']) == 1
         assert metric['host'] == hostname
-
-        metric_type = expected_metrics[metric['metric']]['type']
-        assert metric['type'] == metric_type
+        assert metric['type'] == expected_metrics[metric['metric']]['type']
 
         for tag in metric['tags']:
-            stag = tag.decode('utf-8')
-            if stag.startswith('core:'):
-                expected_value = expected_metrics[metric['metric']][stag]
-                assert metric['points'][0][1] == expected_value
+            stag = tag.decode(encoding='utf-8')
+            if stag.startswith('core'):
+                assert metric['points'][0][1] == expected_metrics[metric['metric']][stag]

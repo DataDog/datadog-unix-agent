@@ -1,4 +1,8 @@
 # checks/corechecks/system/load/tests/test_load.py
+# Unless explicitly stated otherwise all files in this repository are licensed
+# under the Apache License Version 2.0.
+# This product includes software developed at Datadog (https://www.datadoghq.com/).
+# Copyright 2018 Datadog, Inc.
 
 import mock
 
@@ -24,7 +28,7 @@ def test_load(getloadavg, cpu_count):
 
     c = LoadCheck("load", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()[:-1]
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.load.1': (GAUGE, 0.42),
@@ -38,6 +42,7 @@ def test_load(getloadavg, cpu_count):
     assert len(metrics) == len(expected_metrics)
     for metric in metrics:
         assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
         assert metric['host'] == hostname
         assert metric['type'] == expected_metrics[metric['metric']][0]
         assert metric['points'][0][1] == expected_metrics[metric['metric']][1]
@@ -62,7 +67,7 @@ def test_load_no_cpu_count(getloadavg, cpu_count):
     except Exception as e:
         assert str(e) == "Cannot determine number of cores"
 
-    metrics = c.aggregator.flush()[:-1]
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.load.1': (GAUGE, 0.42),
@@ -73,6 +78,9 @@ def test_load_no_cpu_count(getloadavg, cpu_count):
     assert len(metrics) == len(expected_metrics)
     for metric in metrics:
         assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
         assert metric['points'][0][1] == expected_metrics[metric['metric']][1]
 
 
@@ -91,7 +99,7 @@ def test_load_aix(getloadavg, get_subprocess_output, cpu_count):
 
     c = LoadCheck("load", {}, {}, aggregator)
     c.check({})
-    metrics = c.aggregator.flush()[:-1]
+    metrics = c.aggregator.flush()[:-1]  # we remove the datadog.agent.running metric
 
     expected_metrics = {
         'system.load.1': (GAUGE, 1.19),
@@ -105,4 +113,7 @@ def test_load_aix(getloadavg, get_subprocess_output, cpu_count):
     assert len(metrics) == len(expected_metrics)
     for metric in metrics:
         assert metric['metric'] in expected_metrics
+        assert len(metric['points']) == 1
+        assert metric['host'] == hostname
+        assert metric['type'] == expected_metrics[metric['metric']][0]
         assert metric['points'][0][1] == expected_metrics[metric['metric']][1]

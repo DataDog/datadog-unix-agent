@@ -87,4 +87,42 @@ build do
 
     end
   end
+
+  block 'copy corecheck configs' do
+    # Process corechecks from checks/corechecks/<category>/<checkname>/
+    corecheck_categories = Dir.glob("#{project_dir}/checks/corechecks/*").select { |d| File.directory?(d) }
+    
+    corecheck_categories.each do |category_dir|
+      category = category_dir.split('/').last
+      
+      # Skip __pycache__ and other non-category directories
+      next if category.start_with?('__')
+      
+      # Process each check in the category
+      Dir.glob("#{category_dir}/*").each do |check_dir|
+        next unless File.directory?(check_dir)
+        
+        check = check_dir.split('/').last
+        
+        # Skip __pycache__ and test directories
+        next if check.start_with?('__') || check == 'tests'
+        
+        check_conf_dir = "#{conf_dir}/#{check}.d"
+        
+        # Copy the default config, if it exists
+        conf_file_default = "#{check_dir}/data/conf.yaml.default"
+        if File.exist? conf_file_default
+          mkdir check_conf_dir
+          copy conf_file_default, "#{check_conf_dir}/" unless File.exist? "#{check_conf_dir}/conf.yaml.default"
+        end
+        
+        # Copy the example config, if it exists
+        conf_file_example = "#{check_dir}/data/conf.yaml.example"
+        if File.exist? conf_file_example
+          mkdir check_conf_dir
+          copy conf_file_example, "#{check_conf_dir}/" unless File.exist? "#{check_conf_dir}/conf.yaml.example"
+        end
+      end
+    end
+  end
 end

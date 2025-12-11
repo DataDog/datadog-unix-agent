@@ -14,13 +14,13 @@ import tornado
 from utils.hostname import get_hostname, HostnameException
 from utils.api import validate_api_key
 from utils.strip import mask_api_key_value
-from collector import CheckLoader, WheelLoader
+from collector import CheckLoader, WheelLoader, CoreCheckLoader
 
 log = logging.getLogger(__name__)
 
 
 class AgentStatusHandler(tornado.web.RequestHandler):
-    LOADERS = [CheckLoader, WheelLoader]
+    LOADERS = [CoreCheckLoader, CheckLoader, WheelLoader]
 
     def initialize(self, config, started, status):
         self._config = config
@@ -107,6 +107,8 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                     for place, err in error.items():
                         processed['loader'][check][loader] = '{path}: {err}'.format(path=place, err=err['error'])
                 elif loader == WheelLoader.__name__:
+                    processed['loader'][check][loader] = str(error['error'])
+                elif loader == CoreCheckLoader.__name__:
                     processed['loader'][check][loader] = str(error['error'])
 
         for check, errors in runtime_errors.items():

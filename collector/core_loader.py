@@ -125,4 +125,7 @@ class CoreCheckLoader(Loader):
                 }
 
         # No matching module found anywhere
-        return None, None
+        return None, {
+            'error': Exception(f"No module named 'checks.corechecks.*.{check_name}'"),
+            'traceback': None,
+        }

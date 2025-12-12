@@ -8,7 +8,7 @@ from collections import defaultdict
 from copy import copy, deepcopy
 import logging
 
-from . import CheckLoader, WheelLoader
+from . import CheckLoader, WheelLoader, CoreCheckLoader
 from .wheel_loader import DD_WHEEL_NAMESPACE
 
 from aggregator import Aggregator
@@ -20,7 +20,6 @@ log = logging.getLogger(__name__)
 
 
 class Collector(object):
-    CORE_CHECKS = ['cpu', 'load', 'iostat', 'memory', 'filesystem', 'uptime']
 
     def __init__(self, config, aggregator=None):
         self._config = config
@@ -39,8 +38,14 @@ class Collector(object):
     def set_loaders(self):
         check_loader = CheckLoader()
         check_loader.add_place(self._config['additional_checksd'])
-        self._loaders = [check_loader]
-        self._loaders.append(WheelLoader(namespace=DD_WHEEL_NAMESPACE))
+
+        core_loader = CoreCheckLoader()
+
+        self._loaders = [
+            core_loader,                 # core checks first
+            check_loader,                # checks.d next
+            WheelLoader(namespace=DD_WHEEL_NAMESPACE),  # bundled integrations last
+        ]
 
     def set_aggregator(self, aggregator):
         if not isinstance(aggregator, Aggregator):
@@ -52,25 +57,7 @@ class Collector(object):
     def status(self):
         return self._status
 
-    def load_core_checks(self):
-        from checks.corechecks.system import (
-            Cpu,
-            Load,
-            Memory,
-            IOStat,
-            Filesystem,
-            UptimeCheck
-        )
-        self._check_classes['cpu'] = Cpu
-        self._check_classes['filesystem'] = Filesystem
-        self._check_classes['iostat'] = IOStat
-        self._check_classes['load'] = Load
-        self._check_classes['memory'] = Memory
-        self._check_classes['filesystem'] = Filesystem
-        self._check_classes['uptime'] = UptimeCheck
-
     def load_check_classes(self):
-        self.load_core_checks()
 
         for _, check_configs in self._config.get_check_configs().items():
             for check_name in check_configs:
@@ -178,21 +165,6 @@ class Collector(object):
                                 log.error("unable to instantiate instance %s for %s: %s",
                                           instance, check_name, e)
 
-        for check_name in self.CORE_CHECKS:
-            if check_name in self._check_instances:
-                # already instantiated - skip
-                continue
-
-            check_class = self._check_classes[check_name]
-            signature = (check_name, {}, {})
-            signature_hash = AgentCheck.signature_hash(*signature)
-            try:
-                check_instance = check_class(*signature)
-                check_instance.set_aggregator(self._aggregator)
-                self._check_instances[check_name] = [check_instance]
-                self._check_instance_signatures[signature_hash] = signature
-            except Exception:
-                log.error("unable to instantiate core check %s", check_name)
 
     def run_checks(self):
         for name, checks in self._check_instances.items():

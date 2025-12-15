@@ -114,7 +114,7 @@ class FileConfigProvider(ConfigProvider):
         if not subdir.endswith('.d'):
             # Log just the directory path, not the full file path
             invalid_dir = os.path.dirname(path)
-            log.warning("Invalid config directory (expected *.d): %s/ - skipping", invalid_dir)
+            log.warning("Skipped config directory (expected *.d): %s", invalid_dir)
             return None
 
         return subdir.split('.')[0]

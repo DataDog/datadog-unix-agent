@@ -61,7 +61,7 @@ class FileConfigProvider(ConfigProvider):
                     break
 
             check = self._get_check_name_from_path(place, yaml_path)
-            flat_configs = self._flatten_config(yaml_config)
+            flat_configs = self._flatten_config(yaml_config, yaml_path)
             if is_default:
                 defaults[check].extend(flat_configs)
             else:
@@ -113,15 +113,22 @@ class FileConfigProvider(ConfigProvider):
 
         return subdir.split('.')[0]
 
-    def _flatten_config(self, config):
+    def _flatten_config(self, config, config_path=None):
         if not isinstance(config, dict):
             raise ValueError("expected a dictionary")
 
         configs = []
         init_config = config.get('init_config', {})
         instances = config.get('instances', {}) or []
-        for instance in instances:
-            configs.append({'init_config': init_config,
-                            'instances': [instance]})
+        for instance_index, instance in enumerate(instances):
+            config_dict = {
+                'init_config': init_config,
+                'instances': [instance]
+            }
+            # Add metadata for tracking config source and instance index
+            if config_path:
+                config_dict['_config_source'] = config_path
+                config_dict['_instance_index'] = instance_index
+            configs.append(config_dict)
 
         return configs

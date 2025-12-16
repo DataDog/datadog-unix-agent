@@ -28,12 +28,17 @@ Configuration
 Running Checks
 ==============
 {% if agent.get('info', {}).get('checks', {})|length > 0 -%}
-{% for check, stats in agent.get('info', {}).get('checks', {}).items() %}
-  - {{ check }}
-    {{ '-'*check|length }}
-    metrics: {{ stats.get('metrics', 0) }}
-    events: {{ stats.get('events', 0) }}
-    service checks: {{ stats.get('service_checks', 0) }}
+{% for instance_id, stats in agent.get('info', {}).get('checks', {}).items()|sort(attribute='1.check_name') %}
+  {{ stats.get('check_name', 'unknown') }}
+  {{ '-'*stats.get('check_name', 'unknown')|length }}
+    Instance ID: {{ instance_id }}
+    Configuration Source: file:{{ stats.get('config_source', 'unknown') }}[{{ stats.get('instance_index', 0) }}]
+    Total Runs: {{ "{:,}".format(stats.get('total_runs', 0)) }}
+    Metric Samples: Last Run: {{ stats.get('metrics', 0) }}
+    Events: Last Run: {{ stats.get('events', 0) }}
+    Service Checks: Last Run: {{ stats.get('service_checks', 0) }}
+    Average Execution Time: {{ stats.get('avg_execution_time_ms', 0)|int }}ms
+    Last Execution Date: {{ stats.get('last_execution', 'Never') }}
 {% endfor -%}
 {% else -%}
   There are currently no running checks.
@@ -50,12 +55,14 @@ Running Checks
     {% endfor -%}
 {% endfor %}
 
-  Last Flush Metric Count: {{ agent.get('stats', {}).get('metrics') }}
-  Last Flush Event Count: {{ agent.get('stats', {}).get('events') }}
-  Last Flush Service Check Count: {{ agent.get('stats', {}).get('service_checks') }}
-  Total Flush Metric Count: {{ agent.get('stats', {}).get('metrics_total') }}
-  Total Flush Event Count: {{ agent.get('stats', {}).get('events_total') }}
-  Total Flush Service Check Count: {{ agent.get('stats', {}).get('service_checks_total') }}
+Aggregator
+==========
+  Checks Metric Sample: {{ "{:,}".format(agent.get('stats', {}).get('metrics_total', 0)) }}
+  Event: {{ "{:,}".format(agent.get('stats', {}).get('events', 0)) }}
+  Events Flushed: {{ "{:,}".format(agent.get('stats', {}).get('events_total', 0)) }}
+  Service Check: {{ "{:,}".format(agent.get('stats', {}).get('service_checks', 0)) }}
+  Service Checks Flushed: {{ "{:,}".format(agent.get('stats', {}).get('service_checks_total', 0)) }}
+  Series Flushed: {{ "{:,}".format(agent.get('stats', {}).get('metrics_total', 0)) }}
 
 {% if collector.get('info').get('errors').get('loader', {})|length > 0 -%}
 Errors
@@ -71,27 +78,27 @@ Errors
 
 Forwarder
 =========
-  Submitted Series Payloads: {{ forwarder.get('stats', {}).get('series_payloads', 0) }}
-  Submitted Intake Payloads: {{ forwarder.get('stats', {}).get('intake_payloads', 0) }}
-  Submitted Service Check Payloads: {{ forwarder.get('stats', {}).get('service_check_payloads', 0) }}
-  Transactions Submitted: {{ forwarder.get('stats', {}).get('transactions_success', 0) }}
-  Transactions Rescheduled: {{ forwarder.get('stats', {}).get('transactions_rescheduled', 0) }}
-  Full Queue Errors: {{ forwarder.get('stats', {}).get('queue_full_errors', 0) }}
+  Submitted Series Payloads: {{ "{:,}".format(forwarder.get('stats', {}).get('series_payloads', 0)) }}
+  Submitted Intake Payloads: {{ "{:,}".format(forwarder.get('stats', {}).get('intake_payloads', 0)) }}
+  Submitted Service Check Payloads: {{ "{:,}".format(forwarder.get('stats', {}).get('service_check_payloads', 0)) }}
+  Transactions Submitted: {{ "{:,}".format(forwarder.get('stats', {}).get('transactions_success', 0)) }}
+  Transactions Rescheduled: {{ "{:,}".format(forwarder.get('stats', {}).get('transactions_rescheduled', 0)) }}
+  Full Queue Errors: {{ "{:,}".format(forwarder.get('stats', {}).get('queue_full_errors', 0)) }}
 
 {% if dogstatsd|length > 0 %}
 Dogstatsd
 =========
-  Last Flush Metric Count: {{ dogstatsd.get('stats', {}).get('metrics') }}
-  Last Flush Event Count: {{ dogstatsd.get('stats', {}).get('events') }}
-  Last Flush Service Check Count: {{ dogstatsd.get('stats', {}).get('service_checks') }}
-  Last Flush Packet Count: {{ dogstatsd.get('stats', {}).get('packets') }}
-
-  Total Metric Count: {{ dogstatsd.get('stats', {}).get('metrics_total') }}
-  Total Event Count: {{ dogstatsd.get('stats', {}).get('events_total') }}
-  Total Service Check Count: {{ dogstatsd.get('stats', {}).get('service_checks_total') }}
-  Total Received Packet Count: {{ dogstatsd.get('stats', {}).get('packets_total') }}
+  Dogstatsd Metric Sample: {{ "{:,}".format(dogstatsd.get('stats', {}).get('metrics', 0)) }}
+  Event: {{ "{:,}".format(dogstatsd.get('stats', {}).get('events', 0)) }}
+  Service Check: {{ "{:,}".format(dogstatsd.get('stats', {}).get('service_checks', 0)) }}
+  Packet: {{ "{:,}".format(dogstatsd.get('stats', {}).get('packets', 0)) }}
+  Total Metric Count: {{ "{:,}".format(dogstatsd.get('stats', {}).get('metrics_total', 0)) }}
+  Total Event Count: {{ "{:,}".format(dogstatsd.get('stats', {}).get('events_total', 0)) }}
+  Total Service Check Count: {{ "{:,}".format(dogstatsd.get('stats', {}).get('service_checks_total', 0)) }}
+  Total Packet Count: {{ "{:,}".format(dogstatsd.get('stats', {}).get('packets_total', 0)) }}
 {% endif %}
 
 API Key Status
 ==============
   API Key ending in {{ status.get('redacted_api') }}: {{ status.get('api_status') }}
+

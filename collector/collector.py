@@ -186,7 +186,6 @@ class Collector(object):
 
     def run_checks(self):
         for name, checks in self._check_instances.items():
-            log.info('running check %s...', name)
             for check in checks:
                 now = time.monotonic()
 
@@ -194,7 +193,7 @@ class Collector(object):
                 if hasattr(check, 'min_collection_interval'):
                     elapsed = now - getattr(check, '_last_run_time', 0)
                     if elapsed < check.min_collection_interval:
-                        log.info(
+                        log.debug(
                             'Skipping %s: only %.2fs elapsed (interval %.2fs)',
                             name, elapsed, check.min_collection_interval
                         )
@@ -203,6 +202,9 @@ class Collector(object):
                 # Track execution time
                 start_time = time.monotonic()
                 execution_datetime = datetime.utcnow()
+
+                # Log only when actually running the check
+                log.info('Running check %s...', name)
 
                 try:
                     result = check.run()

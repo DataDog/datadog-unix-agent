@@ -62,6 +62,7 @@ class TestProcessAgentInfo:
         assert check_data['total_runs'] == 3
         assert check_data['avg_execution_time_ms'] == 10.0  # round((10.5 + 11.2 + 9.8) / 3, 0)
         assert '2025-12-16 10:30:45.123 UTC' in check_data['last_execution']
+        assert 'ts:' in check_data['last_execution']
 
     def test_process_agent_info_with_service_checks_only(self):
         """Test processing check that only submits service checks (no metrics)."""

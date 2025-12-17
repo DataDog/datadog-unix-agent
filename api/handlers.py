@@ -108,9 +108,10 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             # Get last execution datetime
             last_exec = stats.get('last_execution')
             if last_exec:
+                # Format timestamp with milliseconds (drop last 3 chars to convert microseconds to milliseconds)
                 last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
                 last_exec_timestamp = int(last_exec.timestamp() * 1000)
-                last_exec_display = "{} ({})".format(last_exec_str, last_exec_timestamp)
+                last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_timestamp)
             else:
                 last_exec_display = "Never"
 
@@ -148,9 +149,10 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                 runs = stats.get('total_runs', 0)
                 last_exec = stats.get('last_execution')
                 if last_exec:
+                    # Format timestamp with milliseconds (drop last 3 chars to convert microseconds to milliseconds)
                     last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
                     last_exec_timestamp = int(last_exec.timestamp() * 1000)
-                    last_exec_display = "{} ({})".format(last_exec_str, last_exec_timestamp)
+                    last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_timestamp)
                 else:
                     last_exec_display = "Never"
 
@@ -188,9 +190,10 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                 runs = stats.get('total_runs', 0)
                 last_exec = stats.get('last_execution')
                 if last_exec:
+                    # Format timestamp with milliseconds (drop last 3 chars to convert microseconds to milliseconds)
                     last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
                     last_exec_timestamp = int(last_exec.timestamp() * 1000)
-                    last_exec_display = "{} ({})".format(last_exec_str, last_exec_timestamp)
+                    last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_timestamp)
                 else:
                     last_exec_display = "Never"
 

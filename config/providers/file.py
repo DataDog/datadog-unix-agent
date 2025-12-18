@@ -14,9 +14,6 @@ from .provider import ConfigProvider
 log = logging.getLogger(__name__)
 
 
-class AmbiguousFileConfigSource(Exception):
-    pass
-
 class FileConfigProvider(ConfigProvider):
     VALID_EXTENSIONS = [
         '.yaml',
@@ -43,6 +40,20 @@ class FileConfigProvider(ConfigProvider):
         config_yamls = self._get_config_yamls()
         for config_path, config_file, is_default in config_yamls:
             yaml_path = os.path.join(config_path, config_file)
+
+            # First, validate directory structure before parsing YAML
+            place = None
+            for _place in self._places:
+                if os.path.realpath(config_path).startswith(_place):
+                    place = _place
+                    break
+
+            check = self._get_check_name_from_path(place, yaml_path)
+            if check is None:
+                # Invalid config path, skip it
+                continue
+
+            # Now parse and validate YAML
             with open(yaml_path, 'r') as stream:
                 try:
                     yaml_config = yaml.safe_load(stream)
@@ -108,8 +119,10 @@ class FileConfigProvider(ConfigProvider):
             return os.path.splitext(os.path.basename(path))[0]
 
         if not subdir.endswith('.d'):
-            raise AmbiguousFileConfigSource(
-                "Config doesn't appear to be in correct dir structure: {}".format(path))
+            # Log just the directory path, not the full file path
+            invalid_dir = os.path.dirname(path)
+            log.warning("Skipped config directory (expected *.d): %s", invalid_dir)
+            return None
 
         return subdir.split('.')[0]
 

@@ -29,12 +29,19 @@ class AgentStatusHandler(tornado.web.RequestHandler):
 
     def get(self):
         status = {}
+        check_stats = {}
 
+        # First pass: extract consolidated check stats from collector if available
+        if 'collector' in self._status:
+            _, collector_info = self._status['collector'].snapshot()
+            check_stats = collector_info.get('check_stats', {})
+
+        # Second pass: process all components
         for component, stats in self._status.items():
             log.debug("adding component %s to stats", component)
             stats_snap, info_snap = stats.snapshot()
             if component == 'agent':
-                info_snap = self.process_agent_info(info_snap)
+                info_snap = self.process_agent_info(info_snap, check_stats)
             elif component == 'collector':
                 info_snap = self.process_collector_info(info_snap)
 
@@ -74,16 +81,134 @@ class AgentStatusHandler(tornado.web.RequestHandler):
         except TypeError as e:
             log.error("unable to handle status request: %s", e)
 
-    def process_agent_info(self, info):
+    def process_agent_info(self, info, check_stats=None):
         processed = {}
+        if check_stats is None:
+            check_stats = {}
 
+        # Process metrics by instance (signature)
         for signature, values in info.get('sources', {}).items():
             log.debug("processing %s, %s", signature, values)
-            check = signature[0]
-            if check in processed:
-                processed[check]['metrics'] += values
+            check_name = signature[0]
+            signature_hash = signature[1]
+            instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
+
+            # Get stats for this check instance
+            stats = check_stats.get(signature_hash, {})
+            config_source = stats.get('config_source', 'unknown')
+            instance_index = stats.get('instance_index', 0)
+
+            # Calculate average execution time
+            exec_times_list = stats.get('execution_times', [])
+            avg_exec_time = sum(exec_times_list) / len(exec_times_list) if exec_times_list else 0
+
+            # Get total runs
+            runs = stats.get('total_runs', 0)
+
+            # Get last execution datetime
+            last_exec = stats.get('last_execution')
+            if last_exec:
+                # Format timestamp with milliseconds (drop last 3 chars to convert microseconds to milliseconds)
+                last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
+                last_exec_timestamp = int(last_exec.timestamp() * 1000)
+                last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_timestamp)
             else:
-                processed[check] = {'metrics': values}
+                last_exec_display = "Never"
+
+            processed[instance_id] = {
+                'check_name': check_name,
+                'signature_hash': signature_hash,
+                'config_source': config_source,
+                'instance_index': instance_index,
+                'metrics': values,
+                'service_checks': 0,
+                'events': 0,
+                'avg_execution_time_ms': round(avg_exec_time, 0),
+                'total_runs': runs,
+                'last_execution': last_exec_display
+            }
+
+        # Add service check counts from aggregator service_check_sources
+        service_check_sources = info.get('service_check_sources', {})
+        for signature, count in service_check_sources.items():
+            check_name = signature[0]
+            signature_hash = signature[1]
+            instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
+
+            if instance_id in processed:
+                processed[instance_id]['service_checks'] = count
+            else:
+                # Service check submitted without metrics
+                stats = check_stats.get(signature_hash, {})
+                config_source = stats.get('config_source', 'unknown')
+                instance_index = stats.get('instance_index', 0)
+
+                # Calculate execution stats
+                exec_times_list = stats.get('execution_times', [])
+                avg_exec_time = sum(exec_times_list) / len(exec_times_list) if exec_times_list else 0
+                runs = stats.get('total_runs', 0)
+                last_exec = stats.get('last_execution')
+                if last_exec:
+                    # Format timestamp with milliseconds (drop last 3 chars to convert microseconds to milliseconds)
+                    last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
+                    last_exec_timestamp = int(last_exec.timestamp() * 1000)
+                    last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_timestamp)
+                else:
+                    last_exec_display = "Never"
+
+                processed[instance_id] = {
+                    'check_name': check_name,
+                    'signature_hash': signature_hash,
+                    'config_source': config_source,
+                    'instance_index': instance_index,
+                    'metrics': 0,
+                    'service_checks': count,
+                    'events': 0,
+                    'avg_execution_time_ms': round(avg_exec_time, 0),
+                    'total_runs': runs,
+                    'last_execution': last_exec_display
+                }
+
+        # Add event counts from aggregator event_sources
+        event_sources = info.get('event_sources', {})
+        for signature, count in event_sources.items():
+            check_name = signature[0]
+            signature_hash = signature[1]
+            instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
+
+            if instance_id in processed:
+                processed[instance_id]['events'] = count
+            else:
+                # Event submitted without metrics or service checks
+                stats = check_stats.get(signature_hash, {})
+                config_source = stats.get('config_source', 'unknown')
+                instance_index = stats.get('instance_index', 0)
+
+                # Calculate execution stats
+                exec_times_list = stats.get('execution_times', [])
+                avg_exec_time = sum(exec_times_list) / len(exec_times_list) if exec_times_list else 0
+                runs = stats.get('total_runs', 0)
+                last_exec = stats.get('last_execution')
+                if last_exec:
+                    # Format timestamp with milliseconds (drop last 3 chars to convert microseconds to milliseconds)
+                    last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
+                    last_exec_timestamp = int(last_exec.timestamp() * 1000)
+                    last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_timestamp)
+                else:
+                    last_exec_display = "Never"
+
+                processed[instance_id] = {
+                    'check_name': check_name,
+                    'signature_hash': signature_hash,
+                    'config_source': config_source,
+                    'instance_index': instance_index,
+                    'metrics': 0,
+                    'service_checks': 0,
+                    'events': count,
+                    'avg_execution_time_ms': round(avg_exec_time, 0),
+                    'total_runs': runs,
+                    'last_execution': last_exec_display
+                }
 
         return {'checks': processed}
 

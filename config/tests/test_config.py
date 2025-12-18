@@ -390,10 +390,14 @@ class TestConfig():
         assert config.data['comics']['marvel']['hulk'] == 'bruce banner'
         assert config.data['comics']['dc']['flash'] == 'barry allen'
 
-        os.unsetenv('DD_LOGGING_AGENT_LOG_FILE')
-        os.unsetenv('DD_LOGGING_DOGSTATSD_LOG_FILE')
-        os.unsetenv('DD_COMICS_MARVEL_HULK')
-        os.unsetenv('DD_COMICS_DC_FLASH')
+        # Clean up environment variables properly (os.unsetenv doesn't remove from os.environ dict)
+        for var in ['DD_LOGGING_AGENT_LOG_FILE', 'DD_LOGGING_DOGSTATSD_LOG_FILE', 
+                    'DD_COMICS_MARVEL_HULK', 'DD_COMICS_DC_FLASH']:
+            os.environ.pop(var, None)
+            try:
+                os.unsetenv(var)
+            except:
+                pass
 
     def test_build_defaults(self):
         config = Config()

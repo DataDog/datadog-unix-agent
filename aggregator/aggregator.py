@@ -44,7 +44,6 @@ class Aggregator(object):
                  formatter=None, recent_point_threshold=None,
                  histogram_aggregates=None, histogram_percentiles=None,
                  utf8_decoding=False):
-        # TODO(jaime): add support for event, service_check sources
         self.events = []
         self.service_checks = []
         self.stats = Stats()
@@ -297,7 +296,7 @@ class Aggregator(object):
         raise NotImplementedError()
 
     def event(self, title, text, date_happened=None, alert_type=None, aggregation_key=None,
-              source_type_name=None, priority=None, tags=None, hostname=None):
+              source_type_name=None, priority=None, tags=None, hostname=None, source=None):
         event = {
             'msg_title': title,
             'msg_text': text,
@@ -323,8 +322,31 @@ class Aggregator(object):
 
         self.events.append(event)
 
+        # Track event count by source (if available)
+        if source and hasattr(self, 'event_sources'):
+            self.event_sources[source] += 1
+
+    def submit_event(self, check, check_name, event_dict):
+        """
+        Submit an event from a check instance.
+        This is a wrapper around the event() method that extracts source tracking.
+        """
+        source = (check_name, check.signature)
+        self.event(
+            title=event_dict.get('msg_title', ''),
+            text=event_dict.get('msg_text', ''),
+            date_happened=event_dict.get('timestamp'),
+            alert_type=event_dict.get('alert_type'),
+            aggregation_key=event_dict.get('aggregation_key'),
+            source_type_name=event_dict.get('source_type_name'),
+            priority=event_dict.get('priority'),
+            tags=event_dict.get('tags'),
+            hostname=event_dict.get('host'),
+            source=source
+        )
+
     def service_check(self, check_name, status, tags=None, timestamp=None,
-                      hostname=None, message=None):
+                      hostname=None, message=None, source=None):
         service_check = {
             'check': check_name,
             'status': status,
@@ -342,6 +364,10 @@ class Aggregator(object):
 
         self.service_checks.append(service_check)
 
+        # Track service check count by source (if available)
+        if source and hasattr(self, 'service_check_sources'):
+            self.service_check_sources[source] += 1
+
     def flush(self):
         """ Flush aggregated metrics """
         raise NotImplementedError()
@@ -349,6 +375,11 @@ class Aggregator(object):
     def flush_events(self):
         events = self.events
         self.events = []
+
+        # Save event source tracking to stats before clearing
+        if hasattr(self, 'event_sources'):
+            self.stats.set_info('event_sources', dict(self.event_sources))
+            self.event_sources.clear()
 
         self.stats.set_stat('events', self.event_count)
         self.stats.inc_stat('events_total', self.event_count)
@@ -362,9 +393,14 @@ class Aggregator(object):
         service_checks = self.service_checks
         self.service_checks = []
 
-        self.stats.set_stat('service_checks', self.service_check_count)
-        self.stats.inc_stat('service_checks_total', self.service_check_count)
-        self.service_check_count = 0
+        # Save service check counts by source (if tracked)
+        if hasattr(self, 'service_check_sources'):
+            self.stats.set_info('service_check_sources', dict(self.service_check_sources))
+            self.service_check_sources.clear()
+
+        self.stats.set_stat('service_checks', len(service_checks))
+        self.stats.inc_stat('service_checks_total', len(service_checks))
+        self.service_check_count = len(service_checks)
 
         log.info("Received %d service check runs since last flush", len(service_checks))
 
@@ -547,6 +583,8 @@ class MetricsAggregator(Aggregator):
             utf8_decoding
         )
         self.sources = defaultdict(set)
+        self.service_check_sources = defaultdict(int)  # Track service check counts by source
+        self.event_sources = defaultdict(int)  # Track event counts by source
         self.metrics = {}
         self.metric_type_to_class = MetricResolver()
 

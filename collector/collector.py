@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import time
+from datetime import datetime
 from collections import defaultdict
 from copy import copy, deepcopy
 import logging
@@ -29,6 +30,7 @@ class Collector(object):
         self._check_instance_errors = defaultdict(dict)
         self._check_instances = defaultdict(list)
         self._check_instance_signatures = {}
+        self._check_stats = {}  # Consolidated stats per check instance signature
         self._hostname = get_hostname()
         self._aggregator = aggregator
         self._status = Stats()
@@ -98,6 +100,11 @@ class Collector(object):
                         instances = config.get('instances')  # should be single instance
                         # Convert any None values to empty dicts
                         instances = [i if isinstance(i, dict) else {} for i in instances]
+
+                        # Extract metadata if present
+                        config_source_path = config.get('_config_source', source)
+                        instance_index = config.get('_instance_index', 0)
+
                         for instance in instances:
                             signature = (check_name, init_config, instance)
                             signature_hash = AgentCheck.signature_hash(*signature)
@@ -161,14 +168,24 @@ class Collector(object):
                                 # Register instance
                                 self._check_instances[check_name].append(check_instance)
                                 self._check_instance_signatures[signature_hash] = signature
+
+                                # Initialize consolidated stats for this instance
+                                self._check_stats[signature_hash] = {
+                                    'config_source': config_source_path,
+                                    'instance_index': instance_index,
+                                    'execution_times': [],
+                                    'total_runs': 0,
+                                    'last_execution': None
+                                }
                             except Exception as e:
                                 log.error("unable to instantiate instance %s for %s: %s",
                                           instance, check_name, e)
 
+        # Expose consolidated check stats for status display
+        self._status.set_info('check_stats', copy(self._check_stats))
 
     def run_checks(self):
         for name, checks in self._check_instances.items():
-            log.info('running check %s...', name)
             for check in checks:
                 now = time.monotonic()
 
@@ -176,15 +193,45 @@ class Collector(object):
                 if hasattr(check, 'min_collection_interval'):
                     elapsed = now - getattr(check, '_last_run_time', 0)
                     if elapsed < check.min_collection_interval:
-                        log.info(
+                        log.debug(
                             'Skipping %s: only %.2fs elapsed (interval %.2fs)',
                             name, elapsed, check.min_collection_interval
                         )
                         continue  # skip execution
 
+                # Track execution time
+                start_time = time.monotonic()
+                execution_datetime = datetime.utcnow()
+
+                # Log only when actually running the check
+                log.info('Running check %s...', name)
+
                 try:
                     result = check.run()
                     check._last_run_time = now  # update after successful run
+
+                    # Calculate execution time in milliseconds
+                    execution_time_ms = (time.monotonic() - start_time) * 1000
+
+                    # Track execution metrics in consolidated stats
+                    if check.signature not in self._check_stats:
+                        self._check_stats[check.signature] = {
+                            'config_source': 'unknown',
+                            'instance_index': 0,
+                            'execution_times': [],
+                            'total_runs': 0,
+                            'last_execution': None
+                        }
+
+                    stats = self._check_stats[check.signature]
+                    stats['execution_times'].append(execution_time_ms)
+                    stats['total_runs'] += 1
+                    stats['last_execution'] = execution_datetime
+
+                    # Keep only last 100 execution times for averaging (to avoid unbounded growth)
+                    if len(stats['execution_times']) > 100:
+                        stats['execution_times'].pop(0)
+
                 except Exception:
                     log.exception("error for instance: %s", str(check.instance))
 
@@ -194,3 +241,4 @@ class Collector(object):
                     log.error('Traceback %s: %s', name, result.get('traceback'))
 
         self._status.set_info('runtime_errors', deepcopy(self._check_instance_errors))
+        self._status.set_info('check_stats', copy(self._check_stats))

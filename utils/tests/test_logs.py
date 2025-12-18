@@ -23,16 +23,50 @@ class TestLogging:
 
     def setup_method(self):
         """Reset logging state before each test"""
-        # Store initial handler count for comparison
-        self.initial_handlers = list(logging.getLogger().handlers)
+        # Aggressively clear ALL handlers from root logger and all child loggers
+        root_logger = logging.getLogger()
         
-        # Clear any existing handlers
-        logging.getLogger().handlers.clear()
+        # Clear handlers from root logger
+        for handler in root_logger.handlers[:]:
+            try:
+                handler.flush()
+                handler.close()
+            except:
+                pass
+            root_logger.removeHandler(handler)
+        
+        # Clear handlers from all loggers in the logging module
+        for name in list(logging.Logger.manager.loggerDict.keys()):
+            logger = logging.getLogger(name)
+            for handler in logger.handlers[:]:
+                try:
+                    handler.flush()
+                    handler.close()
+                except:
+                    pass
+                logger.removeHandler(handler)
+        
+        # Reset root logger level to NOTSET so it can be configured fresh
+        root_logger.setLevel(logging.NOTSET)
+        
+        # Clear any environment variables that might affect logging
+        for env_var in ['DD_LOGGING_AGENT_LOG_FILE', 'DD_LOGGING_DOGSTATSD_LOG_FILE', 
+                       'DD_LOGGING_DISABLE_CONSOLE_LOGGING', 'DD_LOGGING_DISABLE_FILE_LOGGING']:
+            os.environ.pop(env_var, None)
         
         # Reset config state
         config.data = {}
         config._loaded_config = None
         config.search_paths.clear()
+    
+    def teardown_method(self):
+        """Clean up logging state after each test"""
+        root_logger = logging.getLogger()
+        # Close and remove all handlers
+        for handler in root_logger.handlers[:]:
+            handler.close()
+            root_logger.removeHandler(handler)
+        root_logger.setLevel(logging.WARNING)  # Reset to default
 
     def _get_config_disable_console_value(self):
         """Get the actual disable_console_logging value, handling string/boolean conversion"""
@@ -154,6 +188,8 @@ class TestLogging:
         """Test that both file and console logging can work together"""
         # Create temp directory for log file
         temp_dir = tempfile.mkdtemp()
+        # Ensure temp directory is writable
+        os.chmod(temp_dir, 0o755)
         log_file_path = os.path.join(temp_dir, 'test_agent.log')
         
         # Create a config with both file and console logging
@@ -179,13 +215,29 @@ class TestLogging:
             initialize_logging('agent')
             
             # Test logging
+            root_logger = logging.getLogger()
             logger = logging.getLogger('test')
-            logger.info("Test message for dual logging")
+            
+            # Log directly to root logger to ensure it goes to file handler
+            root_logger.info("Test message for dual logging")
+            logger.info("Test message from test logger")
+            
+            # Flush all handlers to ensure logs are written to disk
+            for handler in root_logger.handlers:
+                handler.flush()
             
             # Check handlers
-            root_logger = logging.getLogger()
-            has_file_handler = any(isinstance(h, logging.handlers.RotatingFileHandler) 
-                                   for h in root_logger.handlers)
+            file_handlers = [h for h in root_logger.handlers 
+                           if isinstance(h, logging.handlers.RotatingFileHandler)]
+            has_file_handler = len(file_handlers) > 0
+            
+            # Debug: Check handler details
+            if not os.path.exists(log_file_path) and has_file_handler:
+                for h in file_handlers:
+                    sys.stderr.write(f"Handler baseFilename: {h.baseFilename}\n")
+                    sys.stderr.write(f"Expected log_file_path: {log_file_path}\n")
+                    sys.stderr.write(f"Handler baseFilename exists: {os.path.exists(h.baseFilename)}\n")
+                    sys.stderr.write(f"os.access check for {os.path.dirname(log_file_path)}: {os.access(os.path.dirname(log_file_path), os.R_OK | os.W_OK)}\n")
             
             # Check if log file was created and has content
             log_file_exists = os.path.exists(log_file_path)
@@ -196,8 +248,8 @@ class TestLogging:
             assert not config.get('logging', {}).get('disable_file_logging', False), "File logging should be enabled"
             
             # Verify file logging works
-            assert has_file_handler, "File handler should be present"
-            assert log_file_exists, "Log file should be created"
+            assert has_file_handler, f"File handler should be present (found {len(file_handlers)} handlers)"
+            assert log_file_exists, f"Log file should be created at {log_file_path}"
             assert log_file_size > 0, "Log file should contain data"
             
         finally:
@@ -210,6 +262,8 @@ class TestLogging:
         """Test that file logging works when console logging is disabled"""
         # Create temp directory for log file
         temp_dir = tempfile.mkdtemp()
+        # Ensure temp directory is writable
+        os.chmod(temp_dir, 0o755)
         log_file_path = os.path.join(temp_dir, 'test_agent.log')
         
         # Create a config with only file logging
@@ -238,10 +292,23 @@ class TestLogging:
             logger = logging.getLogger('test')
             logger.info("Test message for file-only logging")
             
-            # Check handlers
+            # Flush all handlers to ensure logs are written to disk
             root_logger = logging.getLogger()
-            has_file_handler = any(isinstance(h, logging.handlers.RotatingFileHandler) 
-                                   for h in root_logger.handlers)
+            for handler in root_logger.handlers:
+                handler.flush()
+            
+            # Check handlers
+            file_handlers = [h for h in root_logger.handlers 
+                           if isinstance(h, logging.handlers.RotatingFileHandler)]
+            has_file_handler = len(file_handlers) > 0
+            
+            # Debug: Check handler details
+            if not os.path.exists(log_file_path) and has_file_handler:
+                for h in file_handlers:
+                    sys.stderr.write(f"Handler baseFilename: {h.baseFilename}\n")
+                    sys.stderr.write(f"Expected log_file_path: {log_file_path}\n")
+                    sys.stderr.write(f"Handler baseFilename exists: {os.path.exists(h.baseFilename)}\n")
+                    sys.stderr.write(f"os.access check for {os.path.dirname(log_file_path)}: {os.access(os.path.dirname(log_file_path), os.R_OK | os.W_OK)}\n")
             
             # Check if log file was created and has content
             log_file_exists = os.path.exists(log_file_path)
@@ -252,8 +319,8 @@ class TestLogging:
             assert not config.get('logging', {}).get('disable_file_logging', False), "File logging should be enabled"
             
             # Verify file logging works even with console disabled
-            assert has_file_handler, "File handler should be present"
-            assert log_file_exists, "Log file should be created"
+            assert has_file_handler, f"File handler should be present (found {len(file_handlers)} handlers)"
+            assert log_file_exists, f"Log file should be created at {log_file_path}"
             assert log_file_size > 0, "Log file should contain data"
             
         finally:

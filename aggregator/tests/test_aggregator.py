@@ -921,3 +921,53 @@ class TestMetricsAggregator():
         assert info['sources']['bar'] == 2
         assert info['sources']['haz'] == 1
         assert info['sources'][UNKNOWN_SOURCE] == 1
+
+    def test_service_check_source_classification(self):
+        myaggregator = MetricsAggregator('myhost')
+
+        # Submit service checks from different sources
+        myaggregator.service_check('my.check', 0, source='foo')
+        myaggregator.service_check('my.check', 0, source='foo')
+        myaggregator.service_check('my.other.check', 0, source='foo')
+
+        # Same check different source
+        myaggregator.service_check('my.check', 0, source='bar')
+        myaggregator.service_check('my.check', 0, source='bar')
+
+        # Same check different source
+        myaggregator.service_check('my.check', 0, source='haz')
+
+        service_checks = myaggregator.flush_service_checks()
+        assert len(service_checks) == 6
+
+        _, info = myaggregator.stats.snapshot()
+        assert 'service_check_sources' in info
+        assert len(info['service_check_sources']) == 3
+        assert info['service_check_sources']['foo'] == 3
+        assert info['service_check_sources']['bar'] == 2
+        assert info['service_check_sources']['haz'] == 1
+
+    def test_event_source_classification(self):
+        myaggregator = MetricsAggregator('myhost')
+
+        # Submit events from different sources
+        myaggregator.event('title1', 'text1', source='foo')
+        myaggregator.event('title2', 'text2', source='foo')
+        myaggregator.event('title3', 'text3', source='foo')
+
+        # Same event different source
+        myaggregator.event('title1', 'text1', source='bar')
+        myaggregator.event('title2', 'text2', source='bar')
+
+        # Same event different source
+        myaggregator.event('title1', 'text1', source='haz')
+
+        events = myaggregator.flush_events()
+        assert len(events) == 6
+
+        _, info = myaggregator.stats.snapshot()
+        assert 'event_sources' in info
+        assert len(info['event_sources']) == 3
+        assert info['event_sources']['foo'] == 3
+        assert info['event_sources']['bar'] == 2
+        assert info['event_sources']['haz'] == 1

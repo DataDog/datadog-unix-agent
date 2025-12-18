@@ -112,9 +112,6 @@ def init_config(do_log=True):
     file_provider.add_place(config.get('additional_checksd'))
     config.add_provider('file', file_provider)
 
-    # FIXME: perhaps do this elsewhere
-    config.collect_check_configs()
-
 
 class Agent(Daemon):
     # dictionary k:v - command:log
@@ -246,6 +243,9 @@ class Agent(Daemon):
             aggregator,
             forwarder,
         )
+
+        # collect check configurations
+        config.collect_check_configs()
 
         # instantiate collector
         collector = Collector(config, aggregator)

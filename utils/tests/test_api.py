@@ -4,6 +4,7 @@
 # Copyright 2018 Datadog, Inc.
 
 import requests  # noqa: F401
+import pytest
 
 from utils.api import (
     validate_api_key,
@@ -13,6 +14,17 @@ from utils.api import (
     OTHER_ERROR_MSG,
 )
 from config import config
+from config.default import DEFAULT_DD_URL
+
+
+@pytest.fixture(autouse=True)
+def setup_config():
+    """Ensure config has required values before each test."""
+    # Set dd_url if not already set
+    if not config.get('dd_url'):
+        config.set('dd_url', DEFAULT_DD_URL)
+    yield
+    # Cleanup after test (optional)
 
 
 def test_validate_api_key(requests_mock):

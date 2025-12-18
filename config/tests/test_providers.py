@@ -6,10 +6,7 @@
 import os
 import pytest
 
-from config.providers import (
-    FileConfigProvider,
-    AmbiguousFileConfigSource,
-)
+from config.providers import FileConfigProvider
 
 
 class TestFileProvider():
@@ -58,9 +55,10 @@ class TestFileProvider():
         check = provider._get_check_name_from_path(place, file_two)
         assert check == "foo"
 
-        with pytest.raises(AmbiguousFileConfigSource):
-            file_two = '/etc/datadog-agent/conf.d/foo/conf.yaml'
-            check = provider._get_check_name_from_path(place, file_two)
+        # Invalid directory structure should return None instead of raising exception
+        file_invalid = '/etc/datadog-agent/conf.d/foo/conf.yaml'
+        check = provider._get_check_name_from_path(place, file_invalid)
+        assert check is None
 
     def test_provider(self):
         provider = FileConfigProvider()
@@ -78,3 +76,39 @@ class TestFileProvider():
         assert len(configs) > 0
         assert 'sample_check' in configs
         assert len(configs['sample_check']) == 2
+
+    def test_invalid_directory_structure(self, tmpdir):
+        """Test that invalid config directories (not ending in .d) are skipped gracefully."""
+        provider = FileConfigProvider()
+
+        # Create valid config directory (ends with .d)
+        valid_dir = tmpdir.mkdir("conf.d").mkdir("valid_check.d")
+        valid_config = valid_dir.join("conf.yaml")
+        valid_config.write("""init_config:
+
+instances:
+  - {}
+""")
+
+        # Create invalid config directory (doesn't end with .d)
+        conf_d = tmpdir.join("conf.d")
+        invalid_dir = conf_d.mkdir("invalid_check")
+        invalid_config = invalid_dir.join("conf.yaml")
+        invalid_config.write("""init_config:
+
+instances:
+  - {}
+""")
+
+        # Add the conf.d directory
+        provider.add_place(str(conf_d))
+
+        # Collect configs - should not raise exception
+        configs = provider.collect()
+
+        # Should have the valid check
+        assert 'valid_check' in configs
+        assert len(configs['valid_check']) == 1
+
+        # Should NOT have the invalid check (it was skipped)
+        assert 'invalid_check' not in configs

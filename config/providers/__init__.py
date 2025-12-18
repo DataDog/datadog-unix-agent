@@ -6,11 +6,9 @@
 from .file import (
     ConfigProvider,
     FileConfigProvider,
-    AmbiguousFileConfigSource,
 )
 
 __all__ = [
     'ConfigProvider',
     'FileConfigProvider',
-    'AmbiguousFileConfigSource',
 ]

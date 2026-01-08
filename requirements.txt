@@ -2,7 +2,7 @@ asn1crypto==0.24.0
 atomicwrites==1.1.5
 attrs==18.1.0
 backports-abc==0.5
-certifi==2018.4.16
+certifi==2025.11.12
 cffi==1.14.4
 chardet==3.0.4
 charset-normalizer==2.0.12

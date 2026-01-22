@@ -3,4 +3,4 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2018 Datadog, Inc.
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

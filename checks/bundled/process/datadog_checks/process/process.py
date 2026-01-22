@@ -170,6 +170,36 @@ class Process(AgentCheck):
 
         return result
 
+    def _get_or_cache_process(self, name, pid):
+        """
+        Get a process from cache or create and cache it if not present.
+        Returns the cached psutil.Process object or None if unavailable.
+        """
+        # Check if already cached and still running
+        if pid in self.process_cache[name]:
+            try:
+                if self.process_cache[name][pid].is_running():
+                    return self.process_cache[name][pid]
+            except psutil.AccessDenied:
+                # Process exists but we can't check if running, return cached version
+                return self.process_cache[name][pid]
+            except psutil.NoSuchProcess:
+                # Process died, remove from cache
+                del self.process_cache[name][pid]
+
+        # Not in cache or not running, try to create new process object
+        try:
+            proc = psutil.Process(pid)
+            self.process_cache[name][pid] = proc
+            self.log.debug('New process in cache: %s', pid)
+            return proc
+        except psutil.NoSuchProcess:
+            self.log.debug("Process %s disappeared while caching", pid)
+            return None
+        except psutil.AccessDenied:
+            self.log.debug('Access denied to process %s', pid)
+            return None
+
     def get_process_state(self, name, pids):
         st = defaultdict(list)
 
@@ -182,21 +212,15 @@ class Process(AgentCheck):
         for pid in pids:
             st['pids'].append(pid)
 
-            new_process = False
-            # If the pid's process is not cached, retrieve it
-            if (pid not in self.process_cache[name] or not self.process_cache[name][pid].is_running()):
-                new_process = True
-                try:
-                    self.process_cache[name][pid] = psutil.Process(pid)
-                    self.log.debug('New process in cache: %s', pid)
-                # Skip processes dead in the meantime
-                except psutil.NoSuchProcess:
-                    self.warning("Process {} disappeared while scanning".format(pid))
-                    # reset the PID cache now, something changed
-                    self.last_pid_cache_ts[name] = 0
-                    continue
+            # Track if this is a new process for CPU percent calculation
+            new_process = pid not in self.process_cache[name]
 
-            p = self.process_cache[name][pid]
+            # Get or cache the process
+            p = self._get_or_cache_process(name, pid)
+            if p is None:
+                # Process unavailable (died or access denied)
+                self.last_pid_cache_ts[name] = 0
+                continue
 
             meminfo = self.psutil_wrapper(p, 'memory_info', ['rss', 'vms'])
             st['rss'].append(meminfo.get('rss'))
@@ -242,15 +266,18 @@ class Process(AgentCheck):
 
         return st
 
-    def _get_child_processes(self, pids):
+    def _get_child_processes(self, name, pids):
         children_pids = set()
         for pid in pids:
+            proc = self._get_or_cache_process(name, pid)
+            if proc is None:
+                continue
             try:
-                children = psutil.Process(pid).children(recursive=True)
+                children = proc.children(recursive=True)
                 self.log.debug('%s children were collected for process %s', len(children), pid)
                 for child in children:
                     children_pids.add(child.pid)
-            except psutil.NoSuchProcess:
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 
         return children_pids
@@ -281,12 +308,12 @@ class Process(AgentCheck):
         if pid is not None:
             # we use Process(pid) as a means to search, if pid not found
             # psutil.NoSuchProcess is raised.
-            pids = self._get_pid_set(pid)
+            pids = self._get_pid_set(name, pid)
         elif pid_file is not None:
             try:
                 with open(pid_file, 'r') as file_pid:
                     pid_line = file_pid.readline().strip()
-                    pids = self._get_pid_set(int(pid_line))
+                    pids = self._get_pid_set(name, int(pid_line))
             except IOError as e:
                 # pid file doesn't exist, assuming the process is not running
                 self.log.debug('Unable to find pid file: %s', e)
@@ -302,10 +329,10 @@ class Process(AgentCheck):
             raise ValueError('The "search_string" or "pid" options are required for process identification')
 
         if collect_children:
-            pids.update(self._get_child_processes(pids))
+            pids.update(self._get_child_processes(name, pids))
 
         if user:
-            pids = self._filter_by_user(user, pids)
+            pids = self._filter_by_user(name, user, pids)
 
         proc_state = self.get_process_state(name, pids)
 
@@ -333,11 +360,11 @@ class Process(AgentCheck):
 
         self._process_service_check(name, len(pids), instance.get('thresholds', None), tags)
 
-    def _get_pid_set(self, pid):
-        try:
-            return {psutil.Process(pid).pid}
-        except psutil.NoSuchProcess:
+    def _get_pid_set(self, name, pid):
+        proc = self._get_or_cache_process(name, pid)
+        if proc is None:
             return set()
+        return {proc.pid}
 
     def _process_service_check(self, name, nb_procs, bounds, tags):
         """
@@ -373,23 +400,26 @@ class Process(AgentCheck):
             message="PROCS {}: {} processes found for {}".format(status_str[status], nb_procs, name)
         )
 
-    def _filter_by_user(self, user, pids):
+    def _filter_by_user(self, name, user, pids):
         """
         Filter pids by it's username.
+        :param name: check name for caching
         :param user: string with name of system user
         :param pids: set of pids to filter
         :return: set of filtered pids
         """
         filtered_pids = set()
         for pid in pids:
+            proc = self._get_or_cache_process(name, pid)
+            if proc is None:
+                continue
             try:
-                proc = psutil.Process(pid)
                 if proc.username() == user:
                     self.log.debug("Collecting pid %s belonging to %s", pid, user)
                     filtered_pids.add(pid)
                 else:
                     self.log.debug("Discarding pid %s not belonging to %s", pid, user)
-            except psutil.NoSuchProcess:
-                pass
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                self.log.debug("Cannot get username for process %s", pid)
 
         return filtered_pids

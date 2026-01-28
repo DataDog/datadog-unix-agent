@@ -184,16 +184,28 @@ class Process(AgentCheck):
 
             new_process = False
             # If the pid's process is not cached, retrieve it
-            if (pid not in self.process_cache[name] or not self.process_cache[name][pid].is_running()):
-                new_process = True
-                try:
-                    self.process_cache[name][pid] = psutil.Process(pid)
-                    self.log.debug('New process in cache: %s', pid)
-                # Skip processes dead in the meantime
-                except psutil.NoSuchProcess:
-                    self.warning("Process {} disappeared while scanning".format(pid))
-                    # reset the PID cache now, something changed
-                    self.last_pid_cache_ts[name] = 0
+            try:
+                if (pid not in self.process_cache[name] or not self.process_cache[name][pid].is_running()):
+                    new_process = True
+                    try:
+                        self.process_cache[name][pid] = psutil.Process(pid)
+                        self.log.debug('New process in cache: %s', pid)
+                    # Skip processes dead in the meantime
+                    except psutil.NoSuchProcess:
+                        self.warning("Process {} disappeared while scanning".format(pid))
+                        # reset the PID cache now, something changed
+                        self.last_pid_cache_ts[name] = 0
+                        continue
+                    except psutil.AccessDenied:
+                        self.log.debug("Access denied when creating process object for pid %s", pid)
+                        # reset the PID cache now, something changed
+                        self.last_pid_cache_ts[name] = 0
+                        continue
+            except psutil.AccessDenied:
+                # AccessDenied on is_running() check, process exists but we can't check status
+                # Keep the cached version if available, otherwise skip
+                if pid not in self.process_cache[name]:
+                    self.log.debug("Access denied when checking if process %s is running", pid)
                     continue
 
             p = self.process_cache[name][pid]
@@ -252,6 +264,8 @@ class Process(AgentCheck):
                     children_pids.add(child.pid)
             except psutil.NoSuchProcess:
                 pass
+            except psutil.AccessDenied:
+                self.log.debug("Access denied when getting children for process %s", pid)
 
         return children_pids
 
@@ -338,6 +352,9 @@ class Process(AgentCheck):
             return {psutil.Process(pid).pid}
         except psutil.NoSuchProcess:
             return set()
+        except psutil.AccessDenied:
+            self.log.debug("Access denied when accessing process %s", pid)
+            return set()
 
     def _process_service_check(self, name, nb_procs, bounds, tags):
         """
@@ -391,5 +408,7 @@ class Process(AgentCheck):
                     self.log.debug("Discarding pid %s not belonging to %s", pid, user)
             except psutil.NoSuchProcess:
                 pass
+            except psutil.AccessDenied:
+                self.log.debug("Access denied when getting username for process %s", pid)
 
         return filtered_pids

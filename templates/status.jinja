@@ -28,9 +28,18 @@ Configuration
 Running Checks
 ==============
 {% if agent.get('info', {}).get('checks', {})|length > 0 -%}
-{% for instance_id, stats in agent.get('info', {}).get('checks', {}).items()|sort(attribute='1.check_name') %}
-  {{ stats.get('check_name', 'unknown') }}
-  {{ '-'*stats.get('check_name', 'unknown')|length }}
+{%- set checks_by_name = {} %}
+{%- for instance_id, stats in agent.get('info', {}).get('checks', {}).items() %}
+  {%- set check_name = stats.get('check_name', 'unknown') %}
+  {%- if check_name not in checks_by_name %}
+    {%- set _ = checks_by_name.update({check_name: []}) %}
+  {%- endif %}
+  {%- set _ = checks_by_name[check_name].append((instance_id, stats)) %}
+{%- endfor %}
+{%- for check_name in checks_by_name|sort %}
+  {{ check_name }}
+  {{ '-'*check_name|length }}
+  {%- for instance_id, stats in checks_by_name[check_name]|sort %}
     Instance ID: {{ instance_id }}
     Configuration Source: file:{{ stats.get('config_source', 'unknown') }}[{{ stats.get('instance_index', 0) }}]
     Total Runs: {{ "{:,}".format(stats.get('total_runs', 0)) }}
@@ -39,8 +48,10 @@ Running Checks
     Service Checks: Last Run: {{ stats.get('service_checks', 0) }}
     Average Execution Time: {{ stats.get('avg_execution_time_ms', 0)|int }}ms
     Last Execution Date: {{ stats.get('last_execution', 'Never') }}
-{% endfor -%}
-{% else -%}
+{{ '' }}
+  {%- endfor %}
+{%- endfor %}
+{%- else -%}
   There are currently no running checks.
 {% endif -%}
 {% for check, errors in collector.get('info').get('errors').get('runtime', {}).items() %}

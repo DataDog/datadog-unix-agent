@@ -173,6 +173,7 @@ class Collector(object):
                                 self._check_stats[signature_hash] = {
                                     'config_source': config_source_path,
                                     'instance_index': instance_index,
+                                    'instance_name': instance.get('name'),  # Store instance name for display
                                     'execution_times': [],
                                     'total_runs': 0,
                                     'last_execution': None

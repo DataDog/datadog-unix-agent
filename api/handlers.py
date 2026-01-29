@@ -91,12 +91,18 @@ class AgentStatusHandler(tornado.web.RequestHandler):
             log.debug("processing %s, %s", signature, values)
             check_name = signature[0]
             signature_hash = signature[1]
-            instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
-
+            
             # Get stats for this check instance
             stats = check_stats.get(signature_hash, {})
             config_source = stats.get('config_source', 'unknown')
             instance_index = stats.get('instance_index', 0)
+            instance_name = stats.get('instance_name')
+            
+            # Build instance_id with instance name if available
+            if instance_name:
+                instance_id = "{}:{}:{}".format(check_name, instance_name, format(signature_hash, 'x'))
+            else:
+                instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
 
             # Calculate average execution time
             exec_times_list = stats.get('execution_times', [])
@@ -133,7 +139,14 @@ class AgentStatusHandler(tornado.web.RequestHandler):
         for signature, count in service_check_sources.items():
             check_name = signature[0]
             signature_hash = signature[1]
-            instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
+            
+            # Build instance_id with instance name if available
+            stats = check_stats.get(signature_hash, {})
+            instance_name = stats.get('instance_name')
+            if instance_name:
+                instance_id = "{}:{}:{}".format(check_name, instance_name, format(signature_hash, 'x'))
+            else:
+                instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
 
             if instance_id in processed:
                 processed[instance_id]['service_checks'] = count

@@ -12,7 +12,7 @@ enum34==1.1.6
 funcsigs==1.0.2
 idna==2.7
 ipaddress==1.0.22
-Jinja2==2.11.3
+Jinja2==3.1.6
 lxml==4.6.5
 MarkupSafe==2.0.1
 meld3==1.0.2

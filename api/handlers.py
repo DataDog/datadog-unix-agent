@@ -31,17 +31,19 @@ class AgentStatusHandler(tornado.web.RequestHandler):
         status = {}
         check_stats = {}
 
-        # First pass: extract consolidated check stats from collector if available
+        # First pass: extract consolidated check stats and runtime errors from collector if available
+        runtime_errors = {}
         if 'collector' in self._status:
             _, collector_info = self._status['collector'].snapshot()
             check_stats = collector_info.get('check_stats', {})
+            runtime_errors = collector_info.get('runtime_errors', {})
 
         # Second pass: process all components
         for component, stats in self._status.items():
             log.debug("adding component %s to stats", component)
             stats_snap, info_snap = stats.snapshot()
             if component == 'agent':
-                info_snap = self.process_agent_info(info_snap, check_stats)
+                info_snap = self.process_agent_info(info_snap, check_stats, runtime_errors)
             elif component == 'collector':
                 info_snap = self.process_collector_info(info_snap)
 
@@ -74,6 +76,7 @@ class AgentStatusHandler(tornado.web.RequestHandler):
 
         status['redacted_api'] = mask_api_key_value(self._config.get('api_key'))
         status['api_status'] = validate_api_key(self._config)
+        status['config_errors'] = self._config.get_config_errors()
 
         try:
             log.debug('status response to render: %s', status)
@@ -81,10 +84,12 @@ class AgentStatusHandler(tornado.web.RequestHandler):
         except TypeError as e:
             log.error("unable to handle status request: %s", e)
 
-    def process_agent_info(self, info, check_stats=None):
+    def process_agent_info(self, info, check_stats=None, runtime_errors=None):
         processed = {}
         if check_stats is None:
             check_stats = {}
+        if runtime_errors is None:
+            runtime_errors = {}
 
         # Process metrics by instance (signature)
         for signature, values in info.get('sources', {}).items():
@@ -222,6 +227,47 @@ class AgentStatusHandler(tornado.web.RequestHandler):
                     'total_runs': runs,
                     'last_execution': last_exec_display
                 }
+
+        # Merge runtime errors into existing stats (add error_message/traceback, or create entry if missing)
+        for check_name, errors in runtime_errors.items():
+            for signature_hash, error in errors.items():
+                stats = check_stats.get(signature_hash, {})
+                instance_name = stats.get('instance_name')
+                if instance_name:
+                    instance_id = "{}:{}:{}".format(check_name, instance_name, format(signature_hash, 'x'))
+                else:
+                    instance_id = "{}:{}".format(check_name, format(signature_hash, 'x'))
+
+                if instance_id in processed:
+                    processed[instance_id]['error_message'] = error.get('message', '')
+                    processed[instance_id]['traceback'] = error.get('traceback', '')
+                else:
+                    config_source = stats.get('config_source', 'unknown')
+                    instance_index = stats.get('instance_index', 0)
+                    total_runs = stats.get('total_runs', 0)
+                    exec_times_list = stats.get('execution_times', [])
+                    avg_exec_time = sum(exec_times_list) / len(exec_times_list) if exec_times_list else 0
+                    last_exec = stats.get('last_execution')
+                    if last_exec:
+                        last_exec_str = last_exec.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] + " UTC"
+                        last_exec_ts = int(last_exec.timestamp() * 1000)
+                        last_exec_display = "{} (ts: {})".format(last_exec_str, last_exec_ts)
+                    else:
+                        last_exec_display = "Never"
+                    processed[instance_id] = {
+                        'check_name': check_name,
+                        'signature_hash': signature_hash,
+                        'config_source': config_source,
+                        'instance_index': instance_index,
+                        'metrics': 0,
+                        'events': 0,
+                        'service_checks': 0,
+                        'avg_execution_time_ms': round(avg_exec_time, 0),
+                        'total_runs': total_runs,
+                        'last_execution': last_exec_display,
+                        'error_message': error.get('message', ''),
+                        'traceback': error.get('traceback', ''),
+                    }
 
         return {'checks': processed}
 

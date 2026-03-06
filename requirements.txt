@@ -32,7 +32,7 @@ requests==2.26.0
 singledispatch==3.4.0.3
 six==1.16.0
 supervisor==3.3.4; python_version < '3.0'
-tornado==5.1.1
+tornado==6.5.4
 uptime==3.0.1
 urllib3==1.26.6
 zstandard==0.20.0

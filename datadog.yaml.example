@@ -57,12 +57,15 @@ api_key: <api_key_here>                     # Datadog API key (required)
 #                                     # If not set, uses system defaults (HTTP_PROXY env var).
 #   https: http://localhost:3128      # HTTPS proxy.
 #                                     # If not set, uses system defaults (HTTPS_PROXY env var).
-#   no_proxy: datadoghq.com,localhost,127.0.0.1,169.254.169.254
-#                                     # Comma-separated list of hosts that bypass the proxy.
-#                                     # Defaults to:
-#                                     #   - 127.0.0.1
-#                                     #   - localhost
-#                                     #   - 169.254.169.254
+#   no_proxy:                         # Hosts that bypass the proxy (YAML list).
+#     - .datadoghq.com
+#     - localhost
+#     - 127.0.0.1
+#     - 169.254.169.254
+#                                     # If NO_PROXY / no_proxy is set in the environment, that value
+#                                     # is used alone (comma/semicolon split). Otherwise this list is
+#                                     # used and 127.0.0.1, localhost, 169.254.169.254 are appended
+#                                     # unless the list contains '*' (bypass-all for that path).
 
 # ---------------------------------------------------------------------------
 # DogStatsD configuration

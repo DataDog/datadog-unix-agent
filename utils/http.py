@@ -8,7 +8,7 @@ from config import config
 from config.config import AGENT_VERSION
 from typing import Optional
 from urllib.parse import urlparse
-from utils.network import get_proxy
+from utils.network import get_proxy, should_bypass_proxy
 from utils.util import _is_affirmative
 from utils.strip import mask_api_key_value
 
@@ -26,6 +26,17 @@ log = logging.getLogger(__name__)
 # -------------------------------------------------------------------
 MAX_COMPRESSED_SIZE = 2 << 20  # 2 MB – conservative limit
 MAX_SPLIT_DEPTH = 2            # for future payload-splitting logic
+
+
+def _no_proxy_uri_list(proxies):
+    """Split ``no`` / ``no_proxy`` from a requests ``proxies`` dict into tokens."""
+    raw = proxies.get("no_proxy") or proxies.get("no")
+    if raw is None:
+        return []
+    if isinstance(raw, (list, tuple)):
+        return [str(x).strip() for x in raw if str(x).strip()]
+    raw = str(raw).replace(";", ",")
+    return [p.strip() for p in raw.split(",") if p.strip()]
 
 
 def _compress_with_zstd(data: bytes, level: Optional[int] = None):
@@ -199,12 +210,6 @@ class RequestsWrapper:
         if "DD-API-KEY" in safe_headers:
             safe_headers["DD-API-KEY"] = mask_api_key_value(safe_headers["DD-API-KEY"])
 
-        # Debug request configuration
-        log.debug(
-            "[HTTP] %s %s; verify=%s; proxies=%s; timeout=%s; headers=%s",
-            method, url, merged["verify"], merged["proxies"], merged["timeout"], safe_headers,
-        )
-
         # ----------------------------------------------------------------------
         # Optional payload compression (POST/PUT with data)
         # ----------------------------------------------------------------------
@@ -248,6 +253,20 @@ class RequestsWrapper:
             merged["data"] = data
 
         merged["headers"] = headers
+
+        # requests.adapters.HTTPAdapter uses select_proxy(), which ignores no_proxy
+        # when http/https keys are present. Clear scheme proxies when bypass matches.
+        # Bypass rules follow integrations-core should_bypass_proxy (#5081).
+        proxies = merged.get("proxies")
+        if proxies:
+            no_proxy_uris = _no_proxy_uri_list(proxies)
+            if no_proxy_uris and should_bypass_proxy(url, no_proxy_uris):
+                merged["proxies"] = {**proxies, "http": None, "https": None}
+
+        log.debug(
+            "[HTTP] %s %s; verify=%s; proxies=%s; timeout=%s; headers=%s",
+            method, url, merged["verify"], merged["proxies"], merged["timeout"], safe_headers,
+        )
 
         # ----------------------------------------------------------------------
         # Actual HTTP request with safe error handling

@@ -46,6 +46,40 @@ def test_request_calls_session(monkeypatch):
         assert resp is mock_response
 
 
+def test_no_proxy_uri_list_falls_back_to_urllib_no_key():
+    from utils.http import _no_proxy_uri_list
+
+    assert _no_proxy_uri_list({"no": "a,b", "http": "x"}) == ["a", "b"]
+    assert _no_proxy_uri_list({"no_proxy": "c", "no": "d"}) == ["c"]
+
+
+def test_request_clears_scheme_proxies_when_no_proxy_bypass_matches(monkeypatch):
+    """
+    requests uses select_proxy(), which ignores no_proxy when http/https are set.
+    Null out scheme keys when should_bypass_proxy (integrations-core #5081) matches.
+    """
+    monkeypatch.setattr("config.config.get", lambda key, default=None: False)
+    fake_proxies = {
+        "http": "http://dummy:8888",
+        "https": "http://dummy:8888",
+        "no_proxy": "127.0.0.1,localhost,169.254.169.254,.datadoghq.com",
+    }
+    monkeypatch.setattr("utils.http.get_proxy", lambda: fake_proxies)
+
+    wrapper = RequestsWrapper()
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+
+    url = "https://unix.agent.datadoghq.com/intake/"
+    with patch.object(wrapper._session, "request", return_value=mock_response) as mock_request:
+        wrapper.request("POST", url, data=b"{}")
+        kwargs = mock_request.call_args[1]
+        p = kwargs["proxies"]
+        assert p["http"] is None
+        assert p["https"] is None
+        assert ".datadoghq.com" in (p.get("no_proxy") or "")
+
+
 @pytest.mark.parametrize(
     "skip_flag, expected_verify, warn_called",
     [

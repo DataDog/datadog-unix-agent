@@ -16,3 +16,7 @@ class ConfigProvider(object):
             return False
 
         return 'instances' in config
+
+    def get_config_errors(self):
+        '''Return list of config load errors for status display. Default: empty.'''
+        return []

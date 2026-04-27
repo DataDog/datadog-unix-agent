@@ -24,7 +24,12 @@ class FileConfigProvider(ConfigProvider):
 
     def __init__(self):
         self._places = set()
+        self._config_errors = []
         super(FileConfigProvider, self).__init__()
+
+    def get_config_errors(self):
+        """Return list of config load errors for status display."""
+        return list(self._config_errors)
 
     def add_place(self, place):
         if not os.path.isdir(place):
@@ -36,6 +41,7 @@ class FileConfigProvider(ConfigProvider):
     def collect(self):
         configs = defaultdict(list)
         defaults = defaultdict(list)
+        self._config_errors = []
 
         config_yamls = self._get_config_yamls()
         for config_path, config_file, is_default in config_yamls:
@@ -59,10 +65,25 @@ class FileConfigProvider(ConfigProvider):
                     yaml_config = yaml.safe_load(stream)
                 except yaml.YAMLError as e:
                     log.warn('unable to load YAML for %s: %s', yaml_path, e)
+                    err_msg = str(e).split('\n')[0].strip()
+                    if hasattr(e, 'problem_mark') and e.problem_mark is not None:
+                        message = 'yaml: line {}: {}'.format(e.problem_mark.line + 1, err_msg)
+                    else:
+                        message = err_msg
+                    self._config_errors.append({
+                        'check': check,
+                        'file': config_file,
+                        'message': message,
+                    })
                     continue
 
                 if not self.validate_config(yaml_config):
                     log.warn('bad configuration YAML in %s', yaml_path)
+                    self._config_errors.append({
+                        'check': check,
+                        'file': config_file,
+                        'message': 'bad configuration YAML',
+                    })
                     continue
 
             place = None

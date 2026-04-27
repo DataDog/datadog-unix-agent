@@ -274,3 +274,11 @@ class Config(object):
 
     def get_check_configs(self):
         return self._check_configs
+
+    def get_config_errors(self):
+        """Return list of config load errors from all providers for status display."""
+        errors = []
+        for provider in self._providers.values():
+            if hasattr(provider, 'get_config_errors'):
+                errors.extend(provider.get_config_errors())
+        return errors

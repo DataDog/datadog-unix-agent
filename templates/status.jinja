@@ -40,7 +40,7 @@ Running Checks
   {{ check_name }}
   {{ '-'*check_name|length }}
   {%- for instance_id, stats in checks_by_name[check_name]|sort %}
-    Instance ID: {{ instance_id }}
+    Instance ID: {{ instance_id }}{% if stats.get('error_message') %} [ERROR]{% else %} [OK]{% endif %}
     Configuration Source: file:{{ stats.get('config_source', 'unknown') }}[{{ stats.get('instance_index', 0) }}]
     Total Runs: {{ "{:,}".format(stats.get('total_runs', 0)) }}
     Metric Samples: Last Run: {{ stats.get('metrics', 0) }}
@@ -48,23 +48,38 @@ Running Checks
     Service Checks: Last Run: {{ stats.get('service_checks', 0) }}
     Average Execution Time: {{ stats.get('avg_execution_time_ms', 0)|int }}ms
     Last Execution Date: {{ stats.get('last_execution', 'Never') }}
+{% if stats.get('error_message') %}
+    Error: {{ stats.get('error_message') }}
+
+    {{ stats.get('traceback', '')|indent(width=4) }}
+{% endif -%}
 {{ '' }}
   {%- endfor %}
 {%- endfor %}
 {%- else -%}
   There are currently no running checks.
 {% endif -%}
-{% for check, errors in collector.get('info').get('errors').get('runtime', {}).items() %}
-  - {{ check }}
-    {{ '-'*check|length }}
-    {% for instance, error in errors.items() -%}
-    instance ({{ instance }}):
 
-        Error: {{ error.get('message') }}
-
-        {{ error.get('traceback', '')|indent(width=10) -}}
-    {% endfor -%}
-{% endfor %}
+{% if status.get('config_errors') %}
+Config Errors
+=============
+{%- set config_errors_by_check = {} %}
+{%- for err in status.get('config_errors', []) %}
+  {%- set check_name = err.get('check', 'unknown') %}
+  {%- if check_name not in config_errors_by_check %}
+    {%- set _ = config_errors_by_check.update({check_name: []}) %}
+  {%- endif %}
+  {%- set _ = config_errors_by_check[check_name].append({'file': err.get('file', ''), 'message': err.get('message', '')}) %}
+{%- endfor %}
+  {%- for check_name in config_errors_by_check|sort %}
+    {{ check_name }}
+    {{ '-'*check_name|length }}
+  {%- for item in config_errors_by_check[check_name] %}
+      {{ item.file + ': ' if item.file else '' }}{{ item.message }}
+  {%- endfor %}
+{{ '' }}
+{%- endfor %}
+{%- endif %}
 
 Aggregator
 ==========
@@ -74,7 +89,6 @@ Aggregator
   Service Check: {{ "{:,}".format(agent.get('stats', {}).get('service_checks', 0)) }}
   Service Checks Flushed: {{ "{:,}".format(agent.get('stats', {}).get('service_checks_total', 0)) }}
   Series Flushed: {{ "{:,}".format(agent.get('stats', {}).get('metrics_total', 0)) }}
-
 {% if collector.get('info').get('errors').get('loader', {})|length > 0 -%}
 Errors
 ======
@@ -86,7 +100,6 @@ Errors
     {% endfor -%}
 {%- endfor %}
 {%- endif %}
-
 Forwarder
 =========
   Submitted Series Payloads: {{ "{:,}".format(forwarder.get('stats', {}).get('series_payloads', 0)) }}
@@ -95,7 +108,6 @@ Forwarder
   Transactions Submitted: {{ "{:,}".format(forwarder.get('stats', {}).get('transactions_success', 0)) }}
   Transactions Rescheduled: {{ "{:,}".format(forwarder.get('stats', {}).get('transactions_rescheduled', 0)) }}
   Full Queue Errors: {{ "{:,}".format(forwarder.get('stats', {}).get('queue_full_errors', 0)) }}
-
 {% if dogstatsd|length > 0 %}
 Dogstatsd
 =========
@@ -108,7 +120,6 @@ Dogstatsd
   Total Service Check Count: {{ "{:,}".format(dogstatsd.get('stats', {}).get('service_checks_total', 0)) }}
   Total Packet Count: {{ "{:,}".format(dogstatsd.get('stats', {}).get('packets_total', 0)) }}
 {% endif %}
-
 API Key Status
 ==============
   API Key ending in {{ status.get('redacted_api') }}: {{ status.get('api_status') }}

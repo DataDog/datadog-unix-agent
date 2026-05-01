@@ -1,0 +1,6 @@
+prelude:
+    |
+    Release on: 2026-05-01
+
+    - This release brings bug fixes, security vulnerability upgrades, NO_PROXY proxy support,
+      and behavioral improvements since 1.1.6. Updated AIX 7.2 TL4 bootstrap support included.

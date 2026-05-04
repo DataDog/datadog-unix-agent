@@ -3,9 +3,10 @@ default_version "3.7.7.1"
 
 dependency "readline"
 
-source :git => "https://github.com/LuaDist/libsqlite3.git"
+source :url => "https://github.com/LuaDist/libsqlite3/archive/refs/tags/3.7.7.1.tar.gz",
+       :sha256 => "b1eb700a46a7429a1a587fadd31e8ef5a3fd84bb6a75b898715baf71fedc412e"
 
-relative_path "libsqlite3"
+relative_path "libsqlite3-3.7.7.1"
 
 env = {
 }

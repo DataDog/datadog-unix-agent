@@ -37,7 +37,7 @@ if mac_os_x?
 elsif linux?
   python_configure.push("--enable-unicode=ucs4")
 elsif aix?
-  # something here... 
+  python_configure.push("--with-openssl=#{install_dir}/embedded")
 end
 
 python_configure.push("--with-dbmliborder=")
@@ -62,7 +62,24 @@ build do
   command "make install", :env => env
   delete "#{install_dir}/embedded/lib/python3.8/test"
 
+  if aix?
+    # AIX: ld_so_aix emits "Entry point not found" warnings that Python's setup.py
+    # treats as build failures, leaving _ssl/_hashlib as _failed.so stubs even though
+    # the .so files link and load correctly.  Re-run sharedmods with minimal env to
+    # force a clean build, then manually install the resulting .so files.
+    dynload = "#{install_dir}/embedded/lib/python3.8/lib-dynload"
+    # allow non-zero exit (e.g. _tkinter fails due to missing 32-bit Tk lib — expected)
+    command "make sharedmods || true", :env => {"OBJECT_MODE" => "64",
+                                                "PATH" => env["PATH"],
+                                                "LIBPATH" => "#{install_dir}/embedded/lib:/usr/lib:/lib"}
+    command "cp build/lib.aix-7.2-3.8/_ssl.cpython-38.so #{dynload}/_ssl.cpython-38.so"
+    command "cp build/lib.aix-7.2-3.8/_hashlib.cpython-38.so #{dynload}/_hashlib.cpython-38.so"
+    command "rm -f #{dynload}/_ssl.cpython-38_failed.so #{dynload}/_hashlib.cpython-38_failed.so"
+  end
+
   link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"
   link "#{install_dir}/embedded/bin/pip3", "#{install_dir}/embedded/bin/pip"
-  pip "install --upgrade pip==21.1.3", env: env # Update pip since the version 21.1.1 shipped with python 3.8.10 crashes
+  # Install pip 21.1.3 from local wheel (no network needed; avoids ssl bootstrap issue on AIX)
+  # The wheel is pre-staged at /tmp/pip-21.1.3-py3-none-any.whl by the build bootstrap process
+  pip "install --upgrade --no-index --find-links /tmp pip==21.1.3", env: env
 end

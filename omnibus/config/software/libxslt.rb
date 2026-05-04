@@ -35,4 +35,10 @@ build do
     env: env)
   command "make", env: env
   command "make install", env: env
+
+  if aix?
+    # Our GNU install wrapper uses plain `cp` (no -p) when -m isn't passed,
+    # so shell scripts like xslt-config lose their execute bit on install.
+    command "chmod +x #{install_dir}/embedded/bin/xslt-config"
+  end
 end

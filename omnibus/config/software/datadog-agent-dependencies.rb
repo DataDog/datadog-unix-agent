@@ -55,9 +55,26 @@ build do
     # Let's set the PIC flag and see how it goes.
     env["CFLAGS"] = "-fPIC #{env["CFLAGS"]} -D__64BIT__"
     env["CXXFLAGS"] = "-fPIC #{env["CXXFLAGS"]} -D__64BIT__"
+
+    # lxml's setup.py checks these env vars before falling back to PATH search.
+    # lxml 4.9+ uses WITH_XML2_CONFIG/WITH_XSLT_CONFIG (XML2_CONFIG/XSLT_CONFIG are deprecated).
+    env["WITH_XML2_CONFIG"] = "#{install_dir}/embedded/bin/xml2-config"
+    env["WITH_XSLT_CONFIG"] = "#{install_dir}/embedded/bin/xslt-config"
   end
 
-  ## NOTE: we might have to wrap ALL this remaining code in a `block do...end`
-  pip "install --no-cache-dir -r #{project_dir}/#{requirements_file}", :env => env
+  if aix?
+    # lxml's setup.py uses xml2-config/xslt-config for library detection.
+    # --no-build-isolation bypasses pip's isolated build env so PATH and
+    # WITH_XML2_CONFIG/WITH_XSLT_CONFIG are visible during setup.py egg_info.
+    # Must run before requirements.txt so pip skips lxml when processing it.
+    pip "install --no-cache-dir --no-build-isolation lxml==4.9.4", :env => env
+  end
+
+  # --no-build-isolation avoids pip's isolated build envs which break multiple packages on AIX:
+  # - lxml egg_info can't find xslt-config via PATH in isolated env (handled above separately)
+  # - PyYAML 5.4.1 hits AttributeError: cython_sources with newer setuptools in isolated env
+  # - other C-extension packages may hit similar PEP 517 isolation issues
+  pip_flags = aix? ? "--no-cache-dir --no-build-isolation" : "--no-cache-dir"
+  pip "install #{pip_flags} -r #{project_dir}/#{requirements_file}", :env => env
 
 end

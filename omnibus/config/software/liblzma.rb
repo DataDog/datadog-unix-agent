@@ -30,12 +30,16 @@ source url: "https://tukaani.org/xz/xz-#{version}.tar.gz"
 relative_path "xz-#{version}"
 
 build do
-  env = with_standard_compiler_flags(with_embedded_path)
+  env = if aix?
+          aix_env
+        else
+          with_standard_compiler_flags(with_embedded_path)
+        end
   # liblzma properly uses CFLAGS for C compilation and CPPFLAGS for common
   # flags used across tools such as windres.  Don't put anything in it
   # that can be misinterpreted by windres.
   env["CPPFLAGS"] = "-I#{install_dir}/embedded/include" if windows?
-  env["CFLAGS"] << " -fPIC"
+  env["CFLAGS"] << " -fPIC" unless aix? # aix_env already includes -fPIC
 
   config_command = [
     "--disable-debug",

@@ -30,6 +30,11 @@ build do
     etc_dir = "/etc/datadog-agent"
     var_dir = "/var/log/datadog"
 
+    # Remove macOS resource fork files (._*) that cause compileall to fail with
+    # "source code string cannot contain null bytes" — they're binary metadata,
+    # not Python source, and get swept in via the path-based source copy on macOS.
+    command "find #{install_dir} -name '._*' -exec rm -f {} \\;"
+
     # compile pyc files
     command "#{python_path} -m compileall #{install_dir} -x '#{pyc_mask_re}'"
     command "find . -type f -name '*.pyc' >> #{pyc_compiled_files}", :cwd => install_dir

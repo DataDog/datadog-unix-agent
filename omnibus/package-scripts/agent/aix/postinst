@@ -81,8 +81,10 @@ create_system_services()
         rmitab ${SERVICE_NAME} >/dev/null
     fi
 
-    # Remove stale ODM subsystem definition
-    odmdelete -o SRCsubsys -q "subsysname='${SERVICE_NAME}'" >/dev/null
+    # Remove stale ODM subsystem definition (no-op on clean install)
+    set +e
+    odmdelete -o SRCsubsys -q "subsysname='${SERVICE_NAME}'" >/dev/null 2>&1
+    set -e
 
     # Ensure all agent processes have fully exited
     ATTEMPT=0
@@ -131,12 +133,18 @@ create_system_services()
       -f 9 \
       >/dev/null
 
-    # Start subsystem
-    startsrc -s ${SERVICE_NAME} >/dev/null
+    # Start subsystem (ignore rc=2 "already active" on reinstall)
+    set +e
+    startsrc -s ${SERVICE_NAME} >/dev/null 2>&1
+    set -e
 }
 
 
 create_datadog_user_group
 create_system_services
+
+# Ensure log directory exists with correct ownership
+mkdir -p ${LOG_DIR}
+chown ${DATADOG_USER}:${DATADOG_GROUP} ${LOG_DIR}
 
 exit 0

@@ -18,9 +18,9 @@ PYC_COMPILED_FILES=$INSTALL_DIR/embedded/.pyc_compiled_files.txt
 
 stop_datadog_services()
 {
-  # Stop an already running agent
+  set +e
+  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1
   set -e
-  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
 remove_pyc_compiled_files()

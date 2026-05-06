@@ -37,9 +37,9 @@ stop_datadog_services
 remove_system_services
 
 # Remove symlink to agent CLI
-set +e
-test -L /usr/bin/datadog-agent && rm -f /usr/bin/datadog-agent
-set -e
+if [ -L /usr/bin/datadog-agent ]; then
+    rm -f /usr/bin/datadog-agent
+fi
 
 # Remove installation and config directories not always cleaned by installp
 rm -rf ${INSTALL_DIR}

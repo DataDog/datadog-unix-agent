@@ -20,19 +20,13 @@ DATADOG_GROUP=dd-agent
 
 stop_datadog_services()
 {
-  # Stop an already running agent
-  set +e
-  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
-  set -e
+    stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
 purge_datadog_services()
 {
-  set -e
-  # adding inittab entry
-  rmitab ${SERVICE_NAME}
-
-  rmssys -s ${SERVICE_NAME} > /dev/null 2>&1
+    rmitab ${SERVICE_NAME} > /dev/null 2>&1 || true
+    rmssys -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
 purge_datadog_files()

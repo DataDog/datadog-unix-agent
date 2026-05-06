@@ -20,11 +20,9 @@ set -e
 
 tentative_stop_datadog_services()
 {
-  # Stop an already running agent if it exists
-  set +e
-  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
-  sleep 6
-  set -e
+    # Stop an already running agent if it exists
+    stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
+    sleep 6
 }
 
 tentative_stop_datadog_services

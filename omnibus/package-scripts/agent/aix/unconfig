@@ -5,13 +5,12 @@
 # This product includes software developed at Datadog (https://www.datadoghq.com/).
 # Copyright 2019 Datadog, Inc.
 
-# This script is RPM-specific
-# It is run at the very end of an install/upgrade of the package
-# It is NOT run on removal of the package
+# Run by installp during deinstallation (datadog-unix-agent.unconfig member in liblpp.a).
+# Stops the agent, removes SRC subsystem, and cleans up installation directories.
 #
 # .deb: n/a
-# .rpm: STEP 6 of 6
-# .bff: STEP ? of ? (TODO)
+# .rpm: STEP 6 of 6 (config script, not called on removal)
+# .bff: called by installp -u before file removal
 
 INSTALL_DIR=/opt/datadog-agent
 CONFIG_DIR=/etc/datadog-agent
@@ -24,28 +23,27 @@ set -e
 
 stop_datadog_services()
 {
-  # Stop an already running agent
-  set +e
-  stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
-  set -e
+    stopsrc -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
 remove_system_services()
 {
-    # best effort
-    set +e
-    rmitab ${SERVICE_NAME} > /dev/null
-    rmssys -s ${SERVICE_NAME} > /dev/null
-    set -e
+    # best effort — use || true so individual failures don't abort the script
+    rmitab ${SERVICE_NAME} > /dev/null 2>&1 || true
+    rmssys -s ${SERVICE_NAME} > /dev/null 2>&1 || true
 }
 
 stop_datadog_services
 remove_system_services
 
-# remove symbolc link to the agent
-if [ -L /usr/bin/datadog-agent]; then
+# Remove symlink to agent CLI
+if [ -L /usr/bin/datadog-agent ]; then
     rm -f /usr/bin/datadog-agent
 fi
 
+# Remove installation and config directories not always cleaned by installp
+rm -rf ${INSTALL_DIR}
+rm -rf ${CONFIG_DIR}
+rm -rf ${LOG_DIR}
 
 exit 0

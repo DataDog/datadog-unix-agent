@@ -45,10 +45,10 @@ build do
         "#{install_dir}/embedded/lib/libtinfow.so",
         "#{install_dir}/embedded/lib/libtinfow.so.5",
         "#{install_dir}/embedded/lib/libtinfow.so.5.9.0",
-        "#{install_dir}/embedded/lib/python3.8/lib-dynload/fcntl.cpython-38.so",
-        "#{install_dir}/embedded/lib/python3.8/lib-dynload/nis.cpython-38.so",
-        "#{install_dir}/embedded/lib/python3.8/lib-dynload/readline.cpython-38.so",
-        "#{install_dir}/embedded/lib/python3.8/site-packages/psutil/_psutil_aix.cpython-38.so",
+        "#{install_dir}/embedded/lib/python3.10/lib-dynload/fcntl.cpython-310.so",
+        "#{install_dir}/embedded/lib/python3.10/lib-dynload/nis.cpython-310.so",
+        "#{install_dir}/embedded/lib/python3.10/lib-dynload/readline.cpython-310.so",
+        "#{install_dir}/embedded/lib/python3.10/site-packages/psutil/_psutil_aix.cpython-310.so",
       ]
 
       # Move checks and configuration files

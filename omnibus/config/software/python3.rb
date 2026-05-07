@@ -61,8 +61,11 @@ build do
         end
   patch source: "no-libintl.patch", plevel:1
 
+  workers = `nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 1`.strip.to_i
+  workers = [workers, 1].max
+
   command python_configure.join(" "), :env => env
-  command "make", :env => env
+  command "make -j#{workers}", :env => env
   command "make install", :env => env
   delete "#{install_dir}/embedded/lib/python3.10/test"
 

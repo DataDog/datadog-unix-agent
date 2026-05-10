@@ -5,7 +5,6 @@ from xml.etree.ElementTree import ParseError
 
 import requests
 from lxml import etree
-from six import ensure_text
 
 from checks import AgentCheck
 from utils.util import _is_affirmative
@@ -130,7 +129,7 @@ class IbmWasCheck(AgentCheck):
     def submit_metrics(self, child, prefix, tags):
         value = child.get(metrics.METRIC_VALUE_FIELDS[child.tag])
         metric_name = self.normalize(
-            ensure_text(child.get('name')), prefix='{}.{}'.format(self.METRIC_PREFIX, prefix), fix_case=True
+            child.get('name') or '', prefix='{}.{}'.format(self.METRIC_PREFIX, prefix), fix_case=True
         )
 
         tag = child.tag

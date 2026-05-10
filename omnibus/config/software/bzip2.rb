@@ -36,9 +36,15 @@ libdir = "#{prefix}/lib"
 
 build do
   ship_license "https://gist.githubusercontent.com/remh/227fefddabefc998235f/raw/cc614178cf79580e04671c4d6acfbe95028b1842/bzip2.LICENSE"
-  patch :source => "makefile_take_env_vars.patch"
-  patch :source => "soname_install_dir.patch" if ohai["platform_family"] == "mac_os_x"
-  patch :source => "aix-shared-lib-no-gnu-ld.patch", :plevel => 0 if ohai["platform_family"] == "aix"
+  if aix?
+    # AIX native /usr/bin/patch rejects unified diffs; call GNU patch explicitly
+    patches_dir = File.join(Omnibus::Config.project_root, "config", "patches", "bzip2")
+    command "/opt/freeware/bin/patch -p1 -i #{patches_dir}/makefile_take_env_vars.patch"
+    command "/opt/freeware/bin/patch -p0 -i #{patches_dir}/aix-shared-lib-no-gnu-ld.patch"
+  else
+    patch :source => "makefile_take_env_vars.patch"
+    patch :source => "soname_install_dir.patch" if ohai["platform_family"] == "mac_os_x"
+  end
 
   env = case ohai["platform"]
         when "aix"

@@ -59,7 +59,13 @@ build do
             "LDFLAGS" => "-Wl,-rpath,#{install_dir}/embedded/lib -L#{install_dir}/embedded/lib",
           }
         end
-  patch source: "no-libintl.patch", plevel:1
+  if aix?
+    # AIX native /usr/bin/patch rejects unified diffs; call GNU patch explicitly
+    patch_file = File.join(Omnibus::Config.project_root, "config", "patches", "python3", "no-libintl.patch")
+    command "/opt/freeware/bin/patch -p1 -i #{patch_file}", env: env
+  else
+    patch source: "no-libintl.patch", plevel:1
+  end
 
   workers = `nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo 1`.strip.to_i
   workers = [workers, 1].max
@@ -79,8 +85,8 @@ build do
     command "make sharedmods || true", :env => {"OBJECT_MODE" => "64",
                                                 "PATH" => env["PATH"],
                                                 "LIBPATH" => "#{install_dir}/embedded/lib:/usr/lib:/lib"}
-    command "cp build/lib.aix-7.2-3.10/_ssl.cpython-310.so #{dynload}/_ssl.cpython-310.so"
-    command "cp build/lib.aix-7.2-3.10/_hashlib.cpython-310.so #{dynload}/_hashlib.cpython-310.so"
+    command "sh -c 'cp build/lib.aix*-3.10/_ssl.cpython-310.so #{dynload}/_ssl.cpython-310.so'"
+    command "sh -c 'cp build/lib.aix*-3.10/_hashlib.cpython-310.so #{dynload}/_hashlib.cpython-310.so'"
     command "rm -f #{dynload}/_ssl.cpython-310_failed.so #{dynload}/_hashlib.cpython-310_failed.so"
   end
   link "#{install_dir}/embedded/bin/python3", "#{install_dir}/embedded/bin/python"

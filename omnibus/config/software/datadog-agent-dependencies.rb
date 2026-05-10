@@ -58,6 +58,6 @@ build do
   end
 
   ## NOTE: we might have to wrap ALL this remaining code in a `block do...end`
-  pip "install --no-cache-dir -r #{project_dir}/#{requirements_file}", :env => env
+  pip "install --no-cache-dir --no-build-isolation -r #{project_dir}/#{requirements_file}", :env => env
 
 end

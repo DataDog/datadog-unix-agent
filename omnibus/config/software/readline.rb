@@ -32,7 +32,11 @@ build do
 
   # note: this patch is dependent on the environment we ./configure with
   # if that changes this patch will likely have to be generated again.
-  patch :source => "readline-shlib-makefile-fix.patch", :plevel => 0 if ohai["platform_family"] == "aix"
+  if ohai["platform_family"] == "aix"
+    # AIX native /usr/bin/patch rejects unified diffs; call GNU patch explicitly
+    patch_file = File.join(Omnibus::Config.project_root, "config", "patches", "readline", "readline-shlib-makefile-fix.patch")
+    command "/opt/freeware/bin/patch -p0 -i #{patch_file}", :env => env
+  end
 
   command "make", :env => env
   command "make install", :env => env

@@ -90,7 +90,12 @@ build do
   end
 
   if ohai["platform"] == "aix"
-    patch source: "patch-aix-configure.patch", plevel: 0
+    # AIX native /usr/bin/patch rejects unified diffs; call GNU patch explicitly
+    patch_file = File.join(Omnibus::Config.project_root, "config", "patches", "ncurses", "patch-aix-configure.patch")
+    command "/opt/freeware/bin/patch -p0 -i #{patch_file}", env: env
+    # configure calls config.sub with no argument when ac_cv_target is unset,
+    # which fails on AIX.  Native build: target == host.
+    env["ac_cv_target"] = "powerpc-ibm-aix7.2.0.0"
   end
 
   if ohai["platform"] == "mac_os_x"
@@ -122,32 +127,42 @@ build do
   command "make", env: env
   command "make install", env: env
 
-  # build non-wide-character libraries
-  command "make clean", env: env
-  command "make distclean", env: env
+  if aix?
+    # AIX make does not reliably regenerate include/curses.h during the
+    # distclean→reconfigure→rebuild cycle after a wide-char install.
+    # Wide libraries are a functional superset; create non-wide name aliases.
+    lib_dir = "#{install_dir}/embedded/lib"
+    [["ncurses", "ncursesw"], ["tinfo", "tinfow"]].each do |narrow, wide|
+      ["a", "la", "so"].each do |ext|
+        command "ln -sf lib#{wide}.#{ext} #{lib_dir}/lib#{narrow}.#{ext}", env: env
+      end
+    end
+  else
+    # build non-wide-character libraries
+    command "make clean", env: env
+    command "make distclean", env: env
 
-  env_narrow = env.clone
-  env_narrow["CPPFLAGS"] = "-P -D_LARGE_FILES"
+    env_narrow = env.clone
+    env_narrow["CPPFLAGS"] = "-P -D_LARGE_FILES"
 
-  cmd_array = ["./configure",
-           "--prefix=#{install_dir}/embedded",
-           "--with-termlib",
-           "--without-debug",
-           "--with-normal",
-           "--with-shared",
-           "--without-cxx-binding",
-           "--enable-overwrite",
-           "--enable-termcap"]
+    cmd_array = ["./configure",
+             "--prefix=#{install_dir}/embedded",
+             "--with-termlib",
+             "--without-debug",
+             "--with-normal",
+             "--with-shared",
+             "--without-cxx-binding",
+             "--enable-overwrite",
+             "--enable-termcap"]
 
-  cmd_array << "--with-libtool" if ohai["platform"] == "aix"
-  command(cmd_array.join(" "),
-          env: env_narrow)
-  command "make", env: env_narrow
+    command(cmd_array.join(" "), env: env_narrow)
+    command "make", env: env_narrow
 
-  # installing the non-wide libraries will also install the non-wide
-  # binaries, which doesn't happen to be a problem since we don't
-  # utilize the ncurses binaries in private-chef (or oss chef)
-  command "make install", env: env_narrow
+    # installing the non-wide libraries will also install the non-wide
+    # binaries, which doesn't happen to be a problem since we don't
+    # utilize the ncurses binaries in private-chef (or oss chef)
+    command "make install", env: env_narrow
+  end
 
   # Ensure embedded ncurses wins in the LD search path
   if ohai["platform"] == "smartos"

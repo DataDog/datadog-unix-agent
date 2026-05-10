@@ -137,7 +137,7 @@ build do
   if aix?
     # This enables omnibus to use 'makedepend'
     # from fileset 'X11.adt.imake' (AIX install media)
-    env["PATH"] = "/usr/lpp/X11/bin:#{ENV["PATH"]}"
+    env["PATH"] = "/usr/lpp/X11/bin:#{env["PATH"]}"
   end
 
   make "depend", env: env

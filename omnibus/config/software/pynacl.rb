@@ -1,5 +1,5 @@
 name "pynacl"
-default_version "1.2.1"
+default_version "1.6.2"
 
 python_version = ENV['PYTHON_VERSION']
 
@@ -16,6 +16,10 @@ version "1.2.1" do
   source :sha256 => "00ac0c2bfaa087de634a73a4e348f535f69c386fabf762adb4841728b5fe88b1"
 end
 
+version "1.6.2" do
+  source :sha256 => "fa489623e2a802c1c7e2127188e3072f326c229dbe23f99994b3547407a85958"
+end
+
 relative_path "pynacl-#{version}"
 
 
@@ -29,13 +33,12 @@ build do
   end
 
   if aix?
-    patch source: "libsodium-disable-pwhash_scrypt-test.patch", plevel: 1
-
     env["M4"] = "/opt/freeware/bin/m4"
-
-    # Let's set the PIC flag and see how it goes.
     env["CFLAGS"] = "-fPIC #{env["CFLAGS"]}"
     env["CXXFLAGS"] = "-fPIC #{env["CXXFLAGS"]}"
+    # pynacl's setup.py runs `make check` on bundled libsodium 1.0.20.
+    # pwhash_scrypt crashes on AIX; suppress test compilation and execution.
+    env["LIBSODIUM_MAKE_ARGS"] = "check_PROGRAMS= TESTS="
   end
 
   pip "install wheel", :env => env

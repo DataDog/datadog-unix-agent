@@ -30,8 +30,10 @@ def aix?()
 end
 
 def aix_env()
-    env = with_standard_compiler_flags(with_embedded_path, :aix => { :use_gcc => true }) 
-    env.merge({"LD_RUN_PATH" => "#{install_dir}/embedded/lib"})
+    env = with_standard_compiler_flags(with_embedded_path, :aix => { :use_gcc => true })
+    env.merge!({"LD_RUN_PATH" => "#{install_dir}/embedded/lib"})
+    # Ensure GCC from freeware is on PATH regardless of the caller's environment
+    env["PATH"] = "/opt/freeware/bin:#{env["PATH"]}" unless env["PATH"].to_s.include?("/opt/freeware/bin")
     env["CC"] = "gcc -maix64"
     env["CXX"] = "gcc -maix64"
     env["ARFLAGS"] = "-X64 -cru"

@@ -27,16 +27,17 @@ level. That is:
 
 #### Target Platforms
 
-The omnibus build has been build and tested on the target platforms at the time of this writing:
+The omnibus build has been built and tested on the following platforms:
 
-- AIX 6.1 TL9 SP6
-- AIX 7.1 TL5 SP3
-- AIX 7.2 TL3 SP0
+- AIX 7.2 TL3 SP0 (and later TLs)
 - AIX 7.3 TL3 SP0
 
+**Note:** Starting with version 1.3.0, AIX 6.1 and AIX 7.1 are no longer supported. The agent
+now requires Python 3.10+, which may not be compatible with those older technology levels.
+Users requiring AIX 6.1 or AIX 7.1 support should use version [1.2.1](https://github.com/DataDog/datadog-unix-agent/releases/tag/1.2.1).
+
 Should you attempt to install and run the agent package on a lesser version your mileage will
-vary, you may or may not have all required symbols available. We are working to improve our
-support across al target platforms.
+vary, you may or may not have all required symbols available.
 
 #### Omnibus Bootstrap
 
@@ -277,8 +278,10 @@ so wish. This is the list of former RPM requirements:
 
 ## Developer Notes
 
-The agent runs on Python3.  You will typically want `setuptools`, `wheel` and `virtualenv`
-on your python development environment. We also have some development tools requirements,
+The agent runs on **Python 3.10+**. Python 2 is no longer supported as of version 1.3.0;
+users requiring Python 2 compatibility should use version [1.2.1](https://github.com/DataDog/datadog-unix-agent/releases/tag/1.2.1).
+
+You will typically want `setuptools`, `wheel` and `virtualenv` on your python development environment. We also have some development tools requirements,
 you may install them with:
 ```bash
 pip install -r requirements-dev.txt
@@ -305,9 +308,7 @@ process.
 
 ##### Platforms
 You will need a build machine that matches the target platform, thus:
-- AIX 6.1
-- AIX 7.1
-- AIX 7.2
+- AIX 7.2 TL3 or later
 - AIX 7.3
 
 ##### Omnibus Requirements

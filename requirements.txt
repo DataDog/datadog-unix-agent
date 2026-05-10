@@ -1,6 +1,6 @@
 asn1crypto==0.24.0
 bcrypt==3.2.2
-certifi==2018.4.16
+certifi==2026.4.22
 cffi==2.0.0
 charset-normalizer==2.1.1
 cryptography==2.8

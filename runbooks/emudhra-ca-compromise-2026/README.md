@@ -31,11 +31,14 @@ and `aix.sh` refuses to run against it.
 
 ## Usage
 
-Run as root:
+Download the script and run it as root. `curl` ships with the AIX Toolbox under
+`/opt/freeware/bin`; on hosts without it or without access to GitHub, download
+`aix.sh` elsewhere and copy it over with `scp`.
 
 ```sh
-./aix.sh -n     # preview: reports what would change, writes nothing
-./aix.sh        # apply, restart the Agent, watch its log for 60s
+/opt/freeware/bin/curl -O https://raw.githubusercontent.com/DataDog/datadog-unix-agent/master/runbooks/emudhra-ca-compromise-2026/aix.sh
+sh aix.sh -n     # preview: reports what would change, writes nothing
+sh aix.sh        # apply, restart the Agent, watch its log for 60s
 ```
 
 | Option | Meaning |
@@ -115,7 +118,7 @@ Every bundle must print `rejected`. The Agent itself should keep reporting.
 ## Rollback
 
 ```sh
-./aix.sh -r
+sh aix.sh -r
 ```
 
 This copies the newest `*.pre-cert-update-*` backup of every bundle back in
@@ -132,6 +135,11 @@ place and restarts the Agent.
   `unix.agent.*` intake still validates with each scrubbed bundle, the
   compromised test chain is rejected, and rollback restores it. For example:
   `sh tests/e2e.sh 1.1.6 python:3.8-bullseye 2022-04-26`.
+- On a real AIX 7.3 TL4 LPAR with the official 1.1.6 package installed by
+  `installp`, the script was run under `/bin/sh` (ksh88) through dry run, apply,
+  rerun and rollback: the Agent restarted through SRC and kept posting to the
+  intake, all regional intakes still validated and the compromised test chain
+  was rejected by every bundle.
 
 ## Support
 

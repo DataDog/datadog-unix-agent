@@ -2,6 +2,10 @@
 
 A Datadog Agent specifically designed for Unix-based systems.
 
+> **eMudhra CA compromise (October 2026):** every Unix Agent release ships CA
+> bundles that still trust the compromised eMudhra/emSign roots. See the
+> [remediation runbook](runbooks/emudhra-ca-compromise-2026/) to remove them.
+
 Note: This agent has been designed with portability in mind but has only been tested at the
 time of this writing on AIX.
 If you have any questions, please contact our [support team](https://docs.datadoghq.com/help/).
